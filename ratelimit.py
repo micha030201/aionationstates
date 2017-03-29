@@ -1,6 +1,5 @@
 """Decorators for compliance with for NationStates' API and web rate limits."""
 
-
 import time
 import asyncio
 from functools import partial

@@ -1,5 +1,4 @@
 import re
-from hashlib import sha256
 from contextlib import suppress
 from collections import namedtuple
 
@@ -9,9 +8,11 @@ from nkvd import config, logger
 from nkvd.nationstates import ratelimit
 
 
-ns_url = 'https://www.nationstates.net/'
-api_path = 'cgi-bin/api.cgi'
-api_url = ns_url + api_path
+NS_URL = 'https://www.nationstates.net/'
+API_PATH = 'cgi-bin/api.cgi'
+API_URL = NS_URL + API_PATH
+
+USER_AGENT = 'https://github.com/balag12/NKVD-discordbot'
 
 
 class RawResponse(namedtuple('RawResponse', 'status url text history')):
@@ -36,6 +37,9 @@ class NationSession:
     """Allows you to make authenticated requests to NationStates' API, as well
     as its web interface, sharing the session between the two.
     
+    You generally shouldn't need to use this class directly, instead picking
+    a higher-level abstraction, like PrivateShards or NationControl.
+    
     Important note: does not check credentials upon initialization, you will
     only know if you've made a mistake after you try to make the first request.
     """
@@ -58,7 +62,7 @@ class NationSession:
             'X-Pin': self.pin
         }
         async with aiohttp.request(
-                'GET', api_url, headers=headers,
+                'GET', API_URL, headers=headers,
                 allow_redirects=False, params=params) as resp:
             if resp.status == 403:
                 raise AuthenticationError
@@ -78,9 +82,8 @@ class NationSession:
     async def call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
-            r = await self.call_api({'nation': self.nation, 'q': 'nextissue'})
+            await self.call_api({'nation': self.nation, 'q': 'nextissue'})
         logger.debug('Making authenticated web request')
-        print(path)
         headers = {'User-Agent': self.user_agent}
         cookies = {
             # Will not work with unescaped equals sign
@@ -88,13 +91,13 @@ class NationSession:
             'pin': self.pin
         }
         async with aiohttp.request(
-                method, ns_url + path.strip('/'),
+                method, NS_URL + path.strip('/'),
                 headers=headers, cookies=cookies, **kwargs) as resp:
             with suppress(KeyError):
                 self.pin = resp.cookies['pin'].value
                 logger.debug('Updating pin from web cookie')
             
-            resp =  RawResponse(
+            resp = RawResponse(
                 status=resp.status,
                 url=resp.url,
                 history=resp.history,
@@ -105,29 +108,6 @@ class NationSession:
             return resp
 
 
-class Verify:
-    """An interface to the NationStates' Verification API."""
-    def __init__(self, nation):
-        self.nation = normalize(nation)
-        self.token = sha256(
-            config['NATIONSTATES_SECRET_KEY'].encode() +
-            nation.encode()
-        ).hexdigest()
-        self.url =  ('https://www.nationstates.net/page=verify_login?token=' +
-                     self.token)
-
-    async def check(self, checksum):
-        if not re.match('^[a-zA-Z0-9_-]{43}$', checksum):
-            return False
-        params = {
-            'a': 'verify',
-            'nation': self.nation,
-            'checksum': checksum,
-            'token': self.token
-        }
-        async with aiohttp.request('GET', api_url, params=params) as resp:
-            text = await resp.text()
-        return text == '1\n'
 
 #class Shards:
 #    """A class to access NS Nation API public shards.
@@ -146,7 +126,7 @@ class Verify:
 #            'nation': self.nation,
 #            'q': '+'.join(shards)
 #        }
-#        async with session.get(api_url, params=params) as resp:
+#        async with session.get(API_URL, params=params) as resp:
 #            text = await resp.text()
         
     
