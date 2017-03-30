@@ -1,30 +1,28 @@
+import xml.etree.ElementTree as ET
+
+from nkvd.nationstates.session import ApiSession, NationSession
+from nkvd.nationstates.utils import normalize
 
 
+class NationShards(ApiSession):
+    """A class to access NS Nation API public shards."""
+    def __init__(self, nation):
+        self.nation = normalize(nation)
 
-#class Shards:
-#    """A class to access NS Nation API public shards.
-#    
-#    Does NOT support World Census shards. One day I'll write a separate class
-#    for those pesky things, but not today.
-#    
-#    Does NOT check if the shards you're requesting exist. We are not
-#    responsible for the damages.
-#    """
-#    def __init__(self, nation):
-#        self.nation = normalize(nation)
+    async def get(self, *shards):
+        params = {
+            'nation': self.nation,
+            'q': '+'.join(shards)
+        }
+        resp = await self.call_api(params=params)
+        return dict(self._parse(shards, ET.fromstring(resp.text)))
     
-#    async def _download(self, shards):  # this won't work
-#        params = {
-#            'nation': self.nation,
-#            'q': '+'.join(shards)
-#        }
-#        async with session.get(API_URL, params=params) as resp:
-#            text = await resp.text()
-        
-    
-#    async def get(self, *shards):
-        
-        
-        
+    def _parse(self, shards, xml_root):
+        assert xml_root.attrib['id'] == self.nation
+        if 'animal' in shards:
+            yield ('animal', xml_root.find('ANIMAL').text)
+        if 'flag' in shards:
+            yield ('flag', xml_root.find('FLAG').text)
+        # TODO: finish
 
 
