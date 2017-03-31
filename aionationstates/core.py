@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
-from nkvd.nationstates.session import Session, AuthSession
-from nkvd.nationstates.utils import normalize
+from aionationstates.session import Session, AuthSession
+from aionationstates.utils import normalize
 
 
 class NationShards(Session):

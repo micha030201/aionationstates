@@ -9,8 +9,8 @@ from secrets import token_hex
 
 import aiohttp
 
-from nkvd.nationstates.core import API_URL, NS_URL, USER_AGENT, normalize
-from nkvd.nationstates import ratelimit
+from aionationstates.core import API_URL, NS_URL, USER_AGENT, normalize
+from aionationstates import ratelimit
 
 
 class Verify:

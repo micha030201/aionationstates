@@ -1,2 +1,2 @@
-from nkvd.nationstates.core import *
-#from nkvd.nationstates.verification import *
+from aionationstates.core import *
+#from aionationstates.verification import *

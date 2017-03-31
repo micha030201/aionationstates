@@ -1,13 +1,15 @@
 import re
+import logging
 from contextlib import suppress
 from collections import namedtuple
 
 import aiohttp
 
-from nkvd import logger
-from nkvd.nationstates import ratelimit
-from nkvd.nationstates.utils import normalize
+from aionationstates import ratelimit
+from aionationstates.utils import normalize
 
+
+logger = logging.getLogger('aionationstates')
 
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
