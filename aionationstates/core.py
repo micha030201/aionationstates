@@ -41,20 +41,20 @@ class NationData:
     )
     float_cases = ('TAX', 'PUBLICSECTOR')
     bool_cases = ('TGCANRECRUIT', 'TGCANCAMPAIGN')
-    __init__(self, xml):
+    def __init__(self, xml):
         root = ET.fromstring(xml)
         assert root.tag == 'NATION'
         
-        for tag in str_cases:
+        for tag in self.str_cases:
             with suppress(AttributeError):
                 setattr(self, tag.lower(), root.find(tag).text)
-        for tag in int_cases:
+        for tag in self.int_cases:
             with suppress(AttributeError):
                 setattr(self, tag.lower(), int(root.find(tag).text))
-        for tag in float_cases:
+        for tag in self.float_cases:
             with suppress(AttributeError):
                 setattr(self, tag.lower(), float(root.find(tag).text))
-        for tag in bool_cases:
+        for tag in self.bool_cases:
             with suppress(AttributeError):
                 setattr(self, tag.lower(), bool(int(root.find(tag).text)))
         
@@ -164,4 +164,4 @@ class NationShards(Session):
             yield ('flag', xml_root.find('FLAG').text)
         # TODO: finish
 
-admirable animal animaltrait banner* banners* capital category census** crime currency customleader customcapital customreligion deaths demonym demonym2 demonym2plural dispatches dispatchlist endorsements factbooks factbooklist firstlogin flag founded foundedtime freedom fullname gavote gdp govt govtdesc govtpriority happenings income industrydesc influence lastactivity lastlogin leader legislation majorindustry motto name notable poorest population publicsector rcensus region religion richest scvote sectors sensibilities tax tgcanrecruit*** tgcancampaign*** type wa wabadges wcensus zombie**** 
+
