@@ -1,10 +1,10 @@
 import xml.etree.ElementTree as ET
 
-from nkvd.nationstates.session import ApiSession, NationSession
+from nkvd.nationstates.session import Session, AuthSession
 from nkvd.nationstates.utils import normalize
 
 
-class NationShards(ApiSession):
+class NationShards(Session):
     """A class to access NS Nation API public shards."""
     def __init__(self, nation):
         self.nation = normalize(nation)

@@ -29,7 +29,7 @@ class RawResponse(namedtuple('RawResponse',
     """
 
 
-class _Session:
+class Session:
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
         headers['User-Agent'] = USER_AGENT
@@ -44,8 +44,6 @@ class _Session:
                 text=await resp.text()
             )
 
-
-class ApiSession(_Session):
     @ratelimit.api
     async def call_api(self, **kwargs):
         resp = await self._request('GET', API_URL,
@@ -54,8 +52,6 @@ class ApiSession(_Session):
             raise AuthenticationError
         return resp
 
-
-class WebSession(_Session):  
     @ratelimit.web
     async def call_web(self, path, method='GET', **kwargs):
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
@@ -64,7 +60,7 @@ class WebSession(_Session):
         return resp
 
 
-class NationSession(WebSession, ApiSession):
+class AuthSession(Session):
     """Allows you to make authenticated requests to NationStates' API, as well
     as its web interface, sharing the session between the two.
     
