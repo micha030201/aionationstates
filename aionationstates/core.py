@@ -103,8 +103,7 @@ class NationData:
         
         deaths = root.find('DEATHS')
         if deaths:
-            self.deaths = {elem.get('type'): float(elem.text)
-                           for elem in deaths.findall('DEATH')}
+            self.deaths = {elem.get('type'): float(elem.text) for elem in deaths}
         
         dispatchlist = root.find('DISPATCHLIST') or []
         self.dispatchlist = {
