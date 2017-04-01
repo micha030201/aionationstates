@@ -16,97 +16,90 @@ Dispatch = namedtuple('Dispatch', ('title author category subcategory'
                                    ' created edited views score'))
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-def _banner_url(code):
-    return f'{NS_URL}images/banners/{code}.jpg'
 
-class NationData:
-    """A class to parse and represent Nation API data.
-    Intended to be as close to the raw API data as possible, while remaining
-    usable.
+STR_CASES = {
+    'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
+    'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
+    'majorindustry', 'govtpriority', 'lastactivity', 'influence', 'leader',
+    'capital', 'religion', 'admirable', 'animaltrait', 'crime', 'founded',
+    'govtdesc', 'industrydesc', 'notable', 'sensibilities'
+}
+INT_CASES = {
+    'population', 'firstlogin', 'lastlogin', 'factbooks', 'dispatches',
+    'foundedtime', 'gdp', 'income', 'poorest', 'richest'
+}
+FLOAT_CASES = {'tax', 'publicsector'}
+BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
+
+def parse_api(args, xml):
+    """Parse the NationStates API data.
     
     Inconsistencies:
-        * factbooklist was left out as completely unnecessary. Use
-          dispatchlist instead.
+        * 'factbooklist' is left out as completely unnecessary. Use
+          'dispatchlist' instead.
+        * 'unstatus' is renamed to 'wa'.
+        * 'banner' is removed, use 'banners' and indexing.
     """
-    str_cases = (
-        'NAME', 'TYPE', 'FULLNAME', 'MOTTO', 'CATEGORY', 'REGION', 'ANIMAL',
-        'CURRENCY', 'DEMONYM', 'DEMONYM2', 'DEMONYM2PLURAL', 'FLAG',
-        'MAJORINDUSTRY', 'GOVTPRIORITY', 'LASTACTIVITY', 'INFLUENCE', 'LEADER',
-        'CAPITAL', 'RELIGION', 'ADMIRABLE', 'ANIMALTRAIT', 'CRIME', 'FOUNDED',
-        'GOVTDESC', 'INDUSTRYDESC', 'NOTABLE', 'SENSIBILITIES', 
-    )
-    int_cases = (
-        'POPULATION', 'FIRSTLOGIN', 'LASTLOGIN', 'FACTBOOKS', 'DISPATCHES',
-        'FOUNDEDTIME', 'GDP', 'INCOME', 'POOREST', 'RICHEST', 
-    )
-    float_cases = ('TAX', 'PUBLICSECTOR')
-    bool_cases = ('TGCANRECRUIT', 'TGCANCAMPAIGN')
-    def __init__(self, xml):
-        root = ET.fromstring(xml)
-        assert root.tag == 'NATION'
+    args = set(args)
+    root = ET.fromstring(xml)
+    
+    for arg in args & STR_CASES:
+        yield (arg, root.find(arg.upper()).text)
+    for arg in args & INT_CASES:
+        yield (arg, int(root.find(arg.upper()).text))
+    for arg in args & FLOAT_CASES:
+        yield (arg, float(root.find(arg.upper()).text))
+    for arg in args & BOOL_CASES:
+        yield (arg, bool(int(root.find(arg.upper()).text)))
+    
+    if 'unstatus' in args:
+        yield ('wa', root.find('UNSTATUS').text == 'WA Member')
         
-        for tag in self.str_cases:
-            with suppress(AttributeError):
-                setattr(self, tag.lower(), root.find(tag).text)
-        for tag in self.int_cases:
-            with suppress(AttributeError):
-                setattr(self, tag.lower(), int(root.find(tag).text))
-        for tag in self.float_cases:
-            with suppress(AttributeError):
-                setattr(self, tag.lower(), float(root.find(tag).text))
-        for tag in self.bool_cases:
-            with suppress(AttributeError):
-                setattr(self, tag.lower(), bool(int(root.find(tag).text)))
-        
-        with suppress(AttributeError):
-            self.unstatus = self.wa = root.find('UNSTATUS').text == 'WA Member'
+    if 'banners' in args:
+        yield (
+            'banners',
+            [f'{NS_URL}images/banners/{elem.text}.jpg' for elem in banners]
+        )
 
-        banner = root.find('BANNER')
-        banners = root.find('BANNERS')
-        if banner:
-            self.banners = (_banner_url(banner.text),)
-        elif banners:
-            self.banners = [_banner_url(elem.text) for elem in banners]
-
+    if 'freedom' in args:
         freedom = root.find('FREEDOM')
-        if freedom:
-            self.freedom = Freedom(
-                civilrights=freedom.find('CIVILRIGHTS').text,
-                economy=freedom.find('ECONOMY').text,
-                politicalfreedom=freedom.find('POLITICALFREEDOM').text
-            )
-        
+        yield ('freedom', Freedom(
+            civilrights=freedom.find('CIVILRIGHTS').text,
+            economy=freedom.find('ECONOMY').text,
+            politicalfreedom=freedom.find('POLITICALFREEDOM').text
+        ))
+    
+    if 'freedomscores' in args:
         freedomscores = root.find('FREEDOMSCORES')
-        if freedomscores:
-            self.freedomscores = Freedom(
-                civilrights=int(freedomscores.find('CIVILRIGHTS').text),
-                economy=int(freedomscores.find('ECONOMY').text),
-                politicalfreedom=int(freedomscores.find('POLITICALFREEDOM').text)
-            )
-        
+        yield ('freedomscores', Freedom(
+            civilrights=int(freedomscores.find('CIVILRIGHTS').text),
+            economy=int(freedomscores.find('ECONOMY').text),
+            politicalfreedom=int(freedomscores.find('POLITICALFREEDOM').text)
+        ))
+    
+    if 'govt' in args:
         govt = root.find('GOVT')
-        if govt:
-            self.govt = Govt(
-                administration=float(govt.find('ADMINISTRATION').text),
-                defence=float(govt.find('DEFENCE').text),
-                education=float(govt.find('EDUCATION').text),
-                environment=float(govt.find('ENVIRONMENT').text),
-                healthcare=float(govt.find('HEALTHCARE').text),
-                commerce=float(govt.find('COMMERCE').text),
-                internationalaid=float(govt.find('INTERNATIONALAID').text),
-                lawandorder=float(govt.find('LAWANDORDER').text),
-                publictransport=float(govt.find('PUBLICTRANSPORT').text),
-                socialequality=float(govt.find('SOCIALEQUALITY').text),
-                spirituality=float(govt.find('SPIRITUALITY').text),
-                welfare=float(govt.find('WELFARE').text)
-            )
-        
+        yield ('govt', Govt(
+            administration=float(govt.find('ADMINISTRATION').text),
+            defence=float(govt.find('DEFENCE').text),
+            education=float(govt.find('EDUCATION').text),
+            environment=float(govt.find('ENVIRONMENT').text),
+            healthcare=float(govt.find('HEALTHCARE').text),
+            commerce=float(govt.find('COMMERCE').text),
+            internationalaid=float(govt.find('INTERNATIONALAID').text),
+            lawandorder=float(govt.find('LAWANDORDER').text),
+            publictransport=float(govt.find('PUBLICTRANSPORT').text),
+            socialequality=float(govt.find('SOCIALEQUALITY').text),
+            spirituality=float(govt.find('SPIRITUALITY').text),
+            welfare=float(govt.find('WELFARE').text)
+        ))
+    
+    if 'deaths' in args:
         deaths = root.find('DEATHS')
-        if deaths:
-            self.deaths = {elem.get('type'): float(elem.text) for elem in deaths}
-        
-        dispatchlist = root.find('DISPATCHLIST') or []
-        self.dispatchlist = {
+        self.deaths = {elem.get('type'): float(elem.text) for elem in deaths}
+    
+    if 'dispatchlist' in args:
+        yield ('dispatchlist', {
             elem.get('id'): Dispatch(
                 title=elem.find('TITLE').text,
                 author=elem.find('AUTHOR').text,
@@ -117,28 +110,27 @@ class NationData:
                 views=int(elem.find('VIEWS').text),
                 score=int(elem.find('SCORE').text)
             )
-            for elem in dispatchlist
-        }
-        
+            for elem in root.find('DISPATCHLIST')
+        })
+    
+    if 'endorsements' in args:
         endorsements = root.find('ENDORSEMENTS')
-        if endorsements:
-            if endorsements.text:
-                self.endorsements = endorsements.text.split(',')
-            else:
-                self.endorsements = []
-        
-        legislation = root.find('LEGISLATION')
-        if legislation:
-            self.legislation = [elem.text for elem in legislation]
-        
+        if endorsements.text:
+            yield ('endorsements', endorsements.text.split(','))
+        else:
+            yield ('endorsements', [])
+    
+    if 'legislation' in args:
+        yield ('legislation', [elem.text for elem in root.find('LEGISLATION')])
+    
+    if 'sectors' in args:
         sectors = root.find('SECTORS')
-        if sectors:
-            self.sectors = Sectors(
-                blackmarket=float(sectors.find('BLACKMARKET').text),
-                government=float(sectors.find('GOVERNMENT').text),
-                industry=float(sectors.find('INDUSTRY').text),
-                public=float(sectors.find('PUBLIC').text)
-            )
+        yield ('sectors', Sectors(
+            blackmarket=float(sectors.find('BLACKMARKET').text),
+            government=float(sectors.find('GOVERNMENT').text),
+            industry=float(sectors.find('INDUSTRY').text),
+            public=float(sectors.find('PUBLIC').text)
+        ))
 
 
 
