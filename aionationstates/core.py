@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
-from contextlib import suppress
 from collections import namedtuple
+from contextlib import suppress
 
 from aionationstates.session import Session, AuthSession, NS_URL
 from aionationstates.utils import normalize
@@ -12,10 +12,11 @@ Govt = namedtuple('Govt',
                    ' commerce internationalaid lawandorder publictransport'
                    ' socialequality spirituality welfare'))
 
-Dispatch = namedtuple('Dispatch', ('title author category subcategory'
-                                   ' created edited views score'))
+Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
+                                       ' created edited views score text'))
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
-
+CensusScale = namedtuple('CensusScale', 'id score rank prank rrank prrank')
+CensusPoint = namedtuple('CensusPoint', 'id timestamp score')
 
 STR_CASES = {
     'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
@@ -95,12 +96,16 @@ def parse_api(args, xml):
         ))
     
     if 'deaths' in args:
-        deaths = root.find('DEATHS')
-        self.deaths = {elem.get('type'): float(elem.text) for elem in deaths}
+        yield (
+            'deaths',
+            {elem.get('type'): float(elem.text)
+             for elem in root.find('DEATHS')}
+        )
     
     if 'dispatchlist' in args:
-        yield ('dispatchlist', {
-            elem.get('id'): Dispatch(
+        yield ('dispatchlist', [
+            Dispatch(
+                id=int(elem.get('id')),
                 title=elem.find('TITLE').text,
                 author=elem.find('AUTHOR').text,
                 category=elem.find('CATEGORY').text,
@@ -108,17 +113,72 @@ def parse_api(args, xml):
                 created=int(elem.find('CREATED').text),
                 edited=int(elem.find('EDITED').text),
                 views=int(elem.find('VIEWS').text),
-                score=int(elem.find('SCORE').text)
+                score=int(elem.find('SCORE').text),
+                text=None
             )
             for elem in root.find('DISPATCHLIST')
-        })
+        ])
+    
+    if 'dispatch' in args:
+        dispatch = root.find('DISPATCH')
+        yield (
+            'dispatch',
+            Dispatch(
+                id=int(dispatch.get('id')),
+                title=dispatch.find('TITLE').text,
+                author=dispatch.find('AUTHOR').text,
+                category=dispatch.find('CATEGORY').text,
+                subcategory=dispatch.find('SUBCATEGORY').text,
+                created=int(dispatch.find('CREATED').text),
+                edited=int(dispatch.find('EDITED').text),
+                views=int(dispatch.find('VIEWS').text),
+                score=int(dispatch.find('SCORE').text),
+                text=dispatch.find('TEXT').text
+            )
+        )
+    
+    if 'census' in args:
+        census = root.find('CENSUS')
+        if census[0][0].tag == 'POINT':
+            yield (
+                'censushistory',
+                {int(scale.get('id')):
+                 [CensusPoint(
+                     id=int(scale.get('id')),
+                     timestamp=int(point.find('TIMESTAMP')),
+                     score=int(point.find('SCORE').text)
+                  ) for point in scale]
+                 for scale in census}
+            )
+        else:
+            def make_scale(elem):
+                id = int(scale.get('id'))
+                score = rank = prank = rrank = prrank = None
+                with suppress(AttributeError, TypeError):
+                    score = int(point.find('SCORE').text)
+                with suppress(AttributeError, TypeError):
+                    rank = int(point.find('RANK').text)
+                with suppress(AttributeError, TypeError):
+                    prank = int(point.find('PRANK').text)
+                with suppress(AttributeError, TypeError):
+                    rrank = int(point.find('RRANK').text)
+                with suppress(AttributeError, TypeError):
+                    prrank = int(point.find('PRRANK').text)
+                return CensusScale(id=id, score=score, rank=rank,
+                                   prank=prank, rrank=rrank, prrank=prrank)
+            yield (
+                'census',
+                {int(scale.get('id')): make_scale(scale)
+                 for scale in census}
+            )
+    
     
     if 'endorsements' in args:
         endorsements = root.find('ENDORSEMENTS')
         if endorsements.text:
             yield ('endorsements', endorsements.text.split(','))
         else:
-            yield ('endorsements', [])
+            yield ('endorsements', ())
     
     if 'legislation' in args:
         yield ('legislation', [elem.text for elem in root.find('LEGISLATION')])
@@ -134,25 +194,19 @@ def parse_api(args, xml):
 
 
 
-class NationShards(Session):
-    """A class to access NS Nation API public shards."""
+class Nation(Session):
+    """A class to access the public information about an NS nation."""
     def __init__(self, nation):
         self.nation = normalize(nation)
 
-    async def get(self, *shards):
+    async def shards(self, *shards):
+        """A low-level interface to the Nation Shards API."""
         params = {
             'nation': self.nation,
             'q': '+'.join(shards)
         }
         resp = await self.call_api(params=params)
-        return dict(self._parse(shards, ET.fromstring(resp.text)))
+        return dict(parse_api(shards, ET.fromstring(resp.text)))
     
-    def _parse(self, shards, xml_root):
-        assert xml_root.attrib['id'] == self.nation
-        if 'animal' in shards:
-            yield ('animal', xml_root.find('ANIMAL').text)
-        if 'flag' in shards:
-            yield ('flag', xml_root.find('FLAG').text)
-        # TODO: finish
 
 
