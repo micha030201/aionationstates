@@ -36,10 +36,10 @@ def parse_api(args, xml):
     """Parse the NationStates API data.
     
     Inconsistencies:
-        * 'factbooklist' is left out as completely unnecessary. Use
-          'dispatchlist' instead.
-        * 'unstatus' is renamed to 'wa'.
-        * 'banner' is removed, use 'banners' and indexing.
+        * 'factbooklist' was left out as unnecessary. Use 'dispatchlist'.
+        * 'unstatus' was renamed to 'wa'.
+        * 'banner' was removed, use 'banners' and indexing.
+        * 'census' with mode=history was renamed to 'censushistory'.
     """
     args = set(args)
     root = ET.fromstring(xml)
@@ -145,25 +145,25 @@ def parse_api(args, xml):
                 {int(scale.get('id')):
                  [CensusPoint(
                      id=int(scale.get('id')),
-                     timestamp=int(point.find('TIMESTAMP')),
-                     score=int(point.find('SCORE').text)
+                     timestamp=int(point.find('TIMESTAMP').text),
+                     score=float(point.find('SCORE').text)
                   ) for point in scale]
                  for scale in census}
             )
         else:
             def make_scale(elem):
-                id = int(scale.get('id'))
+                id = int(elem.get('id'))
                 score = rank = prank = rrank = prrank = None
                 with suppress(AttributeError, TypeError):
-                    score = int(point.find('SCORE').text)
+                    score = float(elem.find('SCORE').text)
                 with suppress(AttributeError, TypeError):
-                    rank = int(point.find('RANK').text)
+                    rank = int(elem.find('RANK').text)
                 with suppress(AttributeError, TypeError):
-                    prank = int(point.find('PRANK').text)
+                    prank = int(elem.find('PRANK').text)
                 with suppress(AttributeError, TypeError):
-                    rrank = int(point.find('RRANK').text)
+                    rrank = int(elem.find('RRANK').text)
                 with suppress(AttributeError, TypeError):
-                    prrank = int(point.find('PRRANK').text)
+                    prrank = int(elem.find('PRRANK').text)
                 return CensusScale(id=id, score=score, rank=rank,
                                    prank=prank, rrank=rrank, prrank=prrank)
             yield (
