@@ -20,6 +20,9 @@ class Nation(Session):
         resp = await self.call_api(params=params)
         return dict(self._parse(ET.fromstring(resp.text), set(shards)))
 
+    async def shard(self, shard):
+        return (await self.shards(shard))[shard]
+
     STR_CASES = {
         'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
         'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
@@ -43,6 +46,7 @@ class Nation(Session):
             * unstatus was renamed to wa.
             * banner was removed, use banners and indexing.
             * census with mode=history was renamed to censushistory.
+            * partial census, like with rank but not rrank, won't work.
         """
         
         for arg in args & STR_CASES:
@@ -150,25 +154,19 @@ class Nation(Session):
                  for scale in root.find('CENSUS')}
             )
         if 'census' in args:
-            def make_scale(elem):
-                id = int(elem.get('id'))
-                score = rank = prank = rrank = prrank = None
-                with suppress(AttributeError, TypeError):
-                    score = float(elem.find('SCORE').text)
-                with suppress(AttributeError, TypeError):
-                    rank = int(elem.find('RANK').text)
-                with suppress(AttributeError, TypeError):
-                    prank = int(elem.find('PRANK').text)
-                with suppress(AttributeError, TypeError):
-                    rrank = int(elem.find('RRANK').text)
-                with suppress(AttributeError, TypeError):
-                    prrank = int(elem.find('PRRANK').text)
-                return CensusScale(id=id, score=score, rank=rank,
-                                   prank=prank, rrank=rrank, prrank=prrank)
             yield (
                 'census',
-                {int(scale.get('id')): make_scale(scale)
-                 for scale in root.find('CENSUS')}
+                {
+                    int(scale.get('id')): CensusScale(
+                        id=int(scale.get('id')),
+                        score = float(scale.find('SCORE').text),
+                        rank = int(scale.find('RANK').text),
+                        prank = int(scale.find('PRANK').text),
+                        rrank = int(scale.find('RRANK').text),
+                        prrank = int(scale.find('PRRANK').text)
+                    )
+                    for scale in root.find('CENSUS')
+                }
             )
         
         
@@ -210,7 +208,7 @@ class NationControl(Nation, AuthSession):
     
     async def _accept(self, issue_id, option_id):
         if self.return_census:
-            census_before = self.shards('')
+            census_before = await self.shard('census')  # TODO: finish
         self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
