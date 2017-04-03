@@ -29,7 +29,8 @@ RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers history'))
 
 
-async def _request(self, method, url, headers=None, **kwargs):
+async def _request(method, url, headers=None, **kwargs):
+    print(url)
     headers = headers or {}
     headers['User-Agent'] = USER_AGENT
     async with aiohttp.request(method, url, headers=headers, **kwargs) as resp:
@@ -43,18 +44,22 @@ async def _request(self, method, url, headers=None, **kwargs):
         )
 
 @ratelimit.api
-async def call_api(self, **kwargs):
-    resp = await self._request('GET', API_URL,
-                               allow_redirects=False, **kwargs)
+async def call_api(**kwargs):
+    resp = await _request('GET', API_URL, allow_redirects=False, **kwargs)
     if resp.status == 403:
         raise AuthenticationError
+    if resp.status != 200:
+        Raise Exception
     return resp
 
 @ratelimit.web
-async def call_web(self, path, method='GET', **kwargs):
-    resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
+async def call_web(path, *, method='GET', **kwargs):
+    print(path)
+    resp = await _request(method, NS_URL + path.strip('/'), **kwargs)
     if '<html lang="en" id="page_login">' in resp.text:
         raise AuthenticationError
+    if resp.status >= 400:
+        Raise Exception
     return resp
 
 

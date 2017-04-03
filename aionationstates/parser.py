@@ -199,13 +199,13 @@ def parse_api(args, xml, call_web=call_web, call_api=call_api):
     
     def accept(issue_id, option_id):
         return call_web(
-            f'{NS_URL}page=enact_dilemma/dilemma={issue_id}',
+            f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
         )
     
     def dismiss(issue_id):
         return call_web(
-            f'{NS_URL}page=dilemmas/dismiss={issue_id}',
+            f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
         )
     
@@ -219,17 +219,17 @@ def parse_api(args, xml, call_web=call_web, call_api=call_api):
                     title=issue.find('TITLE').text,
                     text=issue.find('TEXT').text,
                     author=issue.find('AUTHOR').text,
-                    editor=issue.find('EDITOR').text,
+                    editor=getattr(issue.find('EDITOR'), 'text', None),
                     options=[
                         IssueOption(
-                            text=option.find('TEXT').text,
+                            text=option.text,
                             accept=partial(
                                 accept,
                                 issue.get('id'),
                                 option.get('id')
                             )
                         )
-                        for options in issue.findall('OPTION')
+                        for option in issue.findall('OPTION')
                     ],
                     dismiss=partial(
                         dismiss,

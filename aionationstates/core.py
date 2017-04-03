@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 
 from aionationstates.parser import parse_api
 from aionationstates.utils import normalize
@@ -63,7 +64,7 @@ class NationControl:
             'autologin': self.nation + '%3D' + self.autologin,
             'pin': self.pin
         }
-        resp = await call_web(method, cookies=cookies, data=data)
+        resp = await call_web(path, method=method, cookies=cookies, data=data)
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
             logger.debug('Updating pin from web cookie')
