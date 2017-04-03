@@ -1,6 +1,11 @@
-from aionationstates.parse import parse_api
+import logging
+
+from aionationstates.parser import parse_api
 from aionationstates.utils import normalize
 from aionationstates.call import call_api, call_web
+
+
+logger = logging.getLogger('aionationstates')
 
 
 async def shards(*shards, nation=None, region=None, wa=None):
@@ -22,7 +27,11 @@ class NationControl:
     Important note: does not check credentials upon initialization, you will
     only know if you've made a mistake after you try to make the first request.
     """
-    def __init__(self, nation, autologin='', password=''):
+    def __init__(self, nation, autologin='', password='',
+                 only_interface=False):
+        self.only_interface = only_interface
+        self._current_issues = ()
+        
         self.nation = normalize(nation)
         self.password = password
         self.autologin = autologin
@@ -59,5 +68,19 @@ class NationControl:
             self.pin = resp.cookies['pin'].value
             logger.debug('Updating pin from web cookie')
         return resp
+    
+    async def shards(self, *shards):
+        params = {
+            'nation': self.nation,
+            'q': '+'.join(shards)
+        }
+        resp = await self.call_api(params=params)
+        return dict(parse_api(shards, resp.text, call_web=self.call_web))
+    
+    async def get_issues(self):
+        if not (self.only_interface and len(_current_issues) == 5):
+            self._current_issues = dict(await self.shards('issues'))['issues']
+        return self._current_issues
+        
 
 

@@ -39,7 +39,7 @@ INT_CASES = {
 FLOAT_CASES = {'tax', 'publicsector'}
 BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
 
-def parse_api(args, xml):
+def parse_api(args, xml, call_web=call_web, call_api=call_api):
     """Parse the NationStates API data.
     
     Inconsistencies:
