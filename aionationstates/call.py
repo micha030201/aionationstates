@@ -28,39 +28,40 @@ class AuthenticationError(Exception):
 RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers history'))
 
+class Session:
+    async def _request(method, url, headers=None, **kwargs):
+        print(url)
+        headers = headers or {}
+        headers['User-Agent'] = USER_AGENT
+        async with aiohttp.request(method, url,
+                                   headers=headers, **kwargs) as resp:
+            return RawResponse(
+                status=resp.status,
+                url=resp.url,
+                cookies=resp.cookies,
+                headers=resp.headers,
+                history=resp.history,
+                text=await resp.text()
+            )
 
-async def _request(method, url, headers=None, **kwargs):
-    print(url)
-    headers = headers or {}
-    headers['User-Agent'] = USER_AGENT
-    async with aiohttp.request(method, url, headers=headers, **kwargs) as resp:
-        return RawResponse(
-            status=resp.status,
-            url=resp.url,
-            cookies=resp.cookies,
-            headers=resp.headers,
-            history=resp.history,
-            text=await resp.text()
-        )
+    @ratelimit.api
+    async def call_api(**kwargs):
+        resp = await _request('GET', API_URL, allow_redirects=False, **kwargs)
+        if resp.status == 403:
+            raise AuthenticationError
+        if resp.status != 200:
+            Raise Exception
+        return resp
 
-@ratelimit.api
-async def call_api(**kwargs):
-    resp = await _request('GET', API_URL, allow_redirects=False, **kwargs)
-    if resp.status == 403:
-        raise AuthenticationError
-    if resp.status != 200:
-        Raise Exception
-    return resp
-
-@ratelimit.web
-async def call_web(path, *, method='GET', **kwargs):
-    print(path)
-    resp = await _request(method, NS_URL + path.strip('/'), **kwargs)
-    if '<html lang="en" id="page_login">' in resp.text:
-        raise AuthenticationError
-    if resp.status >= 400:
-        Raise Exception
-    return resp
+    @ratelimit.web
+    async def call_web(path, *, method='GET', **kwargs):
+        print(path)
+        resp = await _request(method, NS_URL + path.strip('/'), **kwargs)
+        if '<html lang="en" id="page_login">' in resp.text:
+            raise AuthenticationError
+        if resp.status >= 400:
+            Raise Exception
+        return resp
 
 
 
