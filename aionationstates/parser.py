@@ -1,11 +1,13 @@
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 from contextlib import suppress
+from functools import partial
 
-from aionationstates.session import NS_URL, call_api
+from aionationstates.call import NS_URL, call_api, call_web
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
+
 Govt = namedtuple('Govt',
                   ('administration defence education environment healthcare'
                    ' commerce internationalaid lawandorder publictransport'
@@ -13,9 +15,15 @@ Govt = namedtuple('Govt',
 
 Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
                                    ' created edited views score text'))
+
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
+
 CensusScale = namedtuple('CensusScale', 'id score rank prank rrank prrank')
 CensusPoint = namedtuple('CensusPoint', 'id timestamp score')
+
+Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
+IssueOption = namedtuple('IssueOption', ('text accept'))
+
 
 STR_CASES = {
     'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
@@ -136,40 +144,38 @@ def parse_api(args, xml):
             )
         )
     
+    if 'censushistory' in args:
+        yield (
+            'censushistory',
+            {int(scale.get('id')):
+             [CensusPoint(
+                 id=int(scale.get('id')),
+                 timestamp=int(point.find('TIMESTAMP').text),
+                 score=float(point.find('SCORE').text)
+              ) for point in scale]
+             for scale in root.find('CENSUS')}
+        )
     if 'census' in args:
-        census = root.find('CENSUS')
-        if census[0][0].tag == 'POINT':
-            yield (
-                'censushistory',
-                {int(scale.get('id')):
-                 [CensusPoint(
-                     id=int(scale.get('id')),
-                     timestamp=int(point.find('TIMESTAMP').text),
-                     score=float(point.find('SCORE').text)
-                  ) for point in scale]
-                 for scale in census}
-            )
-        else:
-            def make_scale(elem):
-                id = int(elem.get('id'))
-                score = rank = prank = rrank = prrank = None
-                with suppress(AttributeError, TypeError):
-                    score = float(elem.find('SCORE').text)
-                with suppress(AttributeError, TypeError):
-                    rank = int(elem.find('RANK').text)
-                with suppress(AttributeError, TypeError):
-                    prank = int(elem.find('PRANK').text)
-                with suppress(AttributeError, TypeError):
-                    rrank = int(elem.find('RRANK').text)
-                with suppress(AttributeError, TypeError):
-                    prrank = int(elem.find('PRRANK').text)
-                return CensusScale(id=id, score=score, rank=rank,
-                                   prank=prank, rrank=rrank, prrank=prrank)
-            yield (
-                'census',
-                {int(scale.get('id')): make_scale(scale)
-                 for scale in census}
-            )
+        def make_scale(elem):
+            id = int(elem.get('id'))
+            score = rank = prank = rrank = prrank = None
+            with suppress(AttributeError, TypeError):
+                score = float(elem.find('SCORE').text)
+            with suppress(AttributeError, TypeError):
+                rank = int(elem.find('RANK').text)
+            with suppress(AttributeError, TypeError):
+                prank = int(elem.find('PRANK').text)
+            with suppress(AttributeError, TypeError):
+                rrank = int(elem.find('RRANK').text)
+            with suppress(AttributeError, TypeError):
+                prrank = int(elem.find('PRRANK').text)
+            return CensusScale(id=id, score=score, rank=rank,
+                               prank=prank, rrank=rrank, prrank=prrank)
+        yield (
+            'census',
+            {int(scale.get('id')): make_scale(scale)
+             for scale in root.find('CENSUS')}
+        )
     
     
     if 'endorsements' in args:
@@ -190,3 +196,48 @@ def parse_api(args, xml):
             industry=float(sectors.find('INDUSTRY').text),
             public=float(sectors.find('PUBLIC').text)
         ))
+    
+    def accept(issue_id, option_id):
+        return call_web(
+            f'{NS_URL}page=enact_dilemma/dilemma={issue_id}',
+            method='POST', data={'choice-1': str(option_id)}
+        )
+    
+    def dismiss(issue_id):
+        return call_web(
+            f'{NS_URL}page=dilemmas/dismiss={issue_id}',
+            method='POST', data={'choice--1': '1'}
+        )
+    
+    # Private:
+    if 'issues' in args:
+        yield (
+            'issues',
+            [
+                Issue(
+                    id=int(issue.get('id')),
+                    title=issue.find('TITLE').text,
+                    text=issue.find('TEXT').text,
+                    author=issue.find('AUTHOR').text,
+                    editor=issue.find('EDITOR').text,
+                    options=[
+                        IssueOption(
+                            text=option.find('TEXT').text,
+                            accept=partial(
+                                accept,
+                                issue.get('id'),
+                                option.get('id')
+                            )
+                        )
+                        for options in issue.findall('OPTION')
+                    ],
+                    dismiss=partial(
+                        dismiss,
+                        issue.get('id')
+                    )
+                )
+                for issue in root.find('ISSUES')
+            ]
+        )
+
+
