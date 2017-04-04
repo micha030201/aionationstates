@@ -6,6 +6,7 @@ from collections import namedtuple
 import aiohttp
 
 from aionationstates import ratelimit
+from aionationstates.types import AuthenticationError
 from aionationstates.utils import normalize
 
 
@@ -17,9 +18,6 @@ API_URL = NS_URL + API_PATH
 
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
-
-class AuthenticationError(Exception):
-    """Raised when NationStates doesn't accept provided credentials."""
 
 # A namedtuple to store HTTP responses.
 
@@ -50,7 +48,7 @@ class Session:
         if resp.status == 403:
             raise AuthenticationError
         if resp.status != 200:
-            Raise Exception
+            raise Exception
         return resp
 
     @ratelimit.web
@@ -59,7 +57,7 @@ class Session:
         if '<html lang="en" id="page_login">' in resp.text:
             raise AuthenticationError
         if resp.status >= 400:
-            Raise Exception
+            raise Exception
         return resp
 
 class AuthSession(Session):
@@ -81,7 +79,7 @@ class AuthSession(Session):
         self.pin = '0000000000'
 
     async def call_api(self, params):
-        logger.debug(f'Making authenticated API request as {self.nation}')
+        logger.debug(f'Making authenticated API request as {self.nation} to {str(params)}')
         headers = {
             'X-Password': self.password,
             'X-Autologin': self.autologin,
@@ -99,7 +97,7 @@ class AuthSession(Session):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self.call_api({'nation': self.nation, 'q': 'nextissue'})
-        logger.debug(f'Making authenticated web request as {self.nation}')
+        logger.debug(f'Making authenticated web request as {self.nation} to {path}')
         cookies = {
             # Will not work with unescaped equals sign
             'autologin': self.nation + '%3D' + self.autologin,

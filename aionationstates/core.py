@@ -3,7 +3,7 @@ from contextlib import suppress
 from functools import partial
 import xml.etree.ElementTree as ET
 
-from aionationstates.data_types import *
+from aionationstates.types import *
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
 
@@ -12,13 +12,27 @@ logger = logging.getLogger('aionationstates')
 
 
 class Nation(Session):
+    def __init__(self, nation):
+        self.nation = normalize(nation)
+    
     async def shards(self, *shards):
-        params = {
-            'nation': self.nation,
-            'q': '+'.join(shards)
-        }
+        params = {'nation': self.nation}
+        shards = set(shards)
+        shards_url = shards.copy()
+        if ('census' in shards_url) and ('censushistory' in shards_url):
+            raise ShardError('census and censushistory cannot be combined'
+                             ' into a single request')
+        if 'census' in shards_url:
+            # maybe fix this idk?
+            params['scale'] = '+'.join(str(i) for i in range(81))
+            params['mode'] = 'score+rank+rrank+prank+prrank'
+        with suppress(KeyError):
+            shards_url.remove('censushistory')
+            shards_url.add('census')
+            params['mode'] = 'history'
+        params['q'] = '+'.join(shards_url)
         resp = await self.call_api(params=params)
-        return dict(self._parse(ET.fromstring(resp.text), set(shards)))
+        return dict(self._parse(ET.fromstring(resp.text), shards))
 
     async def shard(self, shard):
         return (await self.shards(shard))[shard]
@@ -28,7 +42,7 @@ class Nation(Session):
         'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
         'majorindustry', 'govtpriority', 'lastactivity', 'influence', 'leader',
         'capital', 'religion', 'admirable', 'animaltrait', 'crime', 'founded',
-        'govtdesc', 'industrydesc', 'notable', 'sensibilities'
+        'govtdesc', 'industrydesc', 'notable', 'sensibilities', 'gavote'
     }
     INT_CASES = {
         'population', 'firstlogin', 'lastlogin', 'factbooks', 'dispatches',
@@ -37,29 +51,28 @@ class Nation(Session):
     FLOAT_CASES = {'tax', 'publicsector'}
     BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
 
-    def _parse(self, xml, args):
+    def _parse(self, root, args):
         """Parse the NationStates API data. Accepts an elementtree and a set,
         returns a generator of (key, value) tuples.
                 
         Inconsistencies:
             * factbooklist was left out as unnecessary. Use dispatchlist.
-            * unstatus was renamed to wa.
             * banner was removed, use banners and indexing.
             * census with mode=history was renamed to censushistory.
             * partial census, like with rank but not rrank, won't work.
         """
         
-        for arg in args & STR_CASES:
+        for arg in args & self.STR_CASES:
             yield (arg, root.find(arg.upper()).text)
-        for arg in args & INT_CASES:
+        for arg in args & self.INT_CASES:
             yield (arg, int(root.find(arg.upper()).text))
-        for arg in args & FLOAT_CASES:
+        for arg in args & self.FLOAT_CASES:
             yield (arg, float(root.find(arg.upper()).text))
-        for arg in args & BOOL_CASES:
+        for arg in args & self.BOOL_CASES:
             yield (arg, bool(int(root.find(arg.upper()).text)))
         
         if 'unstatus' in args:
-            yield ('wa', root.find('UNSTATUS').text == 'WA Member')
+            yield ('unstatus', root.find('UNSTATUS').text == 'WA Member')
             
         if 'banners' in args:
             yield (
@@ -159,11 +172,11 @@ class Nation(Session):
                 {
                     int(scale.get('id')): CensusScale(
                         id=int(scale.get('id')),
-                        score = float(scale.find('SCORE').text),
-                        rank = int(scale.find('RANK').text),
-                        prank = int(scale.find('PRANK').text),
-                        rrank = int(scale.find('RRANK').text),
-                        prrank = int(scale.find('PRRANK').text)
+                        score=float(scale.find('SCORE').text),
+                        rank=int(scale.find('RANK').text),
+                        prank=int(scale.find('PRANK').text),
+                        rrank=int(scale.find('RRANK').text),
+                        prrank=int(scale.find('PRRANK').text)
                     )
                     for scale in root.find('CENSUS')
                 }
@@ -193,7 +206,7 @@ class Nation(Session):
             ))
 
 
-class NationControl(Nation, AuthSession):
+class NationControl(AuthSession, Nation):
     def __init__(self, *args, only_interface=False,
                  return_census=True, **kwargs):
         self.return_census = return_census
@@ -201,18 +214,31 @@ class NationControl(Nation, AuthSession):
         self._current_issues = ()
         super().__init__(*args, **kwargs)
 
-    async def get_issues(self):
+    async def get_issues(self):  # TODO: finish
         if not (self.only_interface and len(_current_issues) == 5):
-            self._current_issues = dict(await self.shards('issues'))['issues']
+            self._current_issues = await self.shard('issues')
         return self._current_issues
     
     async def _accept(self, issue_id, option_id):
         if self.return_census:
-            census_before = await self.shard('census')  # TODO: finish
-        self.call_web(
+            census_before = await self.shard('census')
+        await self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
         )
+        if self.return_census:
+            census_after = await self.shard('census')
+            return {
+                id: CensusScale(
+                    id=id,
+                    score=scale.score - census_before[id].score,
+                    rank=scale.rank - census_before[id].rank,
+                    prank=scale.prank - census_before[id].prank,
+                    rrank=scale.rrank - census_before[id].rrank,
+                    prrank=scale.prrank - census_before[id].prrank
+                )
+                for id, scale in census_after.items()
+            }
     
     def _dismiss(issue_id):
         return self.call_web(
@@ -220,9 +246,8 @@ class NationControl(Nation, AuthSession):
             method='POST', data={'choice--1': '1'}
         )
 
-    def _parse(self, xml, args):
-        super()._parse(xml, args)
-        
+    def _parse(self, root, args):
+        yield from super()._parse(root, args)
         if 'issues' in args:
             yield (
                 'issues',
@@ -237,7 +262,7 @@ class NationControl(Nation, AuthSession):
                             IssueOption(
                                 text=option.text,
                                 accept=partial(
-                                    accept,
+                                    self._accept,
                                     issue.get('id'),
                                     option.get('id')
                                 )
@@ -245,7 +270,7 @@ class NationControl(Nation, AuthSession):
                             for option in issue.findall('OPTION')
                         ],
                         dismiss=partial(
-                            dismiss,
+                            self._dismiss,
                             issue.get('id')
                         )
                     )
