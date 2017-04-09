@@ -19,8 +19,6 @@ API_URL = NS_URL + API_PATH
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
 
-# A namedtuple to store HTTP responses.
-
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
@@ -79,7 +77,8 @@ class AuthSession(Session):
         self.pin = '0000000000'
 
     async def call_api(self, params):
-        logger.debug(f'Making authenticated API request as {self.nation} to {str(params)}')
+        logger.debug(f'Making authenticated API request as {self.nation} to '
+                     f'{str(params)}')
         headers = {
             'X-Password': self.password,
             'X-Autologin': self.autologin,
@@ -97,7 +96,8 @@ class AuthSession(Session):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self.call_api({'nation': self.nation, 'q': 'nextissue'})
-        logger.debug(f'Making authenticated web request as {self.nation} to {path}')
+        logger.debug(f'Making authenticated web request as {self.nation} to '
+                     f'{path}')
         cookies = {
             # Will not work with unescaped equals sign
             'autologin': self.nation + '%3D' + self.autologin,

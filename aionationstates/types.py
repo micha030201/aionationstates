@@ -13,15 +13,13 @@ Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
 
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-CensusScale = namedtuple('CensusScale', 'id score rank prank rrank prrank')
-CensusPoint = namedtuple('CensusPoint', 'id timestamp score')
+CensusScale = namedtuple('CensusScale', 'name score rank prank rrank prrank')
+CensusPoint = namedtuple('CensusPoint', 'name timestamp score')
 
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
 
 
 class AuthenticationError(Exception):
-    """Raised when NationStates doesn't accept provided credentials."""
-
-class ShardError(Exception):
     pass
+

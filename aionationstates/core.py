@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from aionationstates.types import *
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
+from aionationstates.ns_to_human import census_names
 
 
 logger = logging.getLogger('aionationstates')
@@ -16,21 +17,17 @@ class Nation(Session):
         self.nation = normalize(nation)
     
     async def shards(self, *shards):
-        params = {'nation': self.nation}
         shards = set(shards)
-        shards_url = shards.copy()
-        if ('census' in shards_url) and ('censushistory' in shards_url):
-            raise ShardError('census and censushistory cannot be combined'
-                             ' into a single request')
-        if 'census' in shards_url:
-            # maybe fix this idk?
-            params['scale'] = '+'.join(str(i) for i in range(81))
+        params = {'nation': self.nation, 'q': shards.copy()}
+        if 'census' in shards:
+            params['scale'] = 'all'
             params['mode'] = 'score+rank+rrank+prank+prrank'
-        with suppress(KeyError):
-            shards_url.remove('censushistory')
-            shards_url.add('census')
+        elif 'censushistory' in shards:
+            params['q'].remove('censushistory')
+            params['q'].add('census')
+            params['scale'] = 'all'
             params['mode'] = 'history'
-        params['q'] = '+'.join(shards_url)
+        params['q'] = '+'.join(params['q'])
         resp = await self.call_api(params=params)
         return dict(self._parse(ET.fromstring(resp.text), shards))
 
@@ -42,7 +39,8 @@ class Nation(Session):
         'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
         'majorindustry', 'govtpriority', 'lastactivity', 'influence', 'leader',
         'capital', 'religion', 'admirable', 'animaltrait', 'crime', 'founded',
-        'govtdesc', 'industrydesc', 'notable', 'sensibilities', 'gavote'
+        'govtdesc', 'industrydesc', 'notable', 'sensibilities', 'gavote',
+        'scvote'
     }
     INT_CASES = {
         'population', 'firstlogin', 'lastlogin', 'factbooks', 'dispatches',
@@ -59,7 +57,6 @@ class Nation(Session):
             * factbooklist was left out as unnecessary. Use dispatchlist.
             * banner was removed, use banners and indexing.
             * census with mode=history was renamed to censushistory.
-            * partial census, like with rank but not rrank, won't work.
         """
         
         for arg in args & self.STR_CASES:
@@ -160,27 +157,33 @@ class Nation(Session):
                 'censushistory',
                 {int(scale.get('id')):
                  [CensusPoint(
-                     id=int(scale.get('id')),
-                     timestamp=int(point.find('TIMESTAMP').text),
-                     score=float(point.find('SCORE').text)
+                      name=census_names[int(scale.get('id'))],
+                      timestamp=int(point.find('TIMESTAMP').text),
+                      score=float(point.find('SCORE').text)
                   ) for point in scale]
                  for scale in root.find('CENSUS')}
             )
         if 'census' in args:
+            def make_scale(scale):
+                name = census_names[int(scale.get('id'))]
+                score = rank = prank = rrank = prrank = None
+                with suppress(AttributeError, TypeError):
+                    score = float(scale.find('SCORE').text)
+                with suppress(AttributeError, TypeError):
+                    rank = int(scale.find('RANK').text)
+                with suppress(AttributeError, TypeError):
+                    prank = int(scale.find('PRANK').text)
+                with suppress(AttributeError, TypeError):
+                    rrank = int(scale.find('RRANK').text)
+                with suppress(AttributeError, TypeError):
+                    prrank = int(scale.find('PRRANK').text)
+                return CensusScale(name=name, score=score, rank=rank,
+                                   prank=prank, rrank=rrank, prrank=prrank)
             yield (
                 'census',
-                {
-                    int(scale.get('id')): CensusScale(
-                        id=int(scale.get('id')),
-                        score=float(scale.find('SCORE').text),
-                        rank=int(scale.find('RANK').text),
-                        prank=int(scale.find('PRANK').text),
-                        rrank=int(scale.find('RRANK').text),
-                        prrank=int(scale.find('PRRANK').text)
-                    )
-                    for scale in root.find('CENSUS')
-                }
-            )
+                {int(scale.get('id')): make_scale(scale)
+                 for scale in root.find('CENSUS')}
+            ) 
         
         
         if 'endorsements' in args:
@@ -214,7 +217,7 @@ class NationControl(AuthSession, Nation):
         self._current_issues = ()
         super().__init__(*args, **kwargs)
 
-    async def get_issues(self):  # TODO: finish
+    async def get_issues(self):  # TODO: finish & fix
         if not (self.only_interface and len(_current_issues) == 5):
             self._current_issues = await self.shard('issues')
         return self._current_issues
@@ -230,18 +233,16 @@ class NationControl(AuthSession, Nation):
             census_after = await self.shard('census')
             return {
                 id: CensusScale(
-                    id=id,
+                    name=scale.name,
                     score=scale.score - census_before[id].score,
-                    rank=scale.rank - census_before[id].rank,
-                    prank=scale.prank - census_before[id].prank,
-                    rrank=scale.rrank - census_before[id].rrank,
-                    prrank=scale.prrank - census_before[id].prrank
+                    # Useless as they don't update immediately
+                    rank=None, prank=None, rrank=None, prrank=None
                 )
                 for id, scale in census_after.items()
             }
     
     def _dismiss(issue_id):
-        return self.call_web(
+        self.call_web(
             f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
         )
@@ -256,7 +257,7 @@ class NationControl(AuthSession, Nation):
                         id=int(issue.get('id')),
                         title=issue.find('TITLE').text,
                         text=issue.find('TEXT').text,
-                        author=issue.find('AUTHOR').text,
+                        author=getattr(issue.find('AUTHOR'), 'text', None),
                         editor=getattr(issue.find('EDITOR'), 'text', None),
                         options=[
                             IssueOption(
