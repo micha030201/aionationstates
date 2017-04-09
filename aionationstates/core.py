@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from aionationstates.types import *
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
-from aionationstates.ns_to_human import census_names
+from aionationstates.ns_to_human import census_info
 
 
 logger = logging.getLogger('aionationstates')
@@ -157,7 +157,7 @@ class Nation(Session):
                 'censushistory',
                 {int(scale.get('id')):
                  [CensusPoint(
-                      name=census_names[int(scale.get('id'))],
+                      info=census_info[int(scale.get('id'))],
                       timestamp=int(point.find('TIMESTAMP').text),
                       score=float(point.find('SCORE').text)
                   ) for point in scale]
@@ -165,7 +165,7 @@ class Nation(Session):
             )
         if 'census' in args:
             def make_scale(scale):
-                name = census_names[int(scale.get('id'))]
+                info = census_info[int(scale.get('id'))]
                 score = rank = prank = rrank = prrank = None
                 with suppress(AttributeError, TypeError):
                     score = float(scale.find('SCORE').text)
@@ -177,7 +177,7 @@ class Nation(Session):
                     rrank = int(scale.find('RRANK').text)
                 with suppress(AttributeError, TypeError):
                     prrank = int(scale.find('PRRANK').text)
-                return CensusScale(name=name, score=score, rank=rank,
+                return CensusScale(info=info, score=score, rank=rank,
                                    prank=prank, rrank=rrank, prrank=prrank)
             yield (
                 'census',
@@ -233,7 +233,7 @@ class NationControl(AuthSession, Nation):
             census_after = await self.shard('census')
             return {
                 id: CensusScale(
-                    name=scale.name,
+                    info=scale.info,
                     score=scale.score - census_before[id].score,
                     # Useless as they don't update immediately
                     rank=None, prank=None, rrank=None, prrank=None
