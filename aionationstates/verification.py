@@ -1,19 +1,13 @@
-# TODO: fix this shit
-
-
 import re
-
 from contextlib import suppress
 from hashlib import sha256
 from secrets import token_hex
 
-import aiohttp
-
-from aionationstates.core import API_URL, NS_URL, USER_AGENT, normalize
-from aionationstates import ratelimit
+from aionationstates.utils import normalize
+from aionationstates.session import Session, NS_URL
 
 
-class Verify:
+class Verify(Session):
     """An interface to the NationStates' Verification API.
     Does not use a token.
     """
@@ -24,12 +18,6 @@ class Verify:
     async def check(self, checksum):
         if not re.match('^[a-zA-Z0-9_-]{43}$', checksum):
             return False
-        return await self._call(checksum)
-        
-    @ratelimit.api
-    async def _call(self, checksum):
-        """Get regex out of ratelimit."""
-        headers = {'User-Agent': USER_AGENT}
         params = {
             'a': 'verify',
             'nation': self.nation,
@@ -37,9 +25,7 @@ class Verify:
         }
         with suppress(AttributeError):
             params['token'] = self.token
-        async with aiohttp.request('GET', API_URL, headers=headers,
-                                   params=params) as resp:
-            return await resp.text() == '1\n'
+        return await self.call_api(params=params).text == '1\n'
 
 
 class TokenVerify(Verify):

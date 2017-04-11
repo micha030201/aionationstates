@@ -28,7 +28,7 @@ class Session:
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
         headers['User-Agent'] = USER_AGENT
-        async with aiohttp.request(method, url,
+        async with aiohttp.request(method, url,  # TODO: timeout, ClientConnectorError
                                    headers=headers, **kwargs) as resp:
             return RawResponse(
                 status=resp.status,
@@ -96,8 +96,8 @@ class AuthSession(Session):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self.call_api({'nation': self.nation, 'q': 'nextissue'})
-        logger.debug(f'Making authenticated web request as {self.nation} to '
-                     f'{path}')
+        logger.debug(f'Making authenticated web {method} request as'
+                     f' {self.nation} to {path} {data}')
         cookies = {
             # Will not work with unescaped equals sign
             'autologin': self.nation + '%3D' + self.autologin,

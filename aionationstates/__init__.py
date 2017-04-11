@@ -1,2 +1,2 @@
-from aionationstates.core import *
-#from aionationstates.verification import *
+from aionationstates.nation import *
+from aionationstates.verification import *
