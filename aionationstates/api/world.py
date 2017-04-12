@@ -7,23 +7,6 @@ from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
     StandardCasesMixin)
 
 class World(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin):
-    async def shards(self, *shards):
-        shards = set(shards)
-        params = {'q': shards.copy()}
-        if 'census' in shards:
-            params['scale'] = 'all'
-            params['mode'] = 'score+rank+rrank+prank+prrank'
-        elif 'censushistory' in shards:
-            params['q'].remove('censushistory')
-            params['q'].add('census')
-            params['scale'] = 'all'
-            params['mode'] = 'history'
-        params['q'] = '+'.join(params['q'])
-        resp = await self.call_api(params=params)
-        return dict(self._parse(ET.fromstring(resp.text), shards))
-
-    async def shard(self, shard):
-        return (await self.shards(shard))[shard]
 
     # TODO: dispatchlist parameters, regionsbytag parameters
 
@@ -51,4 +34,5 @@ class World(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin):
                     text=dispatch.find('TEXT').text
                 )
             )
-        # TODO: 
+
+

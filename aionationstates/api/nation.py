@@ -1,13 +1,11 @@
 import logging
-from contextlib import suppress
 from functools import partial
 from collections import namedtuple
-import xml.etree.ElementTree as ET
 
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
 from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
-    StandardCasesMixin)
+    StandardCasesMixin, ShardMixin)
 
 
 logger = logging.getLogger('aionationstates')
@@ -22,27 +20,14 @@ Govt = namedtuple('Govt',
 
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin):
+class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
+             ShardMixin):
     def __init__(self, nation):
         self.nation = normalize(nation)
-    
-    async def shards(self, *shards):
-        shards = set(shards)
-        params = {'nation': self.nation, 'q': shards.copy()}
-        if 'census' in shards:
-            params['scale'] = 'all'
-            params['mode'] = 'score+rank+rrank+prank+prrank'
-        elif 'censushistory' in shards:
-            params['q'].remove('censushistory')
-            params['q'].add('census')
-            params['scale'] = 'all'
-            params['mode'] = 'history'
-        params['q'] = '+'.join(params['q'])
-        resp = await self.call_api(params=params)
-        return dict(self._parse(ET.fromstring(resp.text), shards))
 
-    async def shard(self, shard):
-        return (await self.shards(shard))[shard]
+    def _url_transform(self, params):
+        super()._url_transform(params)
+        params['nation'] = self.nation
 
     STR_CASES = {
         'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
@@ -140,6 +125,9 @@ class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin):
             ))
 
 
+# The rest of the values are useless as they don't update immediately
+CensusDiff = namedtuple('CensusDiff', 'info score')
+
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
 
@@ -166,11 +154,9 @@ class NationControl(AuthSession, Nation):
         if self.return_census:
             census_after = await self.shard('census')
             return {
-                id: CensusScale(
+                id: CensusDiff(
                     info=scale.info,
-                    score=scale.score - census_before[id].score,
-                    # Useless as they don't update immediately
-                    rank=None, prank=None, rrank=None, prrank=None
+                    score=scale.score - census_before[id].score
                 )
                 for id, scale in census_after.items()
             }

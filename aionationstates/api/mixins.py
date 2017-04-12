@@ -1,12 +1,33 @@
 # TODO: happenings, nations, poll
 
+from contextlib import suppress
+import xml.etree.ElementTree as ET
+
 from collections import namedtuple
 from aionationstates.ns_to_human import census_info
 
 
+class ShardMixin:
+    async def shards(self, *shards):
+        shards = set(shards)
+        params = {'q': shards.copy()}
+        self._url_transform(params)
+        params['q'] = '+'.join(params['q'])
+        resp = await self.call_api(params=params)
+        return dict(self._parse(ET.fromstring(resp.text), shards))
+
+    async def shard(self, shard):
+        return (await self.shards(shard))[shard]
+    
+    def _url_transform(self, params):
+        pass
+    
+    def _parse(self, root, args):
+        return ()
+
+
 class StandardCasesMixin:
     STR_CASES = INT_CASES = FLOAT_CASES = BOOL_CASES = LIST_CASES = set()
-
     def _parse(self, root, args):
         yield from super()._parse(root, args)
         for arg in args & self.STR_CASES:
@@ -29,6 +50,17 @@ class CensusMixin:
     Inconsistencies:
         * census with mode=history was renamed to censushistory.
     """
+    def _url_transform(self, params):
+        super()._url_transform(params)
+        if 'census' in params['q']:
+            params['scale'] = 'all'
+            params['mode'] = 'score+rank+rrank+prank+prrank'
+        elif 'censushistory' in params['q']:
+            params['q'].remove('censushistory')
+            params['q'].add('census')
+            params['scale'] = 'all'
+            params['mode'] = 'history'
+    
     def _parse(self, root, args):
         yield from super()._parse(root, args)
         if 'censushistory' in args:
