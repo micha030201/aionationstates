@@ -1,2 +1,2 @@
-from aionationstates.nation import *
-from aionationstates.verification import *
+from aionationstates.api.nation import *
+from aionationstates.api.verification import *

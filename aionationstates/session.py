@@ -6,7 +6,6 @@ from collections import namedtuple
 import aiohttp
 
 from aionationstates import ratelimit
-from aionationstates.types import AuthenticationError
 from aionationstates.utils import normalize
 
 
@@ -18,6 +17,9 @@ API_URL = NS_URL + API_PATH
 
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
+
+class AuthenticationError(Exception):
+    pass
 
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.

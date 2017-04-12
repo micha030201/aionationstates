@@ -1,18 +1,28 @@
 import logging
 from contextlib import suppress
 from functools import partial
+from collections import namedtuple
 import xml.etree.ElementTree as ET
 
-from aionationstates.types import *
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
-from aionationstates.ns_to_human import census_info
+from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
+    StandardCasesMixin)
 
 
 logger = logging.getLogger('aionationstates')
 
 
-class Nation(Session):
+Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
+
+Govt = namedtuple('Govt',
+                  ('administration defence education environment healthcare'
+                   ' commerce internationalaid lawandorder publictransport'
+                   ' socialequality spirituality welfare'))
+
+Sectors = namedtuple('Sectors', 'blackmarket government industry public')
+
+class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin):
     def __init__(self, nation):
         self.nation = normalize(nation)
     
@@ -54,19 +64,9 @@ class Nation(Session):
         returns a generator of (key, value) tuples.
                 
         Inconsistencies:
-            * factbooklist was left out as unnecessary. Use dispatchlist.
             * banner was removed, use banners and indexing.
-            * census with mode=history was renamed to censushistory.
         """
-        
-        for arg in args & self.STR_CASES:
-            yield (arg, root.find(arg.upper()).text)
-        for arg in args & self.INT_CASES:
-            yield (arg, int(root.find(arg.upper()).text))
-        for arg in args & self.FLOAT_CASES:
-            yield (arg, float(root.find(arg.upper()).text))
-        for arg in args & self.BOOL_CASES:
-            yield (arg, bool(int(root.find(arg.upper()).text)))
+        yield from super()._parse(root, args)
         
         if 'unstatus' in args:
             yield ('unstatus', root.find('UNSTATUS').text == 'WA Member')
@@ -117,75 +117,6 @@ class Nation(Session):
                  for elem in root.find('DEATHS')}
             )
         
-        if 'dispatchlist' in args:
-            yield ('dispatchlist', [
-                Dispatch(
-                    id=int(elem.get('id')),
-                    title=elem.find('TITLE').text,
-                    author=elem.find('AUTHOR').text,
-                    category=elem.find('CATEGORY').text,
-                    subcategory=elem.find('SUBCATEGORY').text,
-                    created=int(elem.find('CREATED').text),
-                    edited=int(elem.find('EDITED').text),
-                    views=int(elem.find('VIEWS').text),
-                    score=int(elem.find('SCORE').text),
-                    text=None
-                )
-                for elem in root.find('DISPATCHLIST')
-            ])
-        
-        if 'dispatch' in args:
-            dispatch = root.find('DISPATCH')
-            yield (
-                'dispatch',
-                Dispatch(
-                    id=int(dispatch.get('id')),
-                    title=dispatch.find('TITLE').text,
-                    author=dispatch.find('AUTHOR').text,
-                    category=dispatch.find('CATEGORY').text,
-                    subcategory=dispatch.find('SUBCATEGORY').text,
-                    created=int(dispatch.find('CREATED').text),
-                    edited=int(dispatch.find('EDITED').text),
-                    views=int(dispatch.find('VIEWS').text),
-                    score=int(dispatch.find('SCORE').text),
-                    text=dispatch.find('TEXT').text
-                )
-            )
-        
-        if 'censushistory' in args:
-            yield (
-                'censushistory',
-                {int(scale.get('id')):
-                 [CensusPoint(
-                      info=census_info[int(scale.get('id'))],
-                      timestamp=int(point.find('TIMESTAMP').text),
-                      score=float(point.find('SCORE').text)
-                  ) for point in scale]
-                 for scale in root.find('CENSUS')}
-            )
-        if 'census' in args:
-            def make_scale(scale):
-                info = census_info[int(scale.get('id'))]
-                score = rank = prank = rrank = prrank = None
-                with suppress(AttributeError, TypeError):
-                    score = float(scale.find('SCORE').text)
-                with suppress(AttributeError, TypeError):
-                    rank = int(scale.find('RANK').text)
-                with suppress(AttributeError, TypeError):
-                    prank = int(scale.find('PRANK').text)
-                with suppress(AttributeError, TypeError):
-                    rrank = int(scale.find('RRANK').text)
-                with suppress(AttributeError, TypeError):
-                    prrank = int(scale.find('PRRANK').text)
-                return CensusScale(info=info, score=score, rank=rank,
-                                   prank=prank, rrank=rrank, prrank=prrank)
-            yield (
-                'census',
-                {int(scale.get('id')): make_scale(scale)
-                 for scale in root.find('CENSUS')}
-            ) 
-        
-        
         if 'endorsements' in args:
             endorsements = root.find('ENDORSEMENTS')
             if endorsements.text:
@@ -208,6 +139,9 @@ class Nation(Session):
                 public=float(sectors.find('PUBLIC').text)
             ))
 
+
+Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
+IssueOption = namedtuple('IssueOption', ('text accept'))
 
 class NationControl(AuthSession, Nation):
     def __init__(self, *args, only_interface=False,
