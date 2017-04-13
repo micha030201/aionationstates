@@ -2,8 +2,8 @@ from collections import namedtuple
 
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
-from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
-    StandardCasesMixin, ShardMixin)
+from aionationstates.api.mixins import (CensusMixin, StandardCasesMixin,
+    ShardMixin)
 
 
 # TODO: officer authority

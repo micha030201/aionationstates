@@ -1,4 +1,4 @@
-# TODO: happenings, nations, poll
+# TODO: happenings (region history as well), nations, poll, censusranks, wabadges, zombie
 
 from contextlib import suppress
 import xml.etree.ElementTree as ET
@@ -26,7 +26,7 @@ class ShardMixin:
         return ()
 
 
-class StandardCasesMixin:
+class StandardCasesMixin(ShardMixin):
     STR_CASES = INT_CASES = FLOAT_CASES = BOOL_CASES = LIST_CASES = set()
     def _parse(self, root, args):
         yield from super()._parse(root, args)
@@ -39,13 +39,15 @@ class StandardCasesMixin:
         for arg in args & self.BOOL_CASES:
             yield (arg, bool(int(root.find(arg.upper()).text)))
         for arg in args & self.LIST_CASES:
-            yield (arg, root.find(arg.upper()).text.split(','))
+            yield (arg, (root.find(arg.upper()).text
+                         .replace(':', ',')  # what is consistency even
+                         .split(',')))
 
 
 CensusScale = namedtuple('CensusScale', 'info score rank prank rrank prrank')
 CensusPoint = namedtuple('CensusPoint', 'info timestamp score')
 
-class CensusMixin:
+class CensusMixin(ShardMixin):
     """     
     Inconsistencies:
         * census with mode=history was renamed to censushistory.
@@ -100,7 +102,7 @@ class CensusMixin:
 Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
                                    ' created edited views score text'))
 
-class DispatchlistMixin:
+class DispatchlistMixin(ShardMixin):
     """     
     Inconsistencies:
         * factbooklist was left out as unnecessary. Use dispatchlist.

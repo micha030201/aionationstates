@@ -1,4 +1,3 @@
-import logging
 from functools import partial
 from collections import namedtuple
 
@@ -6,9 +5,6 @@ from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession
 from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
     StandardCasesMixin, ShardMixin)
-
-
-logger = logging.getLogger('aionationstates')
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
