@@ -6,7 +6,9 @@ The goal of the project is to provide all the necessary tools for automated nati
 
 ## Developement stage
 
-This project is very early in developement and is not yet usable. At all.
+This project is early in its alpha stage. As such, a lot of features are either not implemented at all, or implemented extremely poorly. Documentation is missing completely, and so are tests.
+
+Yeah, you should really just wait until I get this lib into a usable state. Don't bother with it right now. More trouble than it's worth.
 
 ## Depends on
 
