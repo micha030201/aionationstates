@@ -49,8 +49,8 @@ class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
         """
         yield from super()._parse(root, args)
         
-        if 'unstatus' in args:
-            yield ('unstatus', root.find('UNSTATUS').text == 'WA Member')
+        if 'wa' in args:
+            yield ('wa', root.find('UNSTATUS').text == 'WA Member')
             
         if 'banners' in args:
             yield (

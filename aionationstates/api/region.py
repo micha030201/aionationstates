@@ -11,7 +11,7 @@ from aionationstates.api.mixins import (CensusMixin, StandardCasesMixin,
 Officer = namedtuple('Officer', 'nation office authority time by order')
 
 class Region(Session, CensusMixin, StandardCasesMixin, ShardMixin):
-    def __init__(self, nation):
+    def __init__(self, region):
         self.region = normalize(region)
 
     def _url_transform(self, params):
