@@ -6,8 +6,9 @@ from functools import partial
 
 
 # Measured in seconds between each request:
-api_limit = 0.6  # https://www.nationstates.net/pages/api.html#ratelimits
-web_limit = 6    # https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
+# (with a bit of wiggle room added)
+api_limit = 0.6 + 0.1  # https://www.nationstates.net/pages/api.html#ratelimits
+web_limit = 6 + 0.5    # https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
 
 
 # A hack to make them mutable

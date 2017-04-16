@@ -4,4 +4,4 @@ from aionationstates.api.world import World
 from aionationstates.api.verification import (Verify, TokenVerify,
     RandomTokenVerify)
 
-
+from aionationstates.session import AuthenticationError, RateLimitError

@@ -18,6 +18,9 @@ API_URL = NS_URL + API_PATH
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
 
+class RateLimitError(Exception):
+    pass
+
 class AuthenticationError(Exception):
     pass
 
@@ -47,6 +50,9 @@ class Session:
                                    allow_redirects=False, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
+        if resp.status == 429:
+            raise RateLimitError(
+                f'ratelimited for {resp.headers["X-Retry-After"]} seconds')
         if resp.status != 200:
             raise Exception
         return resp
