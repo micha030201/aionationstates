@@ -85,11 +85,11 @@ class CensusMixin(ShardMixin):
                 with suppress(AttributeError, TypeError):
                     rank = int(scale.find('RANK').text)
                 with suppress(AttributeError, TypeError):
-                    prank = int(scale.find('PRANK').text)
+                    prank = float(scale.find('PRANK').text)
                 with suppress(AttributeError, TypeError):
                     rrank = int(scale.find('RRANK').text)
                 with suppress(AttributeError, TypeError):
-                    prrank = int(scale.find('PRRANK').text)
+                    prrank = float(scale.find('PRRANK').text)
                 return CensusScale(info=info, score=score, rank=rank,
                                    prank=prank, rrank=rrank, prrank=prrank)
             yield (
