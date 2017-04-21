@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 from collections import namedtuple
 from aionationstates.ns_to_human import census_info
+from aionationstates.session import Session
 
 
 class ShardMixin:
@@ -99,8 +100,32 @@ class CensusMixin(ShardMixin):
             )
 
 
-Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
-                                   ' created edited views score text'))
+class Dispatch(Session, ShardMixin):
+    def __init__(self, elem):
+        self.id=int(elem.get('id'))
+        self.title=elem.find('TITLE').text
+        self.author=elem.find('AUTHOR').text
+        self.category=elem.find('CATEGORY').text
+        self.subcategory=elem.find('SUBCATEGORY').text
+        self.created=int(elem.find('CREATED').text)
+        self.edited=int(elem.find('EDITED').text)
+        self.views=int(elem.find('VIEWS').text)
+        self.score=int(elem.find('SCORE').text)
+        self._text = None
+
+    @property
+    async def text(self):
+        if not self._text:
+            self._text = await self.shard('dispatch')
+        return self._text
+
+    def _parse(self, root, args):
+        if 'dispatch' in args:
+            yield ('dispatch', root.find('DISPATCH').find('TEXT').text)
+
+    def _url_transform(self, params):
+        if 'dispatch' in params['q']:
+            params['dispatchid'] = str(self.id)
 
 class DispatchlistMixin(ShardMixin):
     """
@@ -111,18 +136,7 @@ class DispatchlistMixin(ShardMixin):
         yield from super()._parse(root, args)
         if 'dispatchlist' in args:
             yield ('dispatchlist', [
-                Dispatch(
-                    id=int(elem.get('id')),
-                    title=elem.find('TITLE').text,
-                    author=elem.find('AUTHOR').text,
-                    category=elem.find('CATEGORY').text,
-                    subcategory=elem.find('SUBCATEGORY').text,
-                    created=int(elem.find('CREATED').text),
-                    edited=int(elem.find('EDITED').text),
-                    views=int(elem.find('VIEWS').text),
-                    score=int(elem.find('SCORE').text),
-                    text=None  # TODO: get text coroutine
-                )
+                Dispatch(elem)
                 for elem in root.find('DISPATCHLIST')
             ])
 
