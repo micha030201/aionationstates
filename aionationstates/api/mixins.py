@@ -48,7 +48,7 @@ CensusScale = namedtuple('CensusScale', 'info score rank prank rrank prrank')
 CensusPoint = namedtuple('CensusPoint', 'info timestamp score')
 
 class CensusMixin(ShardMixin):
-    """     
+    """
     Inconsistencies:
         * census with mode=history was renamed to censushistory.
     """
@@ -103,7 +103,7 @@ Dispatch = namedtuple('Dispatch', ('id title author category subcategory'
                                    ' created edited views score text'))
 
 class DispatchlistMixin(ShardMixin):
-    """     
+    """
     Inconsistencies:
         * factbooklist was left out as unnecessary. Use dispatchlist.
     """

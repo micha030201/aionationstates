@@ -2,7 +2,7 @@ from functools import partial
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.session import Session, AuthSession
+from aionationstates.session import Session, AuthSession, NS_URL
 from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
     StandardCasesMixin, ShardMixin)
 
@@ -53,6 +53,7 @@ class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
             yield ('wa', root.find('UNSTATUS').text == 'WA Member')
             
         if 'banners' in args:
+            banners = root.find('BANNERS')
             yield (
                 'banners',
                 [f'{NS_URL}images/banners/{elem.text}.jpg' for elem in banners]
@@ -121,43 +122,21 @@ class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
             ))
 
 
-# The rest of the values are useless as they don't update immediately
-CensusDiff = namedtuple('CensusDiff', 'info score')
-
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
 
 class NationControl(AuthSession, Nation):
-    def __init__(self, *args, only_interface=False,
-                 return_census=True, **kwargs):
-        self.return_census = return_census
+    def __init__(self, *args, only_interface=False, **kwargs):
         self.only_interface = only_interface
-        self._current_issues = ()
         super().__init__(*args, **kwargs)
-
-    async def get_issues(self):  # TODO: finish & fix
-        if not (self.only_interface and len(_current_issues) == 5):
-            self._current_issues = await self.shard('issues')
-        return self._current_issues
     
-    async def _accept(self, issue_id, option_id):
-        if self.return_census:
-            census_before = await self.shard('census')
+    async def accept_issue(self, issue_id, option_id):
         await self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
         )
-        if self.return_census:
-            census_after = await self.shard('census')
-            return {
-                id: CensusDiff(
-                    info=scale.info,
-                    score=scale.score - census_before[id].score
-                )
-                for id, scale in census_after.items()
-            }
     
-    def _dismiss(issue_id):
+    def dismiss_issue(self, issue_id):
         self.call_web(
             f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
@@ -179,7 +158,7 @@ class NationControl(AuthSession, Nation):
                             IssueOption(
                                 text=option.text,
                                 accept=partial(
-                                    self._accept,
+                                    self.accept_issue,
                                     issue.get('id'),
                                     option.get('id')
                                 )
@@ -187,7 +166,7 @@ class NationControl(AuthSession, Nation):
                             for option in issue.findall('OPTION')
                         ],
                         dismiss=partial(
-                            self._dismiss,
+                            self.dismiss_issue,
                             issue.get('id')
                         )
                     )

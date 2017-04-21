@@ -1,10 +1,7 @@
-from collections import namedtuple
-import xml.etree.ElementTree as ET
-
-from aionationstates.utils import normalize
 from aionationstates.session import Session
 from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
     StandardCasesMixin, ShardMixin)
+
 
 class World(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
         ShardMixin):
