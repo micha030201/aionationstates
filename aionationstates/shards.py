@@ -78,25 +78,16 @@ class CensusShard(Shard):
                  for scale in root.find('CENSUS')}
             )
         if 'census' in args:
-            def make_scale(scale):
-                info = census_info[int(scale.get('id'))]
-                score = rank = prank = rrank = prrank = None
-                with suppress(AttributeError, TypeError):
-                    score = float(scale.find('SCORE').text)
-                with suppress(AttributeError, TypeError):
-                    rank = int(scale.find('RANK').text)
-                with suppress(AttributeError, TypeError):
-                    prank = float(scale.find('PRANK').text)
-                with suppress(AttributeError, TypeError):
-                    rrank = int(scale.find('RRANK').text)
-                with suppress(AttributeError, TypeError):
-                    prrank = float(scale.find('PRRANK').text)
-                return CensusScale(info=info, score=score, rank=rank,
-                                   prank=prank, rrank=rrank, prrank=prrank)
             yield (
                 'census',
-                {int(scale.get('id')): make_scale(scale)
-                 for scale in root.find('CENSUS')}
+                [CensusScale(
+                     info = census_info[int(scale.get('id'))],
+                     score = float(scale.find('SCORE').text),
+                     rank = int(scale.find('RANK').text),
+                     prank = float(scale.find('PRANK').text),
+                     rrank = int(scale.find('RRANK').text),
+                     prrank = float(scale.find('PRRANK').text)
+                 ) for scale in root.find('CENSUS')]
             )
 
 
