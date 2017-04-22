@@ -2,9 +2,9 @@ from functools import partial
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.session import Session, AuthSession, NS_URL
-from aionationstates.api.mixins import (CensusMixin, DispatchlistMixin,
-    StandardCasesMixin, ShardMixin)
+from aionationstates.session import AuthSession, NS_URL
+from aionationstates.api.shards import (CensusShard, DispatchlistShard,
+    StandardShardCases)
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
@@ -16,8 +16,7 @@ Govt = namedtuple('Govt',
 
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-class Nation(Session, CensusMixin, DispatchlistMixin, StandardCasesMixin,
-             ShardMixin):
+class Nation(CensusShard, DispatchlistShard, StandardShardCases):
     def __init__(self, nation):
         self.nation = normalize(nation)
 

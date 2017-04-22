@@ -8,7 +8,7 @@ from aionationstates.ns_to_human import census_info
 from aionationstates.session import Session
 
 
-class ShardMixin:
+class Shard(Session):
     async def shards(self, *shards):
         shards = set(shards)
         params = {'q': shards.copy()}
@@ -27,7 +27,7 @@ class ShardMixin:
         return ()
 
 
-class StandardCasesMixin(ShardMixin):
+class StandardShardCases(Shard):
     STR_CASES = INT_CASES = FLOAT_CASES = BOOL_CASES = LIST_CASES = set()
     def _parse(self, root, args):
         yield from super()._parse(root, args)
@@ -48,7 +48,7 @@ class StandardCasesMixin(ShardMixin):
 CensusScale = namedtuple('CensusScale', 'info score rank prank rrank prrank')
 CensusPoint = namedtuple('CensusPoint', 'info timestamp score')
 
-class CensusMixin(ShardMixin):
+class CensusShard(Shard):
     """
     Inconsistencies:
         * census with mode=history was renamed to censushistory.
@@ -100,17 +100,17 @@ class CensusMixin(ShardMixin):
             )
 
 
-class Dispatch(Session, ShardMixin):
+class Dispatch(Shard):
     def __init__(self, elem):
-        self.id=int(elem.get('id'))
-        self.title=elem.find('TITLE').text
-        self.author=elem.find('AUTHOR').text
-        self.category=elem.find('CATEGORY').text
-        self.subcategory=elem.find('SUBCATEGORY').text
-        self.created=int(elem.find('CREATED').text)
-        self.edited=int(elem.find('EDITED').text)
-        self.views=int(elem.find('VIEWS').text)
-        self.score=int(elem.find('SCORE').text)
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.author = elem.find('AUTHOR').text
+        self.category = elem.find('CATEGORY').text
+        self.subcategory = elem.find('SUBCATEGORY').text
+        self.created = int(elem.find('CREATED').text)
+        self.edited = int(elem.find('EDITED').text)
+        self.views = int(elem.find('VIEWS').text)
+        self.score = int(elem.find('SCORE').text)
         self._text = None
 
     @property
@@ -127,7 +127,7 @@ class Dispatch(Session, ShardMixin):
         if 'dispatch' in params['q']:
             params['dispatchid'] = str(self.id)
 
-class DispatchlistMixin(ShardMixin):
+class DispatchlistShard(Shard):
     """
     Inconsistencies:
         * factbooklist was left out as unnecessary. Use dispatchlist.
