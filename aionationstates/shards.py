@@ -19,10 +19,10 @@ class Shard(Session):
 
     async def shard(self, shard):
         return (await self.shards(shard))[shard]
-    
+
     def _url_transform(self, params):
         pass
-    
+
     def _parse(self, root, args):
         return ()
 
@@ -51,7 +51,7 @@ CensusPoint = namedtuple('CensusPoint', 'info timestamp score')
 class CensusShard(Shard):
     """
     Inconsistencies:
-        * census with mode=history was renamed to censushistory.
+        census with mode=history was renamed to censushistory.
     """
     def _url_transform(self, params):
         super()._url_transform(params)
@@ -63,7 +63,7 @@ class CensusShard(Shard):
             params['q'].add('census')
             params['scale'] = 'all'
             params['mode'] = 'history'
-    
+
     def _parse(self, root, args):
         yield from super()._parse(root, args)
         if 'censushistory' in args:
@@ -127,10 +127,11 @@ class Dispatch(Shard):
         if 'dispatch' in params['q']:
             params['dispatchid'] = str(self.id)
 
+
 class DispatchlistShard(Shard):
     """
     Inconsistencies:
-        * factbooklist was left out as unnecessary. Use dispatchlist.
+        factbooklist was left out as unnecessary. Use dispatchlist.
     """
     def _parse(self, root, args):
         yield from super()._parse(root, args)

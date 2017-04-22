@@ -1,23 +1,19 @@
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.session import Session
-from aionationstates.api.mixins import (CensusMixin, StandardCasesMixin,
-    ShardMixin)
+from aionationstates.shards import CensusShard, StandardCasesShard
 
 
 # TODO: officer authority
-
 Officer = namedtuple('Officer', 'nation office authority time by order')
 
-class Region(Session, CensusMixin, StandardCasesMixin, ShardMixin):
-    def __init__(self, region):
-        self.region = normalize(region)
+class Region(CensusShard, StandardCasesShard):
+    def __init__(self, name):
+        self.name = normalize(name)
 
     def _url_transform(self, params):
         super()._url_transform(params)
-        params['region'] = self.region
-
+        params['region'] = self.name
 
     STR_CASES = {
         'name', 'flag', 'founded', 'gavote', 'scvote', 'delegate', 'founder',
@@ -28,7 +24,6 @@ class Region(Session, CensusMixin, StandardCasesMixin, ShardMixin):
 
     def _parse(self, root, args):
         yield from super()._parse(root, args)
-        
         if 'officers' in args:
             yield (
                 'officers',
@@ -42,7 +37,6 @@ class Region(Session, CensusMixin, StandardCasesMixin, ShardMixin):
                  )
                  for officer in root.find('OFFICERS')]
             )
-        
         # TODO: embassies, history, messages, tags
 
 

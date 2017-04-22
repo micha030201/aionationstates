@@ -14,7 +14,7 @@ class Verify(Session):
     def __init__(self, nation):
         self.nation = normalize(nation)
         self.url = (NS_URL + 'page=verify_login')
-    
+
     async def check(self, checksum):
         if not re.match('^[a-zA-Z0-9_-]{43}$', checksum):
             return False

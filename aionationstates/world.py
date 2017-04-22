@@ -1,5 +1,5 @@
-from aionationstates.api.Shards import (CensusShard, DispatchlistShard,
-    StandardShardCases)
+from aionationstates.api.Shards import (
+    CensusShard, DispatchlistShard, StandardShardCases)
 
 
 class World(CensusShard, DispatchlistShard, StandardShardCases):

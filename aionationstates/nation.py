@@ -3,8 +3,8 @@ from collections import namedtuple
 
 from aionationstates.utils import normalize
 from aionationstates.session import AuthSession, NS_URL
-from aionationstates.api.shards import (CensusShard, DispatchlistShard,
-    StandardShardCases)
+from aionationstates.shards import (
+    CensusShard, DispatchlistShard, StandardShardCases)
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
@@ -17,12 +17,12 @@ Govt = namedtuple('Govt',
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
 class Nation(CensusShard, DispatchlistShard, StandardShardCases):
-    def __init__(self, nation):
-        self.nation = normalize(nation)
+    def __init__(self, name):
+        self.name = normalize(name)
 
     def _url_transform(self, params):
         super()._url_transform(params)
-        params['nation'] = self.nation
+        params['nation'] = self.name
 
     STR_CASES = {
         'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
@@ -125,10 +125,6 @@ Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
 
 class NationControl(AuthSession, Nation):
-    def __init__(self, *args, only_interface=False, **kwargs):
-        self.only_interface = only_interface
-        super().__init__(*args, **kwargs)
-    
     async def accept_issue(self, issue_id, option_id):
         await self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',

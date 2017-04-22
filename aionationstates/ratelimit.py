@@ -15,6 +15,7 @@ web_limit = 6 + 0.5    # https://forum.nationstates.net/viewtopic.php?p=16394966
 last_time_called_api = [0]
 last_time_called_web = [0]
 
+
 def _rate_limiter(func, limit, last_time_called):
     async def wrapper(*args, **kwargs):
         elapsed = time.perf_counter() - last_time_called[0]

@@ -20,13 +20,16 @@ USER_AGENT = 'https://github.com/micha030201/aionationstates'
 class RateLimitError(Exception):
     pass
 
+
 class AuthenticationError(Exception):
     pass
+
 
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers history'))
+
 
 class Session:
     async def _request(self, method, url, headers=None, **kwargs):
@@ -65,6 +68,7 @@ class Session:
             raise Exception
         return resp
 
+
 class AuthSession(Session):
     """Allows you to make authenticated requests to NationStates' API, as well
     as its web interface, sharing the session between the two.
@@ -72,19 +76,15 @@ class AuthSession(Session):
     Important note: does not check credentials upon initialization, you will
     only know if you've made a mistake after you try to make the first request.
     """
-    def __init__(self, nation, autologin='', password='',
-                 only_interface=False):
-        self.only_interface = only_interface
-        self._current_issues = ()
-        
-        self.nation = normalize(nation)
+    def __init__(self, name, autologin='', password=''):
+        self.name = normalize(name)
         self.password = password
         self.autologin = autologin
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
 
     async def call_api(self, params):
-        logger.debug(f'Making authenticated API request as {self.nation} to '
+        logger.debug(f'Making authenticated API request as {self.name} to '
                      f'{str(params)}')
         headers = {
             'X-Password': self.password,
@@ -102,12 +102,12 @@ class AuthSession(Session):
     async def call_web(self, path, method='GET', data=None):
         if not self.autologin:
             # Obtain autologin in case only password was provided
-            await self.call_api({'nation': self.nation, 'q': 'nextissue'})
+            await self.call_api({'nation': self.name, 'q': 'nextissue'})
         logger.debug(f'Making authenticated web {method} request as'
-                     f' {self.nation} to {path} {data}')
+                     f' {self.name} to {path} {data}')
         cookies = {
             # Will not work with unescaped equals sign
-            'autologin': self.nation + '%3D' + self.autologin,
+            'autologin': self.name + '%3D' + self.autologin,
             'pin': self.pin
         }
         resp = await super().call_web(path, method=method,

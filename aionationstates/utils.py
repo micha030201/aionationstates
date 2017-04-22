@@ -8,3 +8,4 @@ def normalize(identifier):
                          ' characters.')
     return identifier
 
+
