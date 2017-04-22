@@ -1,4 +1,4 @@
-from aionationstates.api.Shards import (
+from aionationstates.shards import (
     CensusShard, DispatchlistShard, StandardShardCases)
 
 

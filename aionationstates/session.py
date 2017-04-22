@@ -16,8 +16,15 @@ API_URL = NS_URL + API_PATH
 
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
+class ExternalCallersError(Exception):
+    """Indicates that an external entity on the system is interfering with
+    our requests.
+    """
 
-class RateLimitError(Exception):
+class RateLimitError(ExternalCallersError):
+    pass
+
+class SessionConflictError(ExternalCallersError):
     pass
 
 
@@ -28,33 +35,33 @@ class AuthenticationError(Exception):
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
-                                         ' cookies headers history'))
+                                         ' cookies headers'))
 
 
 class Session:
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
         headers['User-Agent'] = USER_AGENT
-        async with aiohttp.request(method, url,  # TODO: timeout, ClientConnectorError
-                                   headers=headers, **kwargs) as resp:
+        async with aiohttp.request(method, url, headers=headers,
+                                   allow_redirects=False, **kwargs) as resp:
             return RawResponse(
                 status=resp.status,
                 url=resp.url,
                 cookies=resp.cookies,
                 headers=resp.headers,
-                history=resp.history,
                 text=await resp.text()
             )
 
     @ratelimit.api
-    async def call_api(self, **kwargs):
-        resp = await self._request('GET', API_URL,
-                                   allow_redirects=False, **kwargs)
+    async def call_api(self, params, *, method='GET', **kwargs):
+        resp = await self._request(method, API_URL, params=params, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
         if resp.status == 429:
             raise RateLimitError(
                 f'ratelimited for {resp.headers["X-Retry-After"]} seconds')
+        if resp.status == 409:
+            raise SessionConflictError('previous login too recent')
         if resp.status != 200:
             raise Exception
         return resp
@@ -83,7 +90,7 @@ class AuthSession(Session):
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
 
-    async def call_api(self, params):
+    async def call_api(self, params, **kwargs):
         logger.debug(f'Making authenticated API request as {self.name} to '
                      f'{str(params)}')
         headers = {
@@ -91,7 +98,7 @@ class AuthSession(Session):
             'X-Autologin': self.autologin,
             'X-Pin': self.pin
         }
-        resp = await super().call_api(headers=headers, params=params)
+        resp = await super().call_api(params, headers=headers, **kwargs)
         with suppress(KeyError):
             self.pin = resp.headers['X-Pin']
             logger.debug('Updating pin from API header')
@@ -99,19 +106,19 @@ class AuthSession(Session):
             logger.debug('Setting autologin from API header')
         return resp
 
-    async def call_web(self, path, method='GET', data=None):
+    async def call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self.call_api({'nation': self.name, 'q': 'nextissue'})
         logger.debug(f'Making authenticated web {method} request as'
-                     f' {self.name} to {path} {data}')
+                     f' {self.name} to {path} {kwargs.get("data")}')
         cookies = {
             # Will not work with unescaped equals sign
             'autologin': self.name + '%3D' + self.autologin,
             'pin': self.pin
         }
         resp = await super().call_web(path, method=method,
-                                      cookies=cookies, data=data)
+                                      cookies=cookies, **kwargs)
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
             logger.debug('Updating pin from web cookie')

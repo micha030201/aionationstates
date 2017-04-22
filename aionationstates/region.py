@@ -1,13 +1,13 @@
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.shards import CensusShard, StandardCasesShard
+from aionationstates.shards import CensusShard, StandardShardCases
 
 
 # TODO: officer authority
 Officer = namedtuple('Officer', 'nation office authority time by order')
 
-class Region(CensusShard, StandardCasesShard):
+class Region(CensusShard, StandardShardCases):
     def __init__(self, name):
         self.name = normalize(name)
 
@@ -37,6 +37,7 @@ class Region(CensusShard, StandardCasesShard):
                  )
                  for officer in root.find('OFFICERS')]
             )
+        
         # TODO: embassies, history, messages, tags
 
 
