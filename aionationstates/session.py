@@ -32,6 +32,10 @@ class AuthenticationError(Exception):
     pass
 
 
+class SuddenlyNationstates(Exception):  # TODO: move to another submodule?
+    pass
+
+
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
@@ -63,7 +67,7 @@ class Session:
         if resp.status == 409:
             raise SessionConflictError('previous login too recent')
         if resp.status != 200:
-            raise Exception
+            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
 
     @ratelimit.web
@@ -71,8 +75,8 @@ class Session:
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
         if '<html lang="en" id="page_login">' in resp.text:
             raise AuthenticationError
-        if resp.status >= 400:
-            raise Exception
+        if resp.status != 200:
+            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
 
 

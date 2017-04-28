@@ -2,7 +2,7 @@ from functools import partial
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.session import AuthSession, NS_URL
+from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import (
     CensusShard, DispatchlistShard, StandardShardCases)
 
@@ -130,9 +130,12 @@ class NationControl(AuthSession, Nation):
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
         )
+        if '<html lang="en" id="page_enact_dilemma">' not in resp.text:
+            raise SuddenlyNationstates(
+                'accepting an issue option returned the wrong page')
     
-    def dismiss_issue(self, issue_id):
-        self.call_web(
+    async def dismiss_issue(self, issue_id):
+        await self.call_web(
             f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
         )
