@@ -126,7 +126,7 @@ IssueOption = namedtuple('IssueOption', ('text accept'))
 
 class NationControl(AuthSession, Nation):
     async def accept_issue(self, issue_id, option_id):
-        await self.call_web(
+        resp = await self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={'choice-1': str(option_id)}
         )

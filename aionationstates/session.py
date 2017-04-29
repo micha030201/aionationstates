@@ -67,7 +67,7 @@ class Session:
         if resp.status == 409:
             raise SessionConflictError('previous login too recent')
         if resp.status != 200:
-            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
+            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')  # TODO 404 handling
         return resp
 
     @ratelimit.web
