@@ -1,5 +1,7 @@
+import re
 from functools import partial
 from collections import namedtuple
+from contextlib import suppress
 
 from aionationstates.utils import normalize
 from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
@@ -136,6 +138,10 @@ class NationControl(AuthSession, Nation):
         if ('<p class="error">Invalid choice '
                 '(option not available to your nation).</p>' in resp.text):
             raise SuddenlyNationstates('option not available')
+        reg = r'<h5>The Talking Point<\/h5><p>(.+?)<'
+        match = re.search(reg, resp.text.replace('\n', ''))
+        with suppress(AttributeError):
+            return match.group(1)
     
     async def _dismiss_issue(self, issue_id):
         await self.call_web(
