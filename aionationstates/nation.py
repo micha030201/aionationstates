@@ -125,16 +125,19 @@ Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
 
 class NationControl(AuthSession, Nation):
-    async def accept_issue(self, issue_id, option_id):
+    async def _accept_issue(self, issue_id, option_id):
         resp = await self.call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
-            method='POST', data={'choice-1': str(option_id)}
+            method='POST', data={f'choice-{option_id}': '1'}
         )
         if '<html lang="en" id="page_enact_dilemma">' not in resp.text:
             raise SuddenlyNationstates(
                 'accepting an issue option returned the wrong page')
+        if ('<p class="error">Invalid choice '
+                '(option not available to your nation).</p>' in resp.text):
+            raise SuddenlyNationstates('option not available')
     
-    async def dismiss_issue(self, issue_id):
+    async def _dismiss_issue(self, issue_id):
         await self.call_web(
             f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
@@ -156,7 +159,7 @@ class NationControl(AuthSession, Nation):
                             IssueOption(
                                 text=option.text,
                                 accept=partial(
-                                    self.accept_issue,
+                                    self._accept_issue,
                                     issue.get('id'),
                                     option.get('id')
                                 )
@@ -164,7 +167,7 @@ class NationControl(AuthSession, Nation):
                             for option in issue.findall('OPTION')
                         ],
                         dismiss=partial(
-                            self.dismiss_issue,
+                            self._dismiss_issue,
                             issue.get('id')
                         )
                     )
