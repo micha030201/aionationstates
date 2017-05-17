@@ -100,7 +100,7 @@ class CensusShard(Shard):
             )
 
 
-class Dispatch(Shard):
+class Dispatch(Shard):  # TODO rewrite w/o shard
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.title = elem.find('TITLE').text

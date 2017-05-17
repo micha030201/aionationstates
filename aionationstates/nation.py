@@ -122,6 +122,23 @@ class Nation(CensusShard, DispatchlistShard, StandardShardCases):
                 public=float(sectors.find('PUBLIC').text)
             ))
 
+    async def verify(self, checksum, *, token=None):
+        if not re.match('^[a-zA-Z0-9_-]{43}$', checksum):
+            return False
+        params = {
+            'a': 'verify',
+            'nation': self.name,
+            'checksum': checksum
+        }
+        if token:
+            params['token'] = token
+        return await self.call_api(params=params).text == '1\n'
+
+    def verification_url(self, *, token=None):
+        if token:
+            return f'{NS_URL}page=verify_login?token={token}'
+        return f'{NS_URL}page=verify_login'
+
 
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
