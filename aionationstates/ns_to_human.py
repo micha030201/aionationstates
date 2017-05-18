@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 
-ScaleInfo = namedtuple('ScaleInfo', ('id title ranked gradation'
+ScaleInfo = namedtuple('ScaleInfo', ('id title ranked gradation image'
                                      ' region_description nation_description'))
 
 census_info = {
@@ -10,6 +10,7 @@ census_info = {
         title='Civil Rights',
         ranked='Most Extensive Civil Rights',
         gradation='Martin Luther King, Jr. Units',
+        image='liberal',
         nation_description=('The citizens of nations ranked highly enjoy a '
                             'great amount of civil rights, or freedoms to '
                             'go about their personal business without '
@@ -24,6 +25,7 @@ census_info = {
         title='Economy',
         ranked='Most Efficient Economies',
         gradation='Krugman-Greenspan Business Outlook Index',
+        image='economy',
         nation_description=('Nations ranked highly are the most ruthlessly '
                             'efficient at translating raw resources, '
                             'including people, into economic output.'),
@@ -36,6 +38,7 @@ census_info = {
         title='Political Freedom',
         ranked='Most Politically Free',
         gradation='Diebold Election Inking Scale',
+        image='polifree',
         nation_description=('These nations allow citizens the greatest '
                             'amount of freedom to select their own '
                             'government.'),
@@ -48,6 +51,7 @@ census_info = {
         title='Population',
         ranked='Largest Populations',
         gradation='Capita',
+        image='population',
         nation_description=('The following nations have the greatest '
                             'number of citizens.'),
         region_description=('The following regions have the most citizens '
@@ -58,6 +62,7 @@ census_info = {
         title='Wealth Gaps',
         ranked='Greatest Rich-Poor Divides',
         gradation='Rich To Poor Income Ratio',
+        image='wealthgaps',
         nation_description=('Nations ranked highly have large gaps between '
                             'the incomes of rich and poor citizens. '
                             'Nations low on the list have high levels of '
@@ -72,6 +77,7 @@ census_info = {
         title='Death Rate',
         ranked='Highest Unexpected Death Rate',
         gradation='Bus Surprisal Index',
+        image='death',
         nation_description=('The World Census paid their respects at '
                             'cemeteries in order to determine how likely '
                             'citizens were to die each year from unnatural '
@@ -88,6 +94,7 @@ census_info = {
         title='Compassion',
         ranked='Most Compassionate Citizens',
         gradation='Kitten Softness Rating',
+        image='compassionate',
         nation_description=('Exhaustive World Census tests involving '
                             'kittens revealed the following nations to be '
                             'the most compassionate.'),
@@ -100,6 +107,7 @@ census_info = {
         title='Eco-Friendliness',
         ranked='Most Eco-Friendly Governments',
         gradation='Dolphin Recycling Awareness Index',
+        image='eco-govt',
         nation_description=('The following governments spend the greatest '
                             'amounts on environmental issues. This may not '
                             'always be reflected in the quality of that '
@@ -114,6 +122,7 @@ census_info = {
         title='Social Conservatism',
         ranked='Most Conservative',
         gradation='Bush-Santorum Dawning Terror Index',
+        image='conservative',
         nation_description=('Citizens in nations ranked highly tend to '
                             'have greater restrictions placed on what they '
                             'may do in their personal lives, whether via '
@@ -128,6 +137,7 @@ census_info = {
         title='Nudity',
         ranked='Nudest',
         gradation='Cheeks Per Square Mile',
+        image='nude',
         nation_description=('After exhaustive surveys, the World Census '
                             'calculated which nations have the greatest '
                             'acreages of flesh on public display.'),
@@ -140,6 +150,7 @@ census_info = {
         title='Industry: Automobile Manufacturing',
         ranked='Largest Automobile Manufacturing Sector',
         gradation='Henry Ford Productivity Index',
+        image='auto',
         nation_description=('World Census analysts extensively tested '
                             'concept muscle cars in empty parking lots in '
                             'order to estimate which nations have the '
@@ -154,6 +165,7 @@ census_info = {
         title='Industry: Cheese Exports',
         ranked='Largest Cheese Export Sector',
         gradation='Mozzarella Productivity Index',
+        image='cheese',
         nation_description=('Qualified World Census Cheese Masters nibbled '
                             'their way across the globe to determine which '
                             'nations have the most developed cheese '
@@ -168,6 +180,7 @@ census_info = {
         title='Industry: Basket Weaving',
         ranked='Largest Basket Weaving Sector',
         gradation='Hickory Productivity Index',
+        image='basket',
         nation_description=('World Census agents infiltrated a variety of '
                             'out-of-the-way towns and festivals in order '
                             'to determine which nations have the most '
@@ -182,6 +195,7 @@ census_info = {
         title='Industry: Information Technology',
         ranked='Largest Information Technology Sector',
         gradation='Fann-Boi Productivity Index',
+        image='tech',
         nation_description=('World Census staff compiled lists over Smart '
                             'Phone related traffic accidents to determine '
                             'which nations have the largest Information '
@@ -196,6 +210,7 @@ census_info = {
         title='Industry: Pizza Delivery',
         ranked='Largest Pizza Delivery Sector',
         gradation='Pepperoni Propulsion Productivity Index',
+        image='pizza',
         nation_description=('World Census staff spent many nights '
                             'answering the front door in order to measure '
                             'which nations have the biggest Pizza Delivery '
@@ -210,6 +225,7 @@ census_info = {
         title='Industry: Trout Fishing',
         ranked='Largest Trout Fishing Sector',
         gradation='Nemo Depletion Efficiency Index',
+        image='fish',
         nation_description=('The World Census conducted frenzied haggling '
                             'with fishmongers in order to determine which '
                             'nations have the largest fishing industries.'),
@@ -222,6 +238,7 @@ census_info = {
         title='Industry: Arms Manufacturing',
         ranked='Largest Arms Manufacturing Sector',
         gradation='Charon Conveyancy Index',
+        image='arms',
         nation_description=('World Census special forces intercepted '
                             'crates of smuggled weapons to determine which '
                             'nations have the largest arms industry.'),
@@ -234,6 +251,7 @@ census_info = {
         title='Sector: Agriculture',
         ranked='Largest Agricultural Sector',
         gradation='Mu-Bah-Daggs Productivity Index',
+        image='agriculture',
         nation_description=('World Census bean-counters on horseback '
                             'guided herds of cattle to slaughter in order '
                             'to determine which nations have the largest '
@@ -248,6 +266,7 @@ census_info = {
         title='Industry: Beverage Sales',
         ranked='Largest Soda Pop Sector',
         gradation='Addison-Fukk Productivity Rating',
+        image='soda',
         nation_description=('The World Census recorded sales of fizzy '
                             'syrup water in order to determine which '
                             'nations have the largest beverage industries.'),
@@ -260,6 +279,7 @@ census_info = {
         title='Industry: Timber Woodchipping',
         ranked='Largest Timber Woodchipping Industry',
         gradation='Tasmanian Pulp Environmental Export Index',
+        image='timber',
         nation_description=('The World Census measured the rate of '
                             'desertification in order to calculate which '
                             'nations have the largest timber industry.'),
@@ -272,6 +292,7 @@ census_info = {
         title='Industry: Mining',
         ranked='Largest Mining Sector',
         gradation='Blue Sky Asbestos Index',
+        image='mining',
         nation_description=('World Census experts measured the volume of '
                             'stuff removed from the ground to determine '
                             'which nations have the largest mining '
@@ -286,6 +307,7 @@ census_info = {
         title='Industry: Insurance',
         ranked='Largest Insurance Industry',
         gradation='Risk Expulsion Effectiveness Rating',
+        image='insurance',
         nation_description=('The World Census posed as door-to-door '
                             'salespeople in order to establish which '
                             'nations have the most extensive Insurance '
@@ -300,6 +322,7 @@ census_info = {
         title='Industry: Furniture Restoration',
         ranked='Largest Furniture Restoration Industry',
         gradation='Spitz-Pollish Productivity Index',
+        image='furniture',
         nation_description=('World Census analysts spend quiet weekends in '
                             'the countryside in order to determine which '
                             'nations have the largest Furniture '
@@ -314,6 +337,7 @@ census_info = {
         title='Industry: Retail',
         ranked='Largest Retail Industry',
         gradation='Shrinkwrap Consignment Productivity Index',
+        image='retail',
         nation_description=('The World Census estimated levels of employee '
                             'ennui to determine which nations have the '
                             'largest retail industries.'),
@@ -326,6 +350,7 @@ census_info = {
         title='Industry: Book Publishing',
         ranked='Largest Publishing Industry',
         gradation='Bella Potter Productivity e-Index',
+        image='publishing',
         nation_description=('The World Census tallied social media '
                             'complaints from students regarding overpriced '
                             'textbooks to determine which nations have the '
@@ -340,6 +365,7 @@ census_info = {
         title='Industry: Gambling',
         ranked='Largest Gambling Industry',
         gradation='Kelly Criterion Productivity Index',
+        image='gambling',
         nation_description=('The World Census tailed known underworld '
                             'figures in order to determine which nations '
                             'have the largest gambling industries.'),
@@ -352,6 +378,7 @@ census_info = {
         title='Sector: Manufacturing',
         ranked='Largest Manufacturing Sector',
         gradation='Gooback-Jerbs Productivity Index',
+        image='manufacturing',
         nation_description=('World Census bean-counters tabulated data '
                             'from across several industries in order to '
                             'determine which nations have the largest '
@@ -366,6 +393,7 @@ census_info = {
         title='Government Size',
         ranked='Largest Governments',
         gradation='Bureaucratic Comprehensiveness Rating Scale Index',
+        image='govt',
         nation_description=('World Census agents lined up at public '
                             'agencies around the world in order to study '
                             'the extent of government in nations, taking '
@@ -382,6 +410,7 @@ census_info = {
         title='Welfare',
         ranked='Largest Welfare Programs',
         gradation='Safety Net Mesh Density Rating',
+        image='welfare',
         nation_description=('Governments ranked highly spend the most on '
                             'social welfare programs. Nations ranked low '
                             'tend to have weak or non-existent government '
@@ -396,6 +425,7 @@ census_info = {
         title='Public Healthcare',
         ranked='Most Extensive Public Healthcare',
         gradation='Theresa-Nightingale Rating',
+        image='healthcare',
         nation_description=('World Census interns were infected with '
                             'obscure diseases in order to test which '
                             'nations had the most effective and '
@@ -410,6 +440,7 @@ census_info = {
         title='Law Enforcement',
         ranked='Most Advanced Law Enforcement',
         gradation='Orwell Orderliness Index',
+        image='police',
         nation_description=('World Census interns were framed for minor '
                             'crimes in order to measure the response '
                             'times, effectiveness, and amount of firepower '
@@ -426,6 +457,7 @@ census_info = {
         title='Business Subsidization',
         ranked='Most Subsidized Industry',
         gradation='Gilded Widget Scale',
+        image='business',
         nation_description=('Nations ranked highly spend the most on '
                             'developing and supporting industry, a '
                             "practice known as 'corporate welfare.'"),
@@ -438,6 +470,7 @@ census_info = {
         title='Religiousness',
         ranked='Most Devout',
         gradation='Prayers Per Hour',
+        image='devout',
         nation_description=('World Census Inquisitors conducted rigorous '
                             'one-on-one interviews probing the depth of '
                             "citizens' beliefs in order to determine which "
@@ -452,6 +485,7 @@ census_info = {
         title='Income Equality',
         ranked='Most Income Equality',
         gradation='Marx-Engels Emancipation Scale',
+        image='equality',
         nation_description=('World Census boffins calculated the '
                             'difference in incomes between the richest and '
                             'poorest citizens, where a score of 50 would '
@@ -468,6 +502,7 @@ census_info = {
         title='Niceness',
         ranked='Nicest Citizens',
         gradation='Average Smiles Per Day',
+        image='nice',
         nation_description=('World Census sociology experts studied '
                             'citizens from various nations to determine '
                             'which seemed most friendly and concerned for '
@@ -482,6 +517,7 @@ census_info = {
         title='Rudeness',
         ranked='Rudest Citizens',
         gradation='Insults Per Minute',
+        image='rude',
         nation_description=('World Census experts telephoned citizens from '
                             'all nations at just before dinner time, in a '
                             'study to determine which populations were '
@@ -496,6 +532,7 @@ census_info = {
         title='Intelligence',
         ranked='Smartest Citizens',
         gradation='Quips Per Hour',
+        image='smart',
         nation_description=('The World Census eavesdropped on '
                             'conversations in coffee shops, on campuses, '
                             'and around cinemas in order to determine '
@@ -512,6 +549,7 @@ census_info = {
         title='Ignorance',
         ranked='Most Ignorant Citizens',
         gradation='Missed References Per Hour',
+        image='stupid',
         nation_description=('The World Census studied which nations seemed '
                             'to have the greatest numbers of citizens that '
                             'fell into the categories "ignorant," '
@@ -526,6 +564,7 @@ census_info = {
         title='Political Apathy',
         ranked='Most Politically Apathetic Citizens',
         gradation='Whatever',
+        image='apathetic',
         nation_description=('These results were determined by seeing how '
                             'many citizens of each nation answered a '
                             'recent World Census survey on the local '
@@ -542,6 +581,7 @@ census_info = {
         title='Health',
         ranked='Healthiest Citizens',
         gradation='Bananas Ingested Per Day',
+        image='healthy',
         nation_description=('A measure of the general physical health of '
                             'citizens in each nation.'),
         region_description=('A measure of the general physical health of '
@@ -552,6 +592,7 @@ census_info = {
         title='Cheerfulness',
         ranked='Most Cheerful Citizens',
         gradation='Percentage Of Water Glasses Perceived Half-Full',
+        image='happy',
         nation_description=('The World Census shared cheeky grins with '
                             'citizens around the world in order to '
                             'determine which were the most relentlessly '
@@ -566,6 +607,7 @@ census_info = {
         title='Weather',
         ranked='Best Weather',
         gradation='Meters Of Sunlight',
+        image='weather',
         nation_description=('The following nations were determined to have '
                             'the best all-round weather.'),
         region_description=('The following regions were determined to have '
@@ -576,6 +618,7 @@ census_info = {
         title='Compliance',
         ranked='Lowest Crime Rates',
         gradation='Law-abiding Acts Per Hour',
+        image='lowcrime',
         nation_description=('World Census agents attempted to lure '
                             'citizens into committing various crimes in '
                             'order to test the reluctance of citizens to '
@@ -590,6 +633,7 @@ census_info = {
         title='Safety',
         ranked='Safest',
         gradation='Bubble-Rapp Safety Rating',
+        image='safe',
         nation_description=('World Census agents tested the sharpness of '
                             "household objects, the softness of children's "
                             'play equipment, and the survival rate of '
@@ -606,6 +650,7 @@ census_info = {
         title='Lifespan',
         ranked='Longest Average Lifespans',
         gradation='Years',
+        image='life',
         nation_description=('Nations ranked highly have lower rates of '
                             'preventable death, with their citizens '
                             'enjoying longer average lifespans.'),
@@ -618,6 +663,7 @@ census_info = {
         title='Ideological Radicality',
         ranked='Most Extreme',
         gradation='Paul-Nader Subjective Decentrality Index',
+        image='extreme',
         nation_description=('The World Census ranked nations on the basis '
                             'of how odd, extreme, or fundamentalist their '
                             'social, economic, and political systems are.'),
@@ -630,6 +676,7 @@ census_info = {
         title='Defense Forces',
         ranked='Most Advanced Defense Forces',
         gradation='Total War Preparedness Rating',
+        image='defense',
         nation_description=('Nations ranked highly spend the most on '
                             'national defense, and are most secure against '
                             'foreign aggression.'),
@@ -642,6 +689,7 @@ census_info = {
         title='Pacifism',
         ranked='Most Pacifist',
         gradation='Cheeks Turned Per Day',
+        image='peace',
         nation_description=('Nations ranked highly pursue diplomatic '
                             'solutions rather than military ones in the '
                             'international arena, have small or '
@@ -658,6 +706,7 @@ census_info = {
         title='Economic Freedom',
         ranked='Most Pro-Market',
         gradation='Rand Index',
+        image='pro-market',
         nation_description=('This data was compiled by surveying a random '
                             'sample of businesses with the question, "Do '
                             'you believe the government is committed to '
@@ -672,6 +721,7 @@ census_info = {
         title='Taxation',
         ranked='Highest Average Tax Rates',
         gradation='Effective Tax Rate',
+        image='hightax',
         nation_description=('Although some nations have a flat tax rate '
                             'for all citizens while others tax the rich '
                             'more heavily than the poor, the World Census '
@@ -688,6 +738,7 @@ census_info = {
         title='Freedom From Taxation',
         ranked='Lowest Overall Tax Burden',
         gradation='Hayek Index',
+        image='lowtax',
         nation_description=('World Census financial experts assessed '
                             'nations across a range of direct and indirect '
                             'measures in order to determine which placed '
@@ -702,6 +753,7 @@ census_info = {
         title='Corruption',
         ranked='Most Corrupt Governments',
         gradation='Kickbacks Per Hour',
+        image='corrupt',
         nation_description=('World Census officials visited a range of '
                             'government departments and recorded how '
                             'frequently bribes were required to complete '
@@ -716,6 +768,7 @@ census_info = {
         title='Integrity',
         ranked='Least Corrupt Governments',
         gradation='Percentage Of Bribes Refused',
+        image='leastcorrupt',
         nation_description=('World Census agents tempted government '
                             'officials with financial and other '
                             'inducements to bend the rules and recorded '
@@ -730,6 +783,7 @@ census_info = {
         title='Authoritarianism',
         ranked='Most Authoritarian',
         gradation='Stalins',
+        image='authoritarian',
         nation_description=('World Census staff loitered innocuously in '
                             'various public areas and recorded the length '
                             'of time that passed before they were '
@@ -744,6 +798,7 @@ census_info = {
         title='Youth Rebelliousness',
         ranked='Most Rebellious Youth',
         gradation='Stark-Dean Displacement Index',
+        image='rebelyouth',
         nation_description=('World Census observers counted the number of '
                             'times their car stereo was stolen from '
                             'outside fast food stores to determine which '
@@ -760,6 +815,7 @@ census_info = {
         title='Culture',
         ranked='Most Cultured',
         gradation='Snufflebottom-Wiggendum Pentatonic Scale',
+        image='culture',
         nation_description=('After spending many tedious hours in coffee '
                             'shops and concert halls, World Census experts '
                             'have found the following nations to be the '
@@ -774,6 +830,7 @@ census_info = {
         title='Employment',
         ranked='Highest Workforce Participation Rate',
         gradation='Workforce Participation Rate',
+        image='employed',
         nation_description=('World Census experts studied the ratings of '
                             'daytime television chat shows to estimate the '
                             'percentage of citizens who are employed.'),
@@ -786,6 +843,7 @@ census_info = {
         title='Public Transport',
         ranked='Most Advanced Public Transport',
         gradation='Societal Mobility Rating',
+        image='publictransport',
         nation_description=('World Census experts captured, tagged, and '
                             'released trains in order to identify which '
                             'nations have the most extensive, well-funded '
@@ -800,6 +858,7 @@ census_info = {
         title='Tourism',
         ranked='Most Popular Tourist Destinations',
         gradation='Tourists Per Hour',
+        image='tourism',
         nation_description=('World Census experts tracked millions of '
                             'international tourists in order to determine '
                             "the world's favourite nations to sight-see."),
@@ -812,6 +871,7 @@ census_info = {
         title='Weaponization',
         ranked='Most Armed',
         gradation='Weapons Per Person',
+        image='armed',
         nation_description=('World Census experts took their lives into '
                             'their hands in order to ascertain the average '
                             'number of deadly weapons per citizen.'),
@@ -824,6 +884,7 @@ census_info = {
         title='Recreational Drug Use',
         ranked='Highest Drug Use',
         gradation='Pineapple Fondness Rating',
+        image='drugs',
         nation_description=('World Census experts sampled many cakes of '
                             "dubious content to determine which nations' "
                             'citizens consume the most recreational drugs.'),
@@ -836,6 +897,7 @@ census_info = {
         title='Obesity',
         ranked='Fattest Citizens',
         gradation='Obesity Rate',
+        image='fat',
         nation_description=('World Census takers tracked the sale of '
                             'Cheetos and Twinkies to ascertain which '
                             'nations most enjoyed the "kind bud."'),
@@ -848,6 +910,7 @@ census_info = {
         title='Secularism',
         ranked='Most Secular',
         gradation='Atheism Rate',
+        image='godforsaken',
         nation_description=('World Census experts studied which citizens '
                             'seemed least concerned about eternal '
                             'damnation, spiritual awakeness, and chakra '
@@ -864,6 +927,7 @@ census_info = {
         title='Environmental Beauty',
         ranked='Most Beautiful Environments',
         gradation='Pounds Of Wildlife Per Square Mile',
+        image='environment',
         nation_description=('World Census researchers spent many arduous '
                             'weeks lying on beaches and trekking through '
                             'rainforests to compile a definitive list of '
@@ -880,6 +944,7 @@ census_info = {
         title='Charmlessness',
         ranked='Most Avoided',
         gradation='Kardashian Reflex Score',
+        image='avoided',
         nation_description=('Nations ranked highly are considered by many '
                             'to be the most inhospitable, charmless, and '
                             'ghastly places to spend a vacation, or, '
@@ -894,6 +959,7 @@ census_info = {
         title='Influence',
         ranked='Most Influential',
         gradation='Soft Power Disbursement Rating',
+        image='influence',
         nation_description=('World Census experts spent many evenings '
                             'loitering in the corridors of power in order '
                             'to determine which nations were the greatest '
@@ -908,6 +974,7 @@ census_info = {
         title='World Assembly Endorsements',
         ranked='Most World Assembly Endorsements',
         gradation='Valid Endorsements',
+        image='endorsed',
         nation_description=('World Census staff pored through World '
                             'Assembly records to determine which nations '
                             'were the most endorsed by others in their '
@@ -922,6 +989,7 @@ census_info = {
         title='Averageness',
         ranked='Most Average',
         gradation='Average Standardized Normality Scale',
+        image='average',
         nation_description=('World Census staff took time out to pay '
                             'tribute to those most overlooked of nations: '
                             'the determinedly average.'),
@@ -934,6 +1002,7 @@ census_info = {
         title='Human Development Index',
         ranked='Most Developed',
         gradation='Human Development Index',
+        image='hdi',
         nation_description=('The World Census compiles a "Human '
                             'Development Index" by measuring citizens\' '
                             'average life expectancy, education, and '
@@ -948,6 +1017,7 @@ census_info = {
         title='Primitiveness',
         ranked='Most Primitive',
         gradation='Scary Big Number Scale',
+        image='primitive',
         nation_description=('Nations were ranked by World Census officials '
                             'based on the number of natural phenomena '
                             'attributed to the unknowable will of '
@@ -962,6 +1032,7 @@ census_info = {
         title='Scientific Advancement',
         ranked='Most Scientifically Advanced',
         gradation='Kurzweil Singularity Index',
+        image='advanced',
         nation_description=('World Census researchers quantified national '
                             'scientific advancement by quizzing random '
                             'citizens about quantum chromodynamics, '
@@ -980,6 +1051,7 @@ census_info = {
         title='Inclusiveness',
         ranked='Most Inclusive',
         gradation='Mandela-Wollstonecraft Non-Discrimination Index',
+        image='inclusive',
         nation_description=('WA analysts ranked nations based on whether '
                             'all citizens were commonly treated as equally '
                             'valuable members of society.'),
@@ -992,6 +1064,7 @@ census_info = {
         title='Average Income',
         ranked='Highest Average Incomes',
         gradation='Standard Monetary Units',
+        image='income',
         nation_description=('The World Census carefully compared the '
                             'average spending power of citizens in each '
                             'nation.'),
@@ -1004,6 +1077,7 @@ census_info = {
         title='Average Income of Poor',
         ranked='Highest Poor Incomes',
         gradation='Standard Monetary Units',
+        image='poorincome',
         nation_description=('The World Census studied the spending power '
                             'of the poorest 10% of citizens in each nation.'),
         region_description=('The World Census studied the spending power '
@@ -1014,6 +1088,7 @@ census_info = {
         title='Average Income of Rich',
         ranked='Highest Wealthy Incomes',
         gradation='Standard Monetary Units',
+        image='richincome,
         nation_description=('The World Census studied the spending power '
                             'of the richest 10% of citizens in each nation.'),
         region_description=('The World Census studied the spending power '
@@ -1024,6 +1099,7 @@ census_info = {
         title='Public Education',
         ranked='Most Advanced Public Education',
         gradation='Edu-tellignce\u00AE Test Score',
+        image='educated',
         nation_description=('Fresh-faced World Census agents infiltrated '
                             'schools with varying degrees of success in '
                             'order to determine which nations had the most '
@@ -1040,6 +1116,7 @@ census_info = {
         title='Economic Output',
         ranked='Highest Economic Output',
         gradation='Standard Monetary Units',
+        image='gdp',
         nation_description=('World Census bean-counters crunched the '
                             'numbers to calculate national Gross Domestic '
                             'Product. Older nations, with higher '
@@ -1056,6 +1133,7 @@ census_info = {
         title='Crime',
         ranked='Highest Crime Rates',
         gradation='Crimes Per Hour',
+        image='crime',
         nation_description=('World Census interns were dispatched to seedy '
                             'back alleys in order to determine which '
                             'nations have the highest crime rates.'),
@@ -1068,6 +1146,7 @@ census_info = {
         title='Foreign Aid',
         ranked='Highest Foreign Aid Spending',
         gradation='Clooney Contribution Index',
+        image='aid',
         nation_description=('The World Census intercepted food drops in '
                             'several war-torn regions to determine which '
                             'nations spent the most on international aid. '),
@@ -1080,6 +1159,7 @@ census_info = {
         title='Black Market',
         ranked='Largest Black Market',
         gradation='Standard Monetary Units',
+        image='blackmarket',
         nation_description=('World Census agents tracked "off the books" '
                             'deals and handshake agreements in order to '
                             "study the size of nations' informal economies."),
@@ -1092,6 +1172,7 @@ census_info = {
         title='Residency',
         ranked='Most Stationary',
         gradation='Days',
+        image='stationary',
         nation_description=('Long-term World Census surveillance revealed '
                             'which nations have been resident in their '
                             'current region for the longest time.'),
