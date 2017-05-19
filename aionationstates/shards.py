@@ -2,8 +2,8 @@
 
 from contextlib import suppress
 import xml.etree.ElementTree as ET
-
 from collections import namedtuple
+
 from aionationstates.ns_to_human import census_info
 from aionationstates.session import Session
 
@@ -98,5 +98,58 @@ class CensusShard(Shard):
                 'census',
                 [make_scale(scale) for scale in root.find('CENSUS')]
             )
+
+
+class Dispatch(Session):
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    @classmethod
+    def from_elem(cls, elem):
+        r = cls()
+        r._parse(elem)
+        return r
+
+    def _parse(self, elem):
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.author = elem.find('AUTHOR').text
+        self.category = elem.find('CATEGORY').text
+        self.subcategory = elem.find('SUBCATEGORY').text
+        self.created = int(elem.find('CREATED').text)
+        self.edited = int(elem.find('EDITED').text)
+        self.views = int(elem.find('VIEWS').text)
+        self.score = int(elem.find('SCORE').text)
+        with suppress(AttributeError):
+            self.text = elem.find('TEXT').text
+
+    async def update(self):
+        params = {
+            'q': 'dispatch',
+            'dispatchid': str(self.id)
+        }
+        resp = await self.call_api(params=params)
+        root = ET.fromstring(resp.text)
+        self._parse(root.find('DISPATCH'))
+
+
+class Dispatchlist(Session):
+    """
+    Inconsistencies:
+        factbooklist was left out as unnecessary. Use dispatchlist.
+    """
+    async def dispatchlist(self, *, author=None, category=None,
+                           subcategory=None, sort='new'):
+        params = {'q': 'dispatchlist', 'sort': sort}
+        if author:
+            params['dispatchauthor'] = author
+        if category and subcategory:
+            params['dispatchcategory'] = f'{category}:{subcategory}'
+        elif category:
+            params['dispatchcategory'] = category
+        resp = await self.call_api(params=params)
+        root = ET.fromstring(resp.text)
+        return (Dispatch.from_elem(elem) for elem in root.find('DISPATCHLIST'))
 
 

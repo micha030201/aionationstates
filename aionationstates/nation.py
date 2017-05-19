@@ -6,7 +6,7 @@ from contextlib import suppress
 from aionationstates.utils import normalize
 from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import (
-    CensusShard, DispatchlistShard, StandardShardCases)
+    CensusShard, Dispatchlist, StandardShardCases)
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
@@ -18,7 +18,7 @@ Govt = namedtuple('Govt',
 
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-class Nation(CensusShard, DispatchlistShard, StandardShardCases):
+class Nation(CensusShard, Dispatchlist, StandardShardCases):
     def __init__(self, name):
         self.name = normalize(name)
 
@@ -138,6 +138,9 @@ class Nation(CensusShard, DispatchlistShard, StandardShardCases):
         if token:
             return f'{NS_URL}page=verify_login?token={token}'
         return f'{NS_URL}page=verify_login'
+
+    def dispatchlist(self, **kwargs):
+        return super().dispatchlist(author=self.name, **kwargs)
 
 
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))

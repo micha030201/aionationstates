@@ -1088,7 +1088,7 @@ census_info = {
         title='Average Income of Rich',
         ranked='Highest Wealthy Incomes',
         gradation='Standard Monetary Units',
-        image='richincome,
+        image='richincome',
         nation_description=('The World Census studied the spending power '
                             'of the richest 10% of citizens in each nation.'),
         region_description=('The World Census studied the spending power '
