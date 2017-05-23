@@ -7,6 +7,7 @@ from aionationstates.utils import normalize
 from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import (
     CensusShard, Dispatchlist, StandardShardCases)
+from aionationstates.request import ApiRequestGroup
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
@@ -40,6 +41,26 @@ class Nation(CensusShard, Dispatchlist, StandardShardCases):
     }
     FLOAT_CASES = {'tax', 'publicsector'}
     BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
+    
+    def namee(self):
+        return ApiRequestGroup(
+            session=self,
+            params={
+                'nation': self.name,
+                'q': 'name'
+            },
+            result=(lambda root: root.find('NAME').text)
+        )
+
+    def typee(self):
+        return ApiRequestGroup(
+            session=self,
+            params={
+                'nation': self.name,
+                'q': 'type'
+            },
+            result=(lambda root: root.find('TYPE').text)
+        )  
 
     def _parse(self, root, args):
         """Parse the NationStates API data. Accepts an elementtree and a set,
