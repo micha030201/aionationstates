@@ -1,3 +1,5 @@
+"""Interfaces to shards shared between APIs."""
+
 # TODO: happenings (region history as well), nations, poll, censusranks, wabadges, zombie
 
 from contextlib import suppress
@@ -6,98 +8,55 @@ from collections import namedtuple
 
 from aionationstates.ns_to_human import census_info
 from aionationstates.session import Session
+from aionationstates.request import ApiRequest
 
 
-class Shard(Session):
-    async def shards(self, *shards):
-        shards = set(shards)
-        params = {'q': shards.copy()}
-        self._url_transform(params)
-        params['q'] = '+'.join(params['q'])
-        resp = await self.call_api(params=params)
-        return dict(self._parse(ET.fromstring(resp.text), shards))
-
-    async def shard(self, shard):
-        return (await self.shards(shard))[shard]
-
-    def _url_transform(self, params):
-        pass
-
-    def _parse(self, root, args):
-        return ()
+class CensusScale:
+    def __init__(self, elem):
+        self.info = census_info[int(scale.get('id'))]
+        self.score = self.rank = self.prank = self.rrank = self.prrank = None
+        with suppress(AttributeError, TypeError):
+            self.score = float(scale.find('SCORE').text)
+        with suppress(AttributeError, TypeError):
+            self.rank = int(scale.find('RANK').text)
+        with suppress(AttributeError, TypeError):
+            self.prank = float(scale.find('PRANK').text)
+        with suppress(AttributeError, TypeError):
+            self.rrank = int(scale.find('RRANK').text)
+        with suppress(AttributeError, TypeError):
+            self.prrank = float(scale.find('PRRANK').text)
 
 
-class StandardShardCases(Shard):
-    STR_CASES = INT_CASES = FLOAT_CASES = BOOL_CASES = LIST_CASES = set()
-    def _parse(self, root, args):
-        yield from super()._parse(root, args)
-        for arg in args & self.STR_CASES:
-            yield (arg, root.find(arg.upper()).text)
-        for arg in args & self.INT_CASES:
-            yield (arg, int(root.find(arg.upper()).text))
-        for arg in args & self.FLOAT_CASES:
-            yield (arg, float(root.find(arg.upper()).text))
-        for arg in args & self.BOOL_CASES:
-            yield (arg, bool(int(root.find(arg.upper()).text)))
-        for arg in args & self.LIST_CASES:
-            yield (arg, (root.find(arg.upper()).text
-                         .replace(':', ',')  # what is consistency even
-                         .split(',')))
+class CensusPoint:
+    def __init__(self, elem):
+        self.info = census_info[int(scale.get('id'))]
+        self.timestamp = int(point.find('TIMESTAMP').text)
+        self.score = float(point.find('SCORE').text)
 
 
-CensusScale = namedtuple('CensusScale', 'info score rank prank rrank prrank')
-CensusPoint = namedtuple('CensusPoint', 'info timestamp score')
-
-class CensusShard(Shard):
+class Census:
     """
     Inconsistencies:
         census with mode=history was renamed to censushistory.
     """
-    def _url_transform(self, params):
-        super()._url_transform(params)
-        if 'census' in params['q']:
-            params['scale'] = 'all'
-            params['mode'] = 'score+rank+rrank+prank+prrank'
-        elif 'censushistory' in params['q']:
-            params['q'].remove('censushistory')
-            params['q'].add('census')
-            params['scale'] = 'all'
-            params['mode'] = 'history'
+    def census(self):
+        return ApiRequest(
+            session=self,
+            q='census',
+            params={'scale': 'all', 'mode': 'score+rank+rrank+prank+prrank'},
+            result=(lambda root: [CensusScale(scale_elem)
+                                  for scale_elem in root.find('CENSUS')])
+        )
 
-    def _parse(self, root, args):
-        yield from super()._parse(root, args)
-        if 'censushistory' in args:
-            yield (
-                'censushistory',
-                {int(scale.get('id')):
-                 [CensusPoint(
-                      info=census_info[int(scale.get('id'))],
-                      timestamp=int(point.find('TIMESTAMP').text),
-                      score=float(point.find('SCORE').text)
-                  ) for point in scale]
-                 for scale in root.find('CENSUS')}
-            )
-        if 'census' in args:
-            def make_scale(scale):
-                info = census_info[int(scale.get('id'))]
-                score = rank = prank = rrank = prrank = None
-                with suppress(AttributeError, TypeError):
-                    score = float(scale.find('SCORE').text)
-                with suppress(AttributeError, TypeError):
-                    rank = int(scale.find('RANK').text)
-                with suppress(AttributeError, TypeError):
-                    prank = float(scale.find('PRANK').text)
-                with suppress(AttributeError, TypeError):
-                    rrank = int(scale.find('RRANK').text)
-                with suppress(AttributeError, TypeError):
-                    prrank = float(scale.find('PRRANK').text)
-                return CensusScale(info=info, score=score, rank=rank,
-                                   prank=prank, rrank=rrank, prrank=prrank
-                )
-            yield (
-                'census',
-                [make_scale(scale) for scale in root.find('CENSUS')]
-            )
+    def censushistory(self):
+        return ApiRequest(
+            session=self,
+            q='census',
+            params={'scale': 'all', 'mode': 'history'},
+            result=(lambda root: [[CensusHistory(point_elem)
+                                   for point_elem in scale_elem]
+                                  for scale_elem in root.find('CENSUS')])
+        )
 
 
 class Dispatch(Session):
