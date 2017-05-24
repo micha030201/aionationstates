@@ -2,33 +2,28 @@ from collections import namedtuple
 import xml.etree.ElementTree as ET
 
 
-ApiRequest = namedtuple('ApiRequest', 'results params headers')
-
-class ApiRequestGroup:
-    def __init__(self, *, session, result, params, headers=None):
+class ApiRequest:
+    def __init__(self, *, session, result, q, params=None):
         self.session = session
-        self.requests = [
-            ApiRequest(
-                results=[result],
-                params=params,
-                headers=headers or {}
-            )
-        ]
+        self.results = [result]
+        self.q = {q}
+        self.params = params or {}
 
     def __await__(self):
         return self._wrap()
 
     async def _wrap(self):
-        async def gen():
-            for results, params, headers in self.requests:
-                resp = await self.session.call_api(params, headers=headers)
-                root = ET.fromstring(resp.text)
-                for result in results:
-                    yield result(root)
-        results = [result async for result in gen()]
-        return results[0] if len(results) == 1 else tuple(results)
+        self.params['q'] = '+'.join(self.q)
+        resp = await self.session.call_api(self.params)
+        root = ET.fromstring(resp.text)
+        results = tuple(result(root) for result in self.results)
+        return results[0] if len(results) == 1 else results
 
     def __add__(self, other):
-        # TODO actual request number optimization
-        self.requests += other.requests
+        assert len(self.q & other.q) == 0
+        assert len(set(self.params) & set(other.params)) == 0
+
+        self.q |= other.q
+        self.params.update(other.params)
+        self.results += other.results
         return self

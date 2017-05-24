@@ -7,7 +7,7 @@ from aionationstates.utils import normalize
 from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import (
     CensusShard, Dispatchlist, StandardShardCases)
-from aionationstates.request import ApiRequestGroup
+from aionationstates.request import ApiRequest
 
 
 Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
@@ -27,6 +27,10 @@ class Nation(CensusShard, Dispatchlist, StandardShardCases):
         super()._url_transform(params)
         params['nation'] = self.name
 
+    def call_api(self, params, *args, **kwargs):
+        params['nation'] = self.name
+        return super().call_api(*args, params=params, **kwargs)
+
     STR_CASES = {
         'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
         'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
@@ -43,22 +47,22 @@ class Nation(CensusShard, Dispatchlist, StandardShardCases):
     BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
     
     def namee(self):
-        return ApiRequestGroup(
+        return ApiRequest(
             session=self,
-            params={
-                'nation': self.name,
-                'q': 'name'
-            },
+            q='name',
+#            params={
+#                'nation': self.name
+#            },
             result=(lambda root: root.find('NAME').text)
         )
 
     def typee(self):
-        return ApiRequestGroup(
+        return ApiRequest(
             session=self,
-            params={
-                'nation': self.name,
-                'q': 'type'
-            },
+            q='type',
+#            params={
+#                'nation': self.name
+#            },
             result=(lambda root: root.find('TYPE').text)
         )  
 
