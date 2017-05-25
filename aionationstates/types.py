@@ -28,6 +28,9 @@ class CensusScaleCurrent(CensusScale):
         with suppress(AttributeError, TypeError):
             self.prrank = float(elem.find('PRRANK').text)
 
+    def __repr__(self):
+        return f'<CensusScaleCurrent #{self.info.id} "{self.info.title}">'
+
 
 class CensusPoint:
     def __init__(self, elem):
@@ -35,11 +38,17 @@ class CensusPoint:
         self.timestamp = int(elem.find('TIMESTAMP').text)
         self.score = float(elem.find('SCORE').text)
 
+    def __repr__(self):
+        return f'<CensusPoint timestamp={self.timestamp} score={self.score}>'
+
 
 class CensusScaleHistory(CensusScale):
     def __init__(self, elem):
         super().__init__(elem)
         self.history = [CensusPoint(sub_elem) for sub_elem in elem]
+
+    def __repr__(self):
+        return f'<CensusScaleHistory #{self.info.id} "{self.info.title}">'
 
 
 class DispatchThumbnail:
@@ -54,11 +63,17 @@ class DispatchThumbnail:
         self.views = int(elem.find('VIEWS').text)
         self.score = int(elem.find('SCORE').text)
 
+    def __repr__(self):
+        return f'<DispatchThumbnail id={self.id}>'
+
 
 class Dispatch(DispatchThumbnail):
     def __init__(self, elem):
         super().__init__(elem)
         self.text = elem.find('TEXT').text
+
+    def __repr__(self):
+        return f'<Dispatch id={self.id}>'
 
 
 class PollOption:
