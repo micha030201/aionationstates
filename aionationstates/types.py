@@ -39,7 +39,7 @@ class CensusPoint:
         self.score = float(elem.find('SCORE').text)
 
     def __repr__(self):
-        return f'<CensusPoint timestamp={self.timestamp} score={self.score}>'
+        return f'<CensusPoint timestamp={self.timestamp}>'
 
 
 class CensusScaleHistory(CensusScale):
@@ -78,8 +78,24 @@ class Dispatch(DispatchThumbnail):
 
 class PollOption:
     def __init__(self, elem):
-        self.text = point.find('TIMESTAMP').text
-        self.timestamp = int()
-        self.score = float(point.find('SCORE').text)
+        self.text = elem.find('OPTIONTEXT').text
+        voters = elem.find('SCORE').text
+        self.voters = voters.split(':') if voters else ()
+
+
+class Poll:
+    def __init__(self, elem):
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.text = elem.find('TEXT').text
+        self.region = elem.find('REGION').text
+        self.author = elem.find('AUTHOR').text
+        self.start = int(elem.find('START').text)
+        self.stop = int(elem.find('STOP').text)
+        self.options = [PollOption(option_elem)
+                        for option_elem in elem.find('OPTIONS')]
+
+    def __repr__(self):
+        return f'<Poll id={self.id}>'
 
 
