@@ -4,9 +4,8 @@ from collections import namedtuple
 from contextlib import suppress
 
 from aionationstates.utils import normalize
-from aionationstates.session import AuthSession, NS_URL, SuddenlyNationstates
-from aionationstates.shards import (
-    CensusShard, Dispatchlist, StandardShardCases)
+from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
+from aionationstates.shards import Census
 from aionationstates.request import ApiRequest
 
 
@@ -19,40 +18,19 @@ Govt = namedtuple('Govt',
 
 Sectors = namedtuple('Sectors', 'blackmarket government industry public')
 
-class Nation(CensusShard, Dispatchlist, StandardShardCases):
+class Nation(Census, Session):
     def __init__(self, name):
         self.name = normalize(name)
-
-    def _url_transform(self, params):
-        super()._url_transform(params)
-        params['nation'] = self.name
 
     def call_api(self, params, *args, **kwargs):
         params['nation'] = self.name
         return super().call_api(*args, params=params, **kwargs)
 
-    STR_CASES = {
-        'name', 'type', 'fullname', 'motto', 'category', 'region', 'animal',
-        'currency', 'demonym', 'demonym2', 'demonym2plural', 'flag',
-        'majorindustry', 'govtpriority', 'lastactivity', 'influence', 'leader',
-        'capital', 'religion', 'admirable', 'animaltrait', 'crime', 'founded',
-        'govtdesc', 'industrydesc', 'notable', 'sensibilities', 'gavote',
-        'scvote'
-    }
-    INT_CASES = {
-        'population', 'firstlogin', 'lastlogin', 'factbooks', 'dispatches',
-        'foundedtime', 'gdp', 'income', 'poorest', 'richest'
-    }
-    FLOAT_CASES = {'tax', 'publicsector'}
-    BOOL_CASES = {'tgcanrecruit', 'tgcancampaign'}
     
     def namee(self):
         return ApiRequest(
             session=self,
             q='name',
-#            params={
-#                'nation': self.name
-#            },
             result=(lambda root: root.find('NAME').text)
         )
 
@@ -60,9 +38,6 @@ class Nation(CensusShard, Dispatchlist, StandardShardCases):
         return ApiRequest(
             session=self,
             q='type',
-#            params={
-#                'nation': self.name
-#            },
             result=(lambda root: root.find('TYPE').text)
         )  
 
