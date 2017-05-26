@@ -2,44 +2,61 @@ import re
 from functools import partial
 from collections import namedtuple
 from contextlib import suppress
+from functools import partial
 
 from aionationstates.utils import normalize
 from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
-from aionationstates.shards import Census
+from aionationstates.shards import Census, GeneralCases
 from aionationstates.request import ApiRequest
 
 
-Freedom = namedtuple('Freedom', 'civilrights economy politicalfreedom')
-
-Govt = namedtuple('Govt',
-                  ('administration defence education environment healthcare'
-                   ' commerce internationalaid lawandorder publictransport'
-                   ' socialequality spirituality welfare'))
-
-Sectors = namedtuple('Sectors', 'blackmarket government industry public')
-
-class Nation(Census, Session):
-    def __init__(self, name):
-        self.name = normalize(name)
+class Nation(Census, GeneralCases, Session):
+    def __init__(self, id):
+        self.id = normalize(id)
 
     def call_api(self, params, *args, **kwargs):
-        params['nation'] = self.name
+        params['nation'] = self.id
         return super().call_api(*args, params=params, **kwargs)
 
-    
-    def namee(self):
-        return ApiRequest(
-            session=self,
-            q='name',
-            result=(lambda root: root.find('NAME').text)
-        )
+    def name(self): return self._str_case('name')
+    def type(self): return self._str_case('type')
+    def fullname(self): return self._str_case('fullname')
+    def motto(self): return self._str_case('motto')
+    def category(self): return self._str_case('category')
+    def region(self): return self._str_case('region')
+    def animal(self): return self._str_case('animal')
+    def currency(self): return self._str_case('currency')
+    def demonym(self): return self._str_case('demonym')
+    def demonym2(self): return self._str_case('demonym2')
+    def demonym2plural(self): return self._str_case('demonym2plural')
+    def flag(self): return self._str_case('flag')
+    def majorindustry(self): return self._str_case('majorindustry')
+    def govtpriority(self): return self._str_case('govtpriority')
+    def lastactivity(self): return self._str_case('lastactivity')
+    def influence(self): return self._str_case('influence')
+    def leader(self): return self._str_case('leader')
+    def capital(self): return self._str_case('capital')
+    def religion(self): return self._str_case('religion')
+    def admirable(self): return self._str_case('admirable')
+    def animaltrait(self): return self._str_case('animaltrait')
+    def crime(self): return self._str_case('crime')
+    def founded(self): return self._str_case('founded')
+    def govtdesc(self): return self._str_case('govtdesc')
+    def industrydesc(self): return self._str_case('industrydesc')
+    def notable(self): return self._str_case('notable')
+    def sensibilities(self): return self._str_case('sensibilities')
 
-    def typee(self):
-        return ApiRequest(
-            session=self,
-            q='type',
-            result=(lambda root: root.find('TYPE').text)
-        )  
+    def population(self): return self._int_case('population')
+    def firstlogin(self): return self._int_case('firstlogin')
+    def lastlogin(self): return self._int_case('lastlogin')
+    def factbooks(self): return self._int_case('factbooks')
+    def dispatches(self): return self._int_case('dispatches')
+    def foundedtime(self): return self._int_case('foundedtime')
+    def gdp(self): return self._int_case('gdp')
+    def income(self): return self._int_case('income')
+    def poorest(self): return self._int_case('poorest')
+    def richest(self): return self._int_case('richest')
+
 
     def _parse(self, root, args):
         """Parse the NationStates API data. Accepts an elementtree and a set,
@@ -143,8 +160,7 @@ class Nation(Census, Session):
         return super().dispatchlist(author=self.name, **kwargs)
 
 
-Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
-IssueOption = namedtuple('IssueOption', ('text accept'))
+
 
 class NationControl(AuthSession, Nation):
     async def _accept_issue(self, issue_id, option_id):

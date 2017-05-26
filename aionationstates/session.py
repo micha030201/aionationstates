@@ -1,6 +1,7 @@
 import logging
 from contextlib import suppress
 from collections import namedtuple
+import xml.etree.ElementTree as ET
 
 import aiohttp
 
@@ -36,13 +37,39 @@ class SuddenlyNationstates(Exception):  # TODO: move to another submodule?
     pass
 
 
+class ApiRequest:
+    def __init__(self, *, session, result, q, params=None):
+        self.session = session
+        self.results = [result]
+        self.q = {q}
+        self.params = params or {}
+
+    def __await__(self):
+        return self._wrap()
+
+    async def _wrap(self):
+        self.params['q'] = '+'.join(self.q)
+        resp = await self.session._call_api(self.params)
+        root = ET.fromstring(resp.text)
+        results = tuple(result(root) for result in self.results)
+        return results[0] if len(results) == 1 else results
+
+    def __add__(self, other):
+        assert len(self.q & other.q) == 0  # TODO better errors
+        assert len(set(self.params) & set(other.params)) == 0
+
+        self.q |= other.q
+        self.params.update(other.params)
+        self.results += other.results
+        return self
+
+
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers'))
 
-
-class Session:  # TODO self.useragent
+class Session:  # TODO self._useragent
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
         headers['User-Agent'] = USER_AGENT
@@ -57,7 +84,7 @@ class Session:  # TODO self.useragent
             )
 
     @ratelimit.api
-    async def call_api(self, params, *, method='GET', **kwargs):
+    async def _call_api(self, params, *, method='GET', **kwargs):
         resp = await self._request(method, API_URL, params=params, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
@@ -71,13 +98,16 @@ class Session:  # TODO self.useragent
         return resp
 
     @ratelimit.web
-    async def call_web(self, path, *, method='GET', **kwargs):
+    async def _call_web(self, path, *, method='GET', **kwargs):
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
         if '<html lang="en" id="page_login">' in resp.text:
             raise AuthenticationError
         if resp.status != 200:
             raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
+
+    def _compose_api_call(self, *, result, q, params=None):
+        return ApiRequest(session=self, q=q, params=params, result=result)
 
 
 class AuthSession(Session):
@@ -94,7 +124,7 @@ class AuthSession(Session):
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
 
-    async def call_api(self, params, **kwargs):
+    async def _call_api(self, params, **kwargs):
         logger.debug(f'Making authenticated API request as {self.name} to '
                      f'{str(params)}')
         headers = {
@@ -110,7 +140,7 @@ class AuthSession(Session):
             logger.debug('Setting autologin from API header')
         return resp
 
-    async def call_web(self, path, method='GET', **kwargs):
+    async def _call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self.call_api({'nation': self.name, 'q': 'nextissue'})
