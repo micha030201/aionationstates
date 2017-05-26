@@ -41,28 +41,11 @@ class SuddenlyNationstates(Exception):  # TODO: move to another submodule?
 RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers'))
 
-#from aionationstates.nation import Nation, NationControl
-#from aionationstates.region import Region
-#from aionationstates.world import World
 
-#class Api:
-#    def __init__(self, useragent)
-#        self.useragent = useragent + '/aionationstates0.0.0'
-#
-#    async def get_nation(self, nationname):
-#        return Nation(nationname)
-#
-#    async def get_region(self, regionname):
-#        return Region(regionname)
-#    
-#    ...
-
-
-class Session:
+class Session:  # TODO self.useragent
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
         headers['User-Agent'] = USER_AGENT
-        print(kwargs)
         async with aiohttp.request(method, url, headers=headers,
                                    allow_redirects=False, **kwargs) as resp:
             return RawResponse(
