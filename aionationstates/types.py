@@ -51,6 +51,7 @@ class CensusScaleHistory(CensusScale):
         return f'<CensusScaleHistory #{self.info.id} "{self.info.title}">'
 
 
+
 class DispatchThumbnail:
     def __init__(self, elem):
         self.id = int(elem.get('id'))
@@ -76,6 +77,7 @@ class Dispatch(DispatchThumbnail):
         return f'<Dispatch id={self.id}>'
 
 
+
 class PollOption:
     def __init__(self, elem):
         self.text = elem.find('OPTIONTEXT').text
@@ -97,5 +99,50 @@ class Poll:
 
     def __repr__(self):
         return f'<Poll id={self.id}>'
+
+
+
+class Freedom:
+    def __init__(self, elem):
+        self.civilrights = elem.find('CIVILRIGHTS').text
+        self.economy = elem.find('ECONOMY').text
+        self.politicalfreedom = elem.find('POLITICALFREEDOM').text
+
+
+class FreedomScores:
+    def __init__(self, elem):
+        self.civilrights = int(elem.find('CIVILRIGHTS').text)
+        self.economy = int(elem.find('ECONOMY').text)
+        self.politicalfreedom = int(elem.find('POLITICALFREEDOM').text)
+
+
+class Govt:
+    def __init__(self, elem):
+        self.administration = float(govt.find('ADMINISTRATION').text)
+        self.defence = float(govt.find('DEFENCE').text)
+        self.education = float(govt.find('EDUCATION').text)
+        self.environment = float(govt.find('ENVIRONMENT').text)
+        self.healthcare = float(govt.find('HEALTHCARE').text)
+        self.commerce = float(govt.find('COMMERCE').text)
+        self.internationalaid = float(govt.find('INTERNATIONALAID').text)
+        self.lawandorder = float(govt.find('LAWANDORDER').text)
+        self.publictransport = float(govt.find('PUBLICTRANSPORT').text)
+        self.socialequality = float(govt.find('SOCIALEQUALITY').text)
+        self.spirituality = float(govt.find('SPIRITUALITY').text)
+        self.welfare = float(govt.find('WELFARE').text)
+
+
+class Sectors:
+    def __init__(self, elem):
+        self.blackmarket = float(elem.find('BLACKMARKET').text)
+        self.government = float(elem.find('GOVERNMENT').text)
+        self.industry = float(elem.find('INDUSTRY').text)
+        self.public = float(elem.find('PUBLIC').text)
+
+
+Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
+IssueOption = namedtuple('IssueOption', ('text accept'))
+
+# TODO gavote, scvote
 
 

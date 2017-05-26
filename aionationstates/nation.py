@@ -5,9 +5,9 @@ from contextlib import suppress
 from functools import partial
 
 from aionationstates.utils import normalize
+from aionationstates.types import Freedom, FreedomScores, Govt, Sectors
 from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import Census, GeneralCases
-from aionationstates.request import ApiRequest
 
 
 class Nation(Census, GeneralCases, Session):
@@ -57,109 +57,82 @@ class Nation(Census, GeneralCases, Session):
     def poorest(self): return self._int_case('poorest')
     def richest(self): return self._int_case('richest')
 
+    def wa(self):
+        def result(root):
+            return root.find('UNSTATUS').text == 'WA Member'
+        return self._compose_api_request(q='wa', result=result)
 
-    def _parse(self, root, args):
-        """Parse the NationStates API data. Accepts an elementtree and a set,
-        returns a generator of (key, value) tuples.
-                
-        Inconsistencies:
-            * banner was removed, use banners and indexing.
-        """
-        yield from super()._parse(root, args)
-        
-        if 'wa' in args:
-            yield ('wa', root.find('UNSTATUS').text == 'WA Member')
-            
-        if 'banners' in args:
-            banners = root.find('BANNERS')
-            yield (
-                'banners',
-                [f'{NS_URL}images/banners/{elem.text}.jpg' for elem in banners]
-            )
+    def banners(self):
+        def result(root):
+            return [
+                f'{NS_URL}images/banners/{elem.text}.jpg'
+                for elem in root.find('BANNERS')
+            ]
+        return self._compose_api_request(q='banners', result=result)
 
-        if 'freedom' in args:
-            freedom = root.find('FREEDOM')
-            yield ('freedom', Freedom(
-                civilrights=freedom.find('CIVILRIGHTS').text,
-                economy=freedom.find('ECONOMY').text,
-                politicalfreedom=freedom.find('POLITICALFREEDOM').text
-            ))
-        
-        if 'freedomscores' in args:
-            freedomscores = root.find('FREEDOMSCORES')
-            yield ('freedomscores', Freedom(
-                civilrights=int(freedomscores.find('CIVILRIGHTS').text),
-                economy=int(freedomscores.find('ECONOMY').text),
-                politicalfreedom=int(freedomscores.find('POLITICALFREEDOM').text)
-            ))
-        
-        if 'govt' in args:
-            govt = root.find('GOVT')
-            yield ('govt', Govt(
-                administration=float(govt.find('ADMINISTRATION').text),
-                defence=float(govt.find('DEFENCE').text),
-                education=float(govt.find('EDUCATION').text),
-                environment=float(govt.find('ENVIRONMENT').text),
-                healthcare=float(govt.find('HEALTHCARE').text),
-                commerce=float(govt.find('COMMERCE').text),
-                internationalaid=float(govt.find('INTERNATIONALAID').text),
-                lawandorder=float(govt.find('LAWANDORDER').text),
-                publictransport=float(govt.find('PUBLICTRANSPORT').text),
-                socialequality=float(govt.find('SOCIALEQUALITY').text),
-                spirituality=float(govt.find('SPIRITUALITY').text),
-                welfare=float(govt.find('WELFARE').text)
-            ))
-        
-        if 'deaths' in args:
-            yield (
-                'deaths',
-                {elem.get('type'): float(elem.text)
-                 for elem in root.find('DEATHS')}
-            )
-        
-        if 'endorsements' in args:
-            endorsements = root.find('ENDORSEMENTS')
-            if endorsements.text:
-                yield ('endorsements', endorsements.text.split(','))
-            else:
-                yield ('endorsements', ())
-        
-        if 'legislation' in args:
-            yield (
-                'legislation',
-                [elem.text for elem in root.find('LEGISLATION')]
-            )
-        
-        if 'sectors' in args:
-            sectors = root.find('SECTORS')
-            yield ('sectors', Sectors(
-                blackmarket=float(sectors.find('BLACKMARKET').text),
-                government=float(sectors.find('GOVERNMENT').text),
-                industry=float(sectors.find('INDUSTRY').text),
-                public=float(sectors.find('PUBLIC').text)
-            ))
+    def freedom(self):
+        return self._compose_api_request(
+            q='freedom',
+            result=lambda root: Freedom(root.find('FREEDOM')))
 
-    async def verify(self, checksum, *, token=None):
-        if not re.match('^[a-zA-Z0-9_-]{43}$', checksum):
-            return False
-        params = {
-            'a': 'verify',
-            'nation': self.name,
-            'checksum': checksum
-        }
+    def freedomscores(self):
+        return self._compose_api_request(
+            q='freedomscores',
+            result=lambda root: Freedom(root.find('FREEDOMSCORES')))
+
+    def govt(self):
+        return self._compose_api_request(
+            q='govt',
+            result=lambda root: Govt(root.find('GOVT')))
+
+    def deaths(self):
+        def result(root):
+            return {
+                elem.get('type'): float(elem.text)
+                for elem in root.find('DEATHS')
+            }
+        return self._compose_api_request(q='deaths', result=result)
+
+    def endorsements(self):
+        def result(root):
+            elem = root.find('ENDORSEMENTS')
+            return elem.text.split(',') if elem.text else ()
+        return self._compose_api_request(q='endorsements', result=result)
+
+    def legislation(self):
+        def result(root):
+            return [elem.text for elem in root.find('LEGISLATION')]
+        return self._compose_api_request(q='legislation', result=result)
+
+    def sectors(self):
+        return self._compose_api_request(
+            q='sectors',
+            result=lambda root: Sectors(root.find('SECTORS')))
+
+    def dispatchlist(self):
+        def result(root):
+            return [
+                DispatchThumbnail(elem)
+                for elem in root.find('DISPATCHLIST')
+            ]
+        return self._compose_api_request(q='dispatchlist', result=result)
+
+    def verify(self, checksum, *, token=None):
+        params = {'a': 'verify', 'checksum': checksum}
         if token:
             params['token'] = token
-        return await self.call_api(params=params).text == '1\n'
+        return self._compose_api_request(
+            # Needed so that we get output in xml, as opposed to
+            # plain text. It doesn't actually matter what the
+            # q param is, it's just important that it's not empty.
+            q='i_need_the_output_in_xml',
+            params=params,
+            result=lambda root: bool(int(root.find('VERIFY'))))
 
     def verification_url(self, *, token=None):
         if token:
             return f'{NS_URL}page=verify_login?token={token}'
         return f'{NS_URL}page=verify_login'
-
-    def dispatchlist(self, **kwargs):
-        return super().dispatchlist(author=self.name, **kwargs)
-
-
 
 
 class NationControl(AuthSession, Nation):
@@ -178,7 +151,7 @@ class NationControl(AuthSession, Nation):
         match = re.search(reg, resp.text.replace('\n', ''))
         with suppress(AttributeError):
             return match.group(1)
-    
+
     async def _dismiss_issue(self, issue_id):
         await self.call_web(
             f'page=dilemmas/dismiss={issue_id}',
