@@ -1,4 +1,4 @@
-# TODO slots?
+# TODO slots
 
 from contextlib import suppress
 from collections import namedtuple
@@ -142,6 +142,34 @@ class Sectors:
 
 Issue = namedtuple('Issue', ('id title author editor text options dismiss'))
 IssueOption = namedtuple('IssueOption', ('text accept'))
+
+class IssueOption:
+    def __init__(self, elem, issue):
+        self._issue = issue
+        self.id = int(option.get('id'))
+        self.text = option.text
+
+    def accept(self):
+        return self._issue._nation._accept_issue(self._issue.id, self.id)
+
+
+class Issue:
+    def __init__(self, elem, nation):
+        self._nation = nation
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.text = elem.find('TEXT').text
+        self.author = getattr(elem.find('AUTHOR'), 'text', None)
+        self.editor = getattr(elem.find('EDITOR'), 'text', None)
+        self.options = [
+            IssueOption(sub_elem)
+            for sub_elem in elem.findall('OPTION')
+        ]
+
+    def dismiss(self):
+        return self._nation._dismiss_issue(self.id)
+
+
 
 # TODO gavote, scvote
 

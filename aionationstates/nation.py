@@ -136,8 +136,13 @@ class Nation(Census, GeneralCases, Session):
 
 
 class NationControl(AuthSession, Nation):
+    def issues(self):
+        def result(root):
+            return [Issue(elem) for elem in root.find('ISSUES')]
+        return self._compose_api_request(q='issues', result=result)
+
     async def _accept_issue(self, issue_id, option_id):
-        resp = await self.call_web(
+        resp = await self._call_web(
             f'page=enact_dilemma/dilemma={issue_id}',
             method='POST', data={f'choice-{option_id}': '1'}
         )
@@ -153,41 +158,10 @@ class NationControl(AuthSession, Nation):
             return match.group(1)
 
     async def _dismiss_issue(self, issue_id):
-        await self.call_web(
+        await self._call_web(
             f'page=dilemmas/dismiss={issue_id}',
             method='POST', data={'choice--1': '1'}
         )
 
-    def _parse(self, root, args):
-        yield from super()._parse(root, args)
-        if 'issues' in args:
-            yield (
-                'issues',
-                [
-                    Issue(
-                        id=int(issue.get('id')),
-                        title=issue.find('TITLE').text,
-                        text=issue.find('TEXT').text,
-                        author=getattr(issue.find('AUTHOR'), 'text', None),
-                        editor=getattr(issue.find('EDITOR'), 'text', None),
-                        options=[
-                            IssueOption(
-                                text=option.text,
-                                accept=partial(
-                                    self._accept_issue,
-                                    issue.get('id'),
-                                    option.get('id')
-                                )
-                            )
-                            for option in issue.findall('OPTION')
-                        ],
-                        dismiss=partial(
-                            self._dismiss_issue,
-                            issue.get('id')
-                        )
-                    )
-                    for issue in root.find('ISSUES')
-                ]
-            )
 
 
