@@ -3,6 +3,9 @@
 from contextlib import suppress
 from collections import namedtuple
 from html import unescape
+from enum import Flag, Enum, auto
+from functools import reduce, total_ordering
+from operator import or_
 
 from aionationstates.ns_to_human import census_info
 
@@ -197,6 +200,92 @@ class Issue:
 
 
 
+class OfficerAuthority(Flag):
+    EXECUTIVE      = X = auto()
+    WORLD_ASSEMBLY = W = auto()
+    APPEARANCE     = A = auto()
+    BORDER_CONTROL = B = auto()
+    COMMUNICATIONS = C = auto()
+    EMBASSIES      = E = auto()
+    POLLS          = P = auto()
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}.{self.name}>'
+
+def _officer_auth(string):
+    """This is he best way I could find to make Flag enums work with
+    individual characters as flags.
+    """
+    reduce(or_, (OfficerAuthority[char] for char in string))
+
+
+class Officer:
+    def __init__(self, elem):
+        self.nation = elem.find('NATION').text
+        self.office = elem.find('OFFICE').text
+        self.authority = _officer_auth(elem.find('AUTHORITY').text)
+        self.time = self.appointed_at = int(elem.find('TIME').text)
+        self.by = self.appointed_by = elem.find('BY').text
+        self.order = int(elem.find('ORDER').text) # XXX what does this value even mean?
+
+
+
+@total_ordering
+class _EmbassyPostingRightsParent(Enum):
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+EmbassyPostingRights = _EmbassyPostingRightsParent(
+    value='EmbassyPostingRights',
+    names=(
+        ('NOBODY',                  1),
+        # Why must you be like this NS? Why?
+        # Could you not have gone for 'none'? 'dis'? 'zero'?
+        # Why does it have to be '0'? Why?
+        ('0',                       1),
+        # '0' is not a valid identifier, and we need the values as
+        # integers for comparison operations to work.
+        # *sigh*
+        ('DELEGATES_AND_FOUNDERS',  2),
+        ('con',                     2),
+        ('COMMUNICATIONS_OFFICERS', 3),
+        ('com',                     3),
+        ('OFFICERS',                4),
+        ('off',                     4),
+        ('EVERYBODY',               5),
+        ('all',                     5),
+    )
+)
+
+
+
+class PostStatus(Enum):
+    NORMAL     = 0
+    SUPPRESSED = 1
+    DELETED    = 2
+    MODERATED  = 9
+    @property
+    def viewable(self):
+        return self.value in (0, 1)
+
+
+class Post:
+    def __init__(self, elem):
+        self.id = int(elem.get('id'))
+        self.timestamp = int(elem.find('TIMESTAMP').text)
+        self.nation = self.author = elem.find('NATION').text
+        self.status = PostStatus(int(elem.find('STATUS').text))
+        self.message = self.text = elem.find('MESSAGE').text
+
+        likers_elem = elem.find('LIKERS')
+        self.likers = likers_elem.text.split(':') if likers_elem else ()
+        suppressor_elem = elem.find('SUPPRESSOR')
+        self.suppressor = suppressor_elem.text if suppressor else None
+
+
 # TODO gavote, scvote
+
 
 
