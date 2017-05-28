@@ -34,7 +34,11 @@ class NationStatesHTMLMess:
         return unescape(re.sub('<.+?>', '', self.raw))
 
     def md(self):
-        return unescape(self.raw.replace('<i>', '*').replace('</i>', '*'))
+        return unescape(
+            self.raw
+            .replace('<i>', '*').replace('</i>', '*')
+            .replace('<strong>', '**').replace('</strong>', '**')
+        )
 
 
 class CensusScale:
@@ -199,6 +203,20 @@ class Issue:
         return self._nation._dismiss_issue(self.id)
 
 
+class Embassies:
+    def __init__(self, elem):
+        # I know I'm iterating through them five times; I don't care.
+        self.active = [sub_elem.text for sub_elem in elem
+                       if sub_elem.get('type') is None]
+        self.closing = [sub_elem.text for sub_elem in elem
+                        if sub_elem.get('type') == 'closing']
+        self.pending = [sub_elem.text for sub_elem in elem
+                        if sub_elem.get('type') == 'pending']
+        self.invited = [sub_elem.text for sub_elem in elem
+                        if sub_elem.get('type') == 'invited']
+        self.rejected = [sub_elem.text for sub_elem in elem
+                         if sub_elem.get('type') == 'rejected']
+
 
 class OfficerAuthority(Flag):
     EXECUTIVE      = X = auto()
@@ -219,14 +237,22 @@ def _officer_auth(string):
     reduce(or_, (OfficerAuthority[char] for char in string))
 
 
-class Officer:
+class RegionalOfficer:
+    def __init__(self, *, nation, authority, office):
+        # Not using elem here because founder/delegate stuff is spread
+        # across multiple shards.
+        self.nation = nation
+        self.office = office
+        self.authority = _officer_auth(authority)
+
+
+class AppointedRegionalOfficer(RegionalOfficer):
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
         self.authority = _officer_auth(elem.find('AUTHORITY').text)
         self.time = self.appointed_at = int(elem.find('TIME').text)
         self.by = self.appointed_by = elem.find('BY').text
-        self.order = int(elem.find('ORDER').text) # XXX what does this value even mean?
 
 
 

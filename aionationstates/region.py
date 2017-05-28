@@ -1,43 +1,88 @@
 from collections import namedtuple
 
 from aionationstates.utils import normalize
-from aionationstates.shards import CensusShard, StandardShardCases
+from aionationstates.types import EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer, Embassies
+from aionationstates.session import Session
+from aionationstates.shards import Census, GeneralCases
 
 
-# TODO: officer authority
-Officer = namedtuple('Officer', 'nation office authority time by order')
+class Region(Census, GeneralCases, Session):
+    def __init__(self, id):
+        self.id = normalize(id)
 
-class Region(CensusShard, StandardShardCases):
-    def __init__(self, name):
-        self.name = normalize(name)
+    def call_api(self, params, *args, **kwargs):
+        params['region'] = self.id
+        return super().call_api(*args, params=params, **kwargs)
 
-    def _url_transform(self, params):
-        super()._url_transform(params)
-        params['region'] = self.name
+    def name(self): return self._str_case('name')
+    def flag(self): return self._str_case('flag')
+    def founded(self): return self._str_case('founded')
+    def factbook(self): return self._str_case('factbook')
+    def power(self): return self._str_case('power')
 
-    STR_CASES = {
-        'name', 'flag', 'founded', 'gavote', 'scvote', 'delegate', 'founder',
-        'factbook', 'embassyrmb', 'power', 'founderauth', 'delegateauth'
-    }
-    INT_CASES = {'foundedtime', 'delegatevotes', 'numnations'}
-    LIST_CASES = {'nations'}
+    def foundedtime(self): return self._int_case('foundedtime')
+    def delegatevotes(self): return self._int_case('delegatevotes')
+    def numnations(self): return self._int_case('numnations')
+    population = numnations
 
-    def _parse(self, root, args):
-        yield from super()._parse(root, args)
-        if 'officers' in args:
-            yield (
-                'officers',
-                [Officer(
-                     nation=officer.find('NATION').text,
-                     office=officer.find('OFFICE').text,
-                     authority=officer.find('AUTHORITY').text,
-                     time=int(officer.find('TIME').text),
-                     by=officer.find('BY').text,
-                     order=int(officer.find('ORDER').text)
-                 )
-                 for officer in root.find('OFFICERS')]
+    def nations(self):
+        def result(root):
+            text = root.find('NATIONS').text
+            return text.split(':') if text else ()
+        return self._compose_api_request(q='nations', result=result)
+
+    def embassies(self):
+        def result(root):
+            Embassies(root.find('EMBASSIES'))
+        return self._compose_api_request(q='embassies', result=result)
+
+    def embassyrmb(self):
+        def result(root):
+            EmbassyPostingRights[root.find('EMBASSYRMB')]
+        return self._compose_api_request(q='embassyrmb', result=result)
+
+    def delegate(self):
+        def result(root):
+            nation = root.find('DELEGATE').text
+            if nation == '0':  # No delegate
+                return None
+            return RegionalOfficer(
+                nation=nation,
+                authority=root.find('DELEGATEAUTH').text,
+                office='WA Delegate'
             )
-        
-        # TODO: embassies, history, messages, tags
+        return self._compose_api_request(
+            q='delegate+delegateauth',  # TODO better API for this sorta things
+            result=result
+        )
+
+    def founder(self):
+        def result(root):
+            nation = root.find('FOUNDER').text
+            if nation == '0':  # No founder, it's a GCR
+                return None
+            return RegionalOfficer(
+                nation=nation,
+                authority=root.find('FOUNDERAUTH').text,
+                office='Founder'
+            )
+        return self._compose_api_request(
+            q='founder+founderauth',    # TODO better API for this sorta things
+            result=result
+        )
+
+    def officers(self):
+        def result(root):
+            officers = sorted(root.find('OFFICERS'),
+                              key=lambda elem: int(elem.find('ORDER').text))
+            return [AppointedRegionalOfficer(elem) for elem in officers]
+        return self._compose_api_request(q='officers', result=result)
+
+    def tags(self):
+        def result(root):
+            return [elem.text for elem in root.find('TAGS')]
+        return self._compose_api_request(q='tags', result=result)
+
+    # TODO: history, messages
 
 
