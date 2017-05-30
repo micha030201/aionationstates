@@ -10,9 +10,9 @@ class Region(Census, GeneralCases, Session):
     def __init__(self, id):
         self.id = normalize(id)
 
-    def call_api(self, params, *args, **kwargs):
+    def _call_api(self, params, *args, **kwargs):
         params['region'] = self.id
-        return super().call_api(*args, params=params, **kwargs)
+        return super()._call_api(*args, params=params, **kwargs)
 
     def name(self): return self._str_case('name')
     def flag(self): return self._str_case('flag')

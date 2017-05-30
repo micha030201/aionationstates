@@ -1,7 +1,7 @@
 """Interfaces to shards shared between APIs. Designed to be mixed in
 with Session, otherwise useless."""
 
-# TODO: happenings (region history as well?), poll, censusranks, wabadges, zombie
+# TODO: happenings (region history as well?), poll, censusranks, wabadges
 
 
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory

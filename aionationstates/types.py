@@ -157,18 +157,18 @@ class FreedomScores:
 
 class Govt:
     def __init__(self, elem):
-        self.administration = float(govt.find('ADMINISTRATION').text)
-        self.defence = float(govt.find('DEFENCE').text)
-        self.education = float(govt.find('EDUCATION').text)
-        self.environment = float(govt.find('ENVIRONMENT').text)
-        self.healthcare = float(govt.find('HEALTHCARE').text)
-        self.commerce = float(govt.find('COMMERCE').text)
-        self.internationalaid = float(govt.find('INTERNATIONALAID').text)
-        self.lawandorder = float(govt.find('LAWANDORDER').text)
-        self.publictransport = float(govt.find('PUBLICTRANSPORT').text)
-        self.socialequality = float(govt.find('SOCIALEQUALITY').text)
-        self.spirituality = float(govt.find('SPIRITUALITY').text)
-        self.welfare = float(govt.find('WELFARE').text)
+        self.administration = float(elem.find('ADMINISTRATION').text)
+        self.defence = float(elem.find('DEFENCE').text)
+        self.education = float(elem.find('EDUCATION').text)
+        self.environment = float(elem.find('ENVIRONMENT').text)
+        self.healthcare = float(elem.find('HEALTHCARE').text)
+        self.commerce = float(elem.find('COMMERCE').text)
+        self.internationalaid = float(elem.find('INTERNATIONALAID').text)
+        self.lawandorder = float(elem.find('LAWANDORDER').text)
+        self.publictransport = float(elem.find('PUBLICTRANSPORT').text)
+        self.socialequality = float(elem.find('SOCIALEQUALITY').text)
+        self.spirituality = float(elem.find('SPIRITUALITY').text)
+        self.welfare = float(elem.find('WELFARE').text)
 
 
 class Sectors:

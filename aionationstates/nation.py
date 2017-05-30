@@ -14,9 +14,9 @@ class Nation(Census, GeneralCases, Session):
     def __init__(self, id):
         self.id = normalize(id)
 
-    def call_api(self, params, *args, **kwargs):
+    def _call_api(self, params, **kwargs):
         params['nation'] = self.id
-        return super().call_api(*args, params=params, **kwargs)
+        return super()._call_api(params, **kwargs)
 
     def name(self): return self._str_case('name')
     def type(self): return self._str_case('type')
@@ -56,17 +56,17 @@ class Nation(Census, GeneralCases, Session):
     def founded(self):
         return self._compose_api_request(
             q='foundedtime',
-            result=lambda root: timestamp(root.find('FOUNDEDTIME')))
+            result=lambda root: timestamp(root.find('FOUNDEDTIME').text))
 
     def firstlogin(self):
         return self._compose_api_request(
             q='firstlogin',
-            result=lambda root: timestamp(root.find('FIRSTLOGIN')))
+            result=lambda root: timestamp(root.find('FIRSTLOGIN').text))
 
     def lastlogin(self):
         return self._compose_api_request(
             q='lastlogin',
-            result=lambda root: timestamp(root.find('LASTLOGIN')))
+            result=lambda root: timestamp(root.find('LASTLOGIN').text))
 
     def wa(self):
         def result(root):
@@ -89,7 +89,7 @@ class Nation(Census, GeneralCases, Session):
     def freedomscores(self):
         return self._compose_api_request(
             q='freedomscores',
-            result=lambda root: Freedom(root.find('FREEDOMSCORES')))
+            result=lambda root: FreedomScores(root.find('FREEDOMSCORES')))
 
     def govt(self):
         return self._compose_api_request(
@@ -143,7 +143,7 @@ class Nation(Census, GeneralCases, Session):
             # q param is, it's just important that it's not empty.
             q='i_need_the_output_in_xml',
             params=params,
-            result=lambda root: bool(int(root.find('VERIFY'))))
+            result=lambda root: bool(int(root.find('VERIFY').text)))
 
     def verification_url(self, *, token=None):
         if token:

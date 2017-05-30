@@ -107,7 +107,7 @@ class Session:  # TODO self._useragent
             raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
 
-    def _compose_api_call(self, *, result, q, params=None):
+    def _compose_api_request(self, *, result, q, params=None):
         return ApiRequest(session=self, q=q, params=params, result=result)
 
 
