@@ -33,7 +33,7 @@ class AuthenticationError(Exception):
     pass
 
 
-class SuddenlyNationstates(Exception):  # TODO: move to another submodule?
+class SuddenlyNationstates(Exception):  # TODO: move to another submodule
     pass
 
 
@@ -55,6 +55,7 @@ class ApiRequest:
         return results[0] if len(results) == 1 else results
 
     def __add__(self, other):
+        assert self.session is other.session
         assert len(self.q & other.q) == 0  # TODO better errors
         assert len(set(self.params) & set(other.params)) == 0
 
