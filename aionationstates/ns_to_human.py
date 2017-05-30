@@ -1,4 +1,44 @@
+"""Contains impractical to obtain otherwise static data about NationStates."""
+
 from collections import namedtuple
+
+
+dispatch_categories = {
+    'Factbook': (
+        'Overview',
+        'History',
+        'Geography',
+        'Culture',
+        'Politics',
+        'Legislation',
+        'Religion',
+        'Military',
+        'Economy',
+        'International',
+        'Trivia',
+        'Miscellaneous',
+    ),
+    'Bulletin': (
+        'Policy',
+        'News',
+        'Opinion',
+        'Campaign',
+    ),
+    'Account': (
+        'Military',
+        'Trade',
+        'Sport',
+        'Drama',
+        'Diplomacy',
+        'Science',
+        'Culture',
+        'Other',
+    ),
+    'Meta': (
+        'Gameplay',
+        'Reference',
+    ),
+}
 
 
 ScaleInfo = namedtuple('ScaleInfo', ('id title ranked gradation image'
