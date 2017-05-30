@@ -1,10 +1,9 @@
 """Interfaces to shards shared between APIs. Designed to be mixed in
 with Session, otherwise useless."""
 
-# TODO: happenings (region history as well?), nations, poll, censusranks, wabadges, zombie
+# TODO: happenings (region history as well?), poll, censusranks, wabadges, zombie
 
 
-from aionationstates.request import ApiRequest
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
 
 
@@ -24,33 +23,29 @@ class GeneralCases:
 
 
 class Census:
-    """
-    Inconsistencies:
-        census with mode=history was renamed to censushistory.
-    """
     def census(self, scale=None):
+        def result(root):
+            return [
+                CensusScaleCurrent(scale_elem)
+                for scale_elem in root.find('CENSUS')
+            ]
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scale:
             params['scale'] = _scale_to_str(scale)
-        return ApiRequest(
-            session=self,
-            q='census',
-            params=params,
-            result=(lambda root: [CensusScaleCurrent(scale_elem)
-                                  for scale_elem in root.find('CENSUS')])
-        )
+        return self._compose_api_request(
+            q='census', params=params, result=result)
 
-    def censushistory(self):
+    def censushistory(self, scale=None):
+        def result(root):
+            return [
+                CensusScaleHistory(scale_elem)
+                for scale_elem in root.find('CENSUS')
+            ]
         params = {'mode': 'history'}
         if scale:
             params['scale'] = _scale_to_str(scale)
-        return ApiRequest(
-            session=self,
-            q='census',
-            params=params,
-            result=(lambda root: [CensusScaleHistory(point_elem)
-                                  for scale_elem in root.find('CENSUS')])
-        )
+        return self._compose_api_request(
+            q='census', params=params, result=result)
 
 
 def _scale_to_str(self, scale):
