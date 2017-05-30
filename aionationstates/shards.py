@@ -35,7 +35,7 @@ class Census:
         return self._compose_api_request(
             q='census', params=params, result=result)
 
-    def censushistory(self, scale=None):
+    def censushistory(self, scale=None):  # TODO to, from?
         def result(root):
             return [
                 CensusScaleHistory(scale_elem)
@@ -48,7 +48,7 @@ class Census:
             q='census', params=params, result=result)
 
 
-def _scale_to_str(self, scale):
+def _scale_to_str(scale):
     if type(scale) is str:
         return scale
     elif type(scale) is int:
