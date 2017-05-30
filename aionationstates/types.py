@@ -316,6 +316,27 @@ class Post:
         self.suppressor = suppressor_elem.text if suppressor else None
 
 
+
+class ZombieAction(Enum):
+    EXTERMINATE = 'exterminate'
+    RESEARCH = 'research'
+    EXPORT = 'export'
+
+
+class RegionZombie:
+    def __init__(self, elem):
+        self.survivors = int(elem.find('SURVIVORS').text)
+        self.zombies = int(elem.find('ZOMBIES').text)
+        self.dead = int(elem.find('DEAD').text)
+
+
+class NationZombie(RegionZombie):
+    def __init__(self, elem):
+        super().__init__(elem)
+        action = elem.find('ZACTION').text
+        self.action = ZombieAction(action) if action else None
+
+
 # TODO gavote, scvote
 
 

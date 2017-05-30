@@ -1,7 +1,7 @@
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer,
-    Embassies)
+    Embassies, RegionZombie)
 from aionationstates.session import Session
 from aionationstates.shards import Census, GeneralCases
 
@@ -85,6 +85,11 @@ class Region(Census, GeneralCases, Session):
         def result(root):
             return [elem.text for elem in root.find('TAGS')]
         return self._compose_api_request(q='tags', result=result)
+
+    def zombie(self):
+        return self._compose_api_request(
+            q='zombie',
+            result=lambda root: RegionZombie(root.find('ZOMBIE')))
 
     # TODO: history, messages
 

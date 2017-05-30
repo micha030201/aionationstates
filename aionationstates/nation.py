@@ -5,7 +5,7 @@ from contextlib import suppress
 from functools import partial
 
 from aionationstates.utils import normalize, timestamp
-from aionationstates.types import Freedom, FreedomScores, Govt, Sectors
+from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie
 from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import Census, GeneralCases
 
@@ -127,6 +127,11 @@ class Nation(Census, GeneralCases, Session):
                 for elem in root.find('DISPATCHLIST')
             ]
         return self._compose_api_request(q='dispatchlist', result=result)
+
+    def zombie(self):
+        return self._compose_api_request(
+            q='zombie',
+            result=lambda root: NationZombie(root.find('ZOMBIE')))
 
     def verify(self, checksum, *, token=None):
         params = {'a': 'verify', 'checksum': checksum}
