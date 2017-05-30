@@ -1,7 +1,7 @@
-from collections import namedtuple
-
-from aionationstates.utils import normalize
-from aionationstates.types import EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer, Embassies
+from aionationstates.utils import normalize, timestamp
+from aionationstates.types import (
+    EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer,
+    Embassies)
 from aionationstates.session import Session
 from aionationstates.shards import Census, GeneralCases
 
@@ -16,14 +16,17 @@ class Region(Census, GeneralCases, Session):
 
     def name(self): return self._str_case('name')
     def flag(self): return self._str_case('flag')
-    def founded(self): return self._str_case('founded')
     def factbook(self): return self._str_case('factbook')
     def power(self): return self._str_case('power')
 
-    def foundedtime(self): return self._int_case('foundedtime')
     def delegatevotes(self): return self._int_case('delegatevotes')
     def numnations(self): return self._int_case('numnations')
-    population = numnations
+    population = numnations  # TODO it this necessary?
+
+    def founded(self):
+        return self._compose_api_request(
+            q='foundedtime',
+            result=lambda root: timestamp(root.find('FOUNDEDTIME')))
 
     def nations(self):
         def result(root):

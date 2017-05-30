@@ -7,7 +7,11 @@ from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
 
+from aionationstates.utils import timestamp
 from aionationstates.ns_to_human import census_info
+
+
+# TODO BBCode class
 
 
 class NationStatesHTMLMess:
@@ -70,7 +74,7 @@ class CensusScaleCurrent(CensusScale):
 class CensusPoint:
     def __init__(self, elem):
         super().__init__(elem)
-        self.timestamp = int(elem.find('TIMESTAMP').text)
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
         self.score = float(elem.find('SCORE').text)
 
     def __repr__(self):
@@ -94,8 +98,8 @@ class DispatchThumbnail:
         self.author = elem.find('AUTHOR').text
         self.category = elem.find('CATEGORY').text
         self.subcategory = elem.find('SUBCATEGORY').text
-        self.created = int(elem.find('CREATED').text)
-        self.edited = int(elem.find('EDITED').text)
+        self.created = timestamp(elem.find('CREATED').text)
+        self.edited = timestamp(elem.find('EDITED').text)
         self.views = int(elem.find('VIEWS').text)
         self.score = int(elem.find('SCORE').text)
 
@@ -127,8 +131,8 @@ class Poll:
         self.text = NationStatesHTMLMess(elem.find('TEXT').text)
         self.region = elem.find('REGION').text
         self.author = elem.find('AUTHOR').text
-        self.start = int(elem.find('START').text)
-        self.stop = int(elem.find('STOP').text)
+        self.start = timestamp(elem.find('START').text)
+        self.stop = timestamp(elem.find('STOP').text)
         self.options = [PollOption(option_elem)
                         for option_elem in elem.find('OPTIONS')]
 
@@ -218,6 +222,7 @@ class Embassies:
                          if sub_elem.get('type') == 'rejected']
 
 
+
 class OfficerAuthority(Flag):
     EXECUTIVE      = X = auto()
     WORLD_ASSEMBLY = W = auto()
@@ -251,7 +256,7 @@ class AppointedRegionalOfficer(RegionalOfficer):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
         self.authority = _officer_auth(elem.find('AUTHORITY').text)
-        self.time = self.appointed_at = int(elem.find('TIME').text)
+        self.time = self.appointed_at = timestamp(elem.find('TIME').text)
         self.by = self.appointed_by = elem.find('BY').text
 
 
@@ -300,7 +305,7 @@ class PostStatus(Enum):
 class Post:
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.timestamp = int(elem.find('TIMESTAMP').text)
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
         self.nation = self.author = elem.find('NATION').text
         self.status = PostStatus(int(elem.find('STATUS').text))
         self.message = self.text = elem.find('MESSAGE').text

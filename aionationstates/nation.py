@@ -4,7 +4,7 @@ from collections import namedtuple
 from contextlib import suppress
 from functools import partial
 
-from aionationstates.utils import normalize
+from aionationstates.utils import normalize, timestamp
 from aionationstates.types import Freedom, FreedomScores, Govt, Sectors
 from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import Census, GeneralCases
@@ -32,7 +32,7 @@ class Nation(Census, GeneralCases, Session):
     def flag(self): return self._str_case('flag')
     def majorindustry(self): return self._str_case('majorindustry')
     def govtpriority(self): return self._str_case('govtpriority')
-    def lastactivity(self): return self._str_case('lastactivity')
+    def lastactivity(self): return self._str_case('lastactivity')  # TODO there's no timestamp; decide
     def influence(self): return self._str_case('influence')
     def leader(self): return self._str_case('leader')
     def capital(self): return self._str_case('capital')
@@ -40,22 +40,33 @@ class Nation(Census, GeneralCases, Session):
     def admirable(self): return self._str_case('admirable')
     def animaltrait(self): return self._str_case('animaltrait')
     def crime(self): return self._str_case('crime')
-    def founded(self): return self._str_case('founded')
     def govtdesc(self): return self._str_case('govtdesc')
     def industrydesc(self): return self._str_case('industrydesc')
     def notable(self): return self._str_case('notable')
     def sensibilities(self): return self._str_case('sensibilities')
 
     def population(self): return self._int_case('population')
-    def firstlogin(self): return self._int_case('firstlogin')
-    def lastlogin(self): return self._int_case('lastlogin')
     def factbooks(self): return self._int_case('factbooks')
     def dispatches(self): return self._int_case('dispatches')
-    def foundedtime(self): return self._int_case('foundedtime')
     def gdp(self): return self._int_case('gdp')
     def income(self): return self._int_case('income')
     def poorest(self): return self._int_case('poorest')
     def richest(self): return self._int_case('richest')
+
+    def founded(self):
+        return self._compose_api_request(
+            q='foundedtime',
+            result=lambda root: timestamp(root.find('FOUNDEDTIME')))
+
+    def firstlogin(self):
+        return self._compose_api_request(
+            q='firstlogin',
+            result=lambda root: timestamp(root.find('FIRSTLOGIN')))
+
+    def lastlogin(self):
+        return self._compose_api_request(
+            q='lastlogin',
+            result=lambda root: timestamp(root.find('LASTLOGIN')))
 
     def wa(self):
         def result(root):
@@ -95,8 +106,8 @@ class Nation(Census, GeneralCases, Session):
 
     def endorsements(self):
         def result(root):
-            elem = root.find('ENDORSEMENTS')
-            return elem.text.split(',') if elem.text else ()
+            text = root.find('ENDORSEMENTS').text
+            return text.split(',') if text else ()
         return self._compose_api_request(q='endorsements', result=result)
 
     def legislation(self):
