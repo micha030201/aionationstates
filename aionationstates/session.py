@@ -55,9 +55,13 @@ class ApiRequest:
         return results[0] if len(results) == 1 else results
 
     def __add__(self, other):
-        assert self.session is other.session
-        assert len(self.q & other.q) == 0  # TODO better errors
-        assert len(set(self.params) & set(other.params)) == 0
+        if self.session is not other.session:
+            raise ValueError('ApiRequests do not share the same session')
+        if not len(self.q & other.q) == 0:
+            raise ValueError('ApiRequests contain the same query')
+        if not len(set(self.params) & set(other.params)) == 0:
+            # XXX is this actually necessary?
+            raise ValueError('ApiRequests contain conflicting params')
 
         self.q |= other.q
         self.params.update(other.params)
