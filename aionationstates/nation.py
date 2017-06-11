@@ -1,11 +1,9 @@
-import re
 from functools import partial
-from collections import namedtuple
 from contextlib import suppress
 from functools import partial
 
-from aionationstates.utils import normalize, timestamp
-from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie
+from aionationstates.utils import normalize, timestamp, banner_url
+from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie, Issue, IssueResult
 from aionationstates.session import Session, AuthSession, NS_URL, SuddenlyNationstates
 from aionationstates.shards import Census, GeneralCases
 
@@ -21,7 +19,7 @@ class Nation(Census, GeneralCases, Session):
     def name(self): return self._str_case('name')
     def type(self): return self._str_case('type')
     def fullname(self): return self._str_case('fullname')
-    def motto(self): return self._str_case('motto')
+    def motto(self): return self._str_case('motto')  # TODO encoding mess
     def category(self): return self._str_case('category')
     def region(self): return self._str_case('region')
     def animal(self): return self._str_case('animal')
@@ -76,7 +74,7 @@ class Nation(Census, GeneralCases, Session):
     def banners(self):
         def result(root):
             return [
-                f'{NS_URL}images/banners/{elem.text}.jpg'
+                banner_url(elem.text)
                 for elem in root.find('BANNERS')
             ]
         return self._compose_api_request(q='banners', result=result)
@@ -152,32 +150,23 @@ class Nation(Census, GeneralCases, Session):
 
 
 class NationControl(AuthSession, Nation):
+    def _call_api_command(self, data, **kwargs):
+        data['nation'] = self.id
+        return super()._call_api(data, **kwargs)
+
     def issues(self):
         def result(root):
             return [Issue(elem) for elem in root.find('ISSUES')]
         return self._compose_api_request(q='issues', result=result)
 
     async def _accept_issue(self, issue_id, option_id):
-        resp = await self._call_web(
-            f'page=enact_dilemma/dilemma={issue_id}',
-            method='POST', data={f'choice-{option_id}': '1'}
-        )
-        if '<html lang="en" id="page_enact_dilemma">' not in resp.text:
-            raise SuddenlyNationstates(
-                'accepting an issue option returned the wrong page')
-        if ('<p class="error">Invalid choice '
-                '(option not available to your nation).</p>' in resp.text):
-            raise SuddenlyNationstates('option not available')
-        reg = r'<h5>The Talking Point<\/h5><p>(.+?)<'
-        match = re.search(reg, resp.text.replace('\n', ''))
-        with suppress(AttributeError):
-            return match.group(1)
-
-    async def _dismiss_issue(self, issue_id):
-        await self._call_web(
-            f'page=dilemmas/dismiss={issue_id}',
-            method='POST', data={'choice--1': '1'}
-        )
-
+        data = {
+            'c': 'issue',
+            'issue': str(issue_id),
+            'option': str(option_id)
+        }
+        resp = await self._call_api_command(data)
+        root = ET.fromstring(resp.text)
+        return IssueResult(root.find('ISSUE'))
 
 

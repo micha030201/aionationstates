@@ -7,7 +7,7 @@ from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
 
-from aionationstates.utils import timestamp
+from aionationstates.utils import timestamp, banner_url
 from aionationstates.ns_to_human import census_info
 
 
@@ -174,7 +174,65 @@ class Issue:
         ]
 
     def dismiss(self):
-        return self._nation._dismiss_issue(self.id)
+        return self._nation._accept_issue(self.id, -1)
+
+
+Reclassification = namedtuple('Reclassification', 'before after')
+
+class Reclassifications:
+    def __init__(self, elem):
+        self.civilrights = self.economy = \
+            self.politicalfreedom = self.govt = None
+        if elem is None:
+            return
+        attr_names = {
+            '0': 'civilrights',
+            '1': 'economy',
+            '2': 'politicalfreedom',
+            'govt': 'govt'
+        }
+        for sub_elem in elem:
+            setattr(
+                self, attr_names[sub_elem.get('type')],
+                Reclassification(
+                    before=sub_elem.find('FROM').text,
+                    after=sub_elem.find('TO').text
+                )
+            )
+
+
+class CensusScaleChange(CensusScale):
+    def __init__(self, elem):
+        super().__init__(elem)
+        self.score = float(elem.find('SCORE').text)  # TODO docs score *after*
+        self.change = float(elem.find('CHANGE').text)
+        self.pchange = float(elem.find('PCHANGE').text)
+
+
+class IssueResult:
+    def __init__(self, elem):
+        with suppress(AttributeError):
+            error = root.find('ERROR').text
+            if error == 'Invalid choice.':
+                raise ValueError('invalid option')
+            elif error == 'Issue already processed!':
+                # I know it may not be obvious, but that's exactly
+                # what NS is trying to say here.
+                raise ValueError('invalid issue')
+        assert elem.find('OK') == '1'  # honestly no idea
+
+        self.desc = getattr(elem.find('DESC'), 'text', None)
+        self.rankings = [
+            CensusScaleChange(sub_elem) for sub_elem
+            in elem.findall('RANKINGS') or ()
+        ]
+        self.unlocks = [
+            banner_url(sub_elem.text) for sub_elem
+            in elem.findall('UNLOCKS') or ()
+        ]
+        self.reclassifications = Reclassifications(
+            elem.find('RECLASSIFICATIONS'))
+
 
 
 class Embassies:
