@@ -89,8 +89,8 @@ class Session:  # TODO self._useragent
             )
 
     @ratelimit.api
-    async def _call_api(self, params, *, method='GET', **kwargs):
-        resp = await self._request(method, API_URL, params=params, **kwargs)
+    async def _base_call_api(self, method, **kwargs):
+        resp = await self._request(method, API_URL, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
         if resp.status == 429:
@@ -101,6 +101,12 @@ class Session:  # TODO self._useragent
         if resp.status != 200:
             raise SuddenlyNationstates(f'unexpected status code: {resp.status}')  # TODO 404 handling
         return resp
+
+    async def _call_api(self, params, **kwargs):
+        return await self._base_call_api('GET', params=params, **kwargs)
+
+    async def _call_api_command(self, data, **kwargs):
+        return await self._base_call_api('POST', data=data, **kwargs)
 
     @ratelimit.web
     async def _call_web(self, path, *, method='GET', **kwargs):
@@ -129,15 +135,15 @@ class AuthSession(Session):
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
 
-    async def _call_api(self, params, **kwargs):
+    async def _base_call_api(self, method, **kwargs):
         logger.debug(f'Making authenticated API request as {self.name} to '
-                     f'{str(params)}')
+                     f'{str(kwargs)}')
         headers = {
             'X-Password': self.password,
             'X-Autologin': self.autologin,
             'X-Pin': self.pin
         }
-        resp = await super().call_api(params, headers=headers, **kwargs)
+        resp = await super()._base_call_api(method, headers=headers, **kwargs)
         with suppress(KeyError):
             self.pin = resp.headers['X-Pin']
             logger.debug('Updating pin from API header')
@@ -148,7 +154,7 @@ class AuthSession(Session):
     async def _call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
-            await self.call_api({'nation': self.name, 'q': 'nextissue'})
+            await self._call_api({'nation': self.name, 'q': 'nextissue'})
         logger.debug(f'Making authenticated web {method} request as'
                      f' {self.name} to {path} {kwargs.get("data")}')
         cookies = {
@@ -156,7 +162,7 @@ class AuthSession(Session):
             'autologin': self.name + '%3D' + self.autologin,
             'pin': self.pin
         }
-        resp = await super().call_web(path, method=method,
+        resp = await super()._call_web(path, method=method,
                                       cookies=cookies, **kwargs)
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
