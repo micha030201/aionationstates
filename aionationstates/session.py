@@ -50,7 +50,7 @@ class ApiRequest:
     async def _wrap(self):
         self.params['q'] = '+'.join(self.q)
         resp = await self.session._call_api(self.params)
-        root = ET.fromstring(resp.text)
+        root = ET.fromstring(resp.text)  # TODO move into _call_api?
         results = tuple(result(root) for result in self.results)
         return results[0] if len(results) == 1 else results
 
@@ -105,9 +105,6 @@ class Session:  # TODO self._useragent
     async def _call_api(self, params, **kwargs):
         return await self._base_call_api('GET', params=params, **kwargs)
 
-    async def _call_api_command(self, data, **kwargs):
-        return await self._base_call_api('POST', data=data, **kwargs)
-
     @ratelimit.web
     async def _call_web(self, path, *, method='GET', **kwargs):
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
@@ -150,6 +147,9 @@ class AuthSession(Session):
             self.autologin = resp.headers['X-Autologin']
             logger.debug('Setting autologin from API header')
         return resp
+
+    async def _call_api_command(self, data, **kwargs):
+        return await self._base_call_api('POST', data=data, **kwargs)
 
     async def _call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
