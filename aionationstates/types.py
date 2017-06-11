@@ -11,40 +11,6 @@ from aionationstates.utils import timestamp
 from aionationstates.ns_to_human import census_info
 
 
-# TODO BBCode class
-
-
-class NationStatesHTMLMess:
-    """In some cases, such as with poll and issue options,
-    NS returns weird sorta-HTML data instead of plain text.
-
-    While it is understandable that they just wanted fancy font styles,
-    like italics or bold, and couldn't come up with a better alternative
-    to embedding pieces of HTML here and there, having tags and entities
-    sprinkled throughout your text is often undesirable, and getting rid
-    of them properly can be a nuisance.
-
-    However, we do not want to lose font styles by presenting the data
-    as a string; and converting it to another, more forgiving markup
-    language would just be silly.
-    Hence the need for this class. It stores the raw weirdness as returned
-    by NS, but lets you painlessly convert it to plain text and a few other
-    formats, or deal with it directly, should you so desire.
-    """
-    def __init__(self, raw):
-        self.raw = raw
-
-    def __str__(self):
-        return unescape(re.sub('<.+?>', '', self.raw))
-
-    def md(self):
-        return unescape(
-            self.raw
-            .replace('<i>', '*').replace('</i>', '*')
-            .replace('<strong>', '**').replace('</strong>', '**')
-        )
-
-
 class CensusScale:
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
@@ -98,10 +64,14 @@ class DispatchThumbnail:
         self.author = elem.find('AUTHOR').text
         self.category = elem.find('CATEGORY').text
         self.subcategory = elem.find('SUBCATEGORY').text
-        self.created = timestamp(elem.find('CREATED').text)
-        self.edited = timestamp(elem.find('EDITED').text)
         self.views = int(elem.find('VIEWS').text)
         self.score = int(elem.find('SCORE').text)
+
+        created = int(elem.find('CREATED').text)
+        # Otherwise it's 0 for dispatches that were never edited
+        edited = int(elem.find('EDITED').text) or created
+        self.created = timestamp(created)
+        self.edited = timestamp(edited)
 
     def __repr__(self):
         return f'<DispatchThumbnail id={self.id}>'
@@ -119,7 +89,7 @@ class Dispatch(DispatchThumbnail):
 
 class PollOption:
     def __init__(self, elem):
-        self.text = NationStatesHTMLMess(elem.find('OPTIONTEXT').text)
+        self.text = elem.find('OPTIONTEXT').text
         voters = elem.find('VOTERS').text
         self.voters = voters.split(':') if voters else ()
 
@@ -127,8 +97,8 @@ class PollOption:
 class Poll:
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text  # XXX html?
-        self.text = NationStatesHTMLMess(elem.find('TEXT').text)
+        self.title = elem.find('TITLE').text
+        self.text = elem.find('TEXT').text
         self.region = elem.find('REGION').text
         self.author = elem.find('AUTHOR').text
         self.start = timestamp(elem.find('START').text)
@@ -184,7 +154,7 @@ class IssueOption:
     def __init__(self, elem, issue):
         self._issue = issue
         self.id = int(option.get('id'))
-        self.text = NationStatesHTMLMess(option.text)
+        self.text = option.text
 
     def accept(self):
         return self._issue._nation._accept_issue(self._issue.id, self.id)
@@ -194,8 +164,8 @@ class Issue:
     def __init__(self, elem, nation):
         self._nation = nation
         self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text  # XXX html?
-        self.text = NationStatesHTMLMess(elem.find('TEXT').text)
+        self.title = elem.find('TITLE').text
+        self.text = elem.find('TEXT').text
         self.author = getattr(elem.find('AUTHOR'), 'text', None)
         self.editor = getattr(elem.find('EDITOR'), 'text', None)
         self.options = [
