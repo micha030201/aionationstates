@@ -172,6 +172,13 @@ class Issue:
             IssueOption(sub_elem)
             for sub_elem in elem.findall('OPTION')
         ]
+        def issue_banners(elem):
+            for x in range(10):  # Should be more than enough.
+                try:
+                    yield banner_url(elem.find(f'PIC{x}').text)
+                except AttributeError:
+                    break
+        self.banners = list(issue_banners(elem))
 
     def dismiss(self):
         return self._nation._accept_issue(self.id, -1)
