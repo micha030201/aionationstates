@@ -228,17 +228,21 @@ class IssueResult:
                 raise ValueError('invalid issue')
         assert elem.find('OK') == '1'  # honestly no idea
 
-        self.desc = getattr(elem.find('DESC'), 'text', None)
-        self.rankings = [
+        self.desc = getattr(elem.find('DESC'), 'text', None)  # TODO rename?
+        self.rankings = [  # TODO rename?
             CensusScaleChange(sub_elem) for sub_elem
             in elem.findall('RANKINGS') or ()
         ]
-        self.unlocks = [
+        self.unlocks = [  # TODO rename?
             banner_url(sub_elem.text) for sub_elem
             in elem.findall('UNLOCKS') or ()
         ]
         self.reclassifications = Reclassifications(
             elem.find('RECLASSIFICATIONS'))
+        self.headlines = [
+            sub_elem.text for sub_elem
+            in elem.findall('HEADLINES') or ()
+        ]
 
 
 
