@@ -1,6 +1,7 @@
 from functools import partial
 from contextlib import suppress
 from functools import partial
+import xml.etree.ElementTree as ET
 
 from aionationstates.utils import normalize, timestamp, banner_url
 from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie, Issue, IssueResult
@@ -156,7 +157,7 @@ class NationControl(AuthSession, Nation):
 
     def issues(self):
         def result(root):
-            return [Issue(elem) for elem in root.find('ISSUES')]
+            return [Issue(elem, self) for elem in root.find('ISSUES')]
         return self._compose_api_request(q='issues', result=result)
 
     async def _accept_issue(self, issue_id, option_id):

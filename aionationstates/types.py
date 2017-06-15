@@ -153,8 +153,8 @@ class Sectors:
 class IssueOption:
     def __init__(self, elem, issue):
         self._issue = issue
-        self.id = int(option.get('id'))
-        self.text = option.text
+        self.id = int(elem.get('id'))
+        self.text = elem.text
 
     def accept(self):
         return self._issue._nation._accept_issue(self._issue.id, self.id)
@@ -169,11 +169,11 @@ class Issue:
         self.author = getattr(elem.find('AUTHOR'), 'text', None)
         self.editor = getattr(elem.find('EDITOR'), 'text', None)
         self.options = [
-            IssueOption(sub_elem)
+            IssueOption(sub_elem, self)
             for sub_elem in elem.findall('OPTION')
         ]
         def issue_banners(elem):
-            for x in range(10):  # Should be more than enough.
+            for x in range(1, 10):  # Should be more than enough.
                 try:
                     yield banner_url(elem.find(f'PIC{x}').text)
                 except AttributeError:
@@ -219,29 +219,29 @@ class CensusScaleChange(CensusScale):
 class IssueResult:
     def __init__(self, elem):
         with suppress(AttributeError):
-            error = root.find('ERROR').text
+            error = elem.find('ERROR').text
             if error == 'Invalid choice.':
                 raise ValueError('invalid option')
             elif error == 'Issue already processed!':
                 # I know it may not be obvious, but that's exactly
                 # what NS is trying to say here.
                 raise ValueError('invalid issue')
-        assert elem.find('OK') == '1'  # honestly no idea
+        assert elem.find('OK').text == '1'  # honestly no idea
 
         self.desc = getattr(elem.find('DESC'), 'text', None)  # TODO rename?
         self.rankings = [  # TODO rename?
             CensusScaleChange(sub_elem) for sub_elem
-            in elem.findall('RANKINGS') or ()
+            in elem.find('RANKINGS') or ()
         ]
         self.unlocks = [  # TODO rename?
             banner_url(sub_elem.text) for sub_elem
-            in elem.findall('UNLOCKS') or ()
+            in elem.find('UNLOCKS') or ()
         ]
         self.reclassifications = Reclassifications(
             elem.find('RECLASSIFICATIONS'))
         self.headlines = [
             sub_elem.text for sub_elem
-            in elem.findall('HEADLINES') or ()
+            in elem.find('HEADLINES') or ()
         ]
 
 

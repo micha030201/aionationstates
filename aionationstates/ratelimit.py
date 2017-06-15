@@ -1,4 +1,4 @@
-"""Decorators for compliance with for NationStates' API and web rate limits."""
+"""Decorators for compliance with NationStates' API and web rate limits."""
 
 import time
 import asyncio

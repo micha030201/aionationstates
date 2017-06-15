@@ -16,7 +16,7 @@ class Region(Census, GeneralCases, Session):
 
     def name(self): return self._str_case('name')
     def flag(self): return self._str_case('flag')
-    def factbook(self): return self._str_case('factbook')
+    def factbook(self): return self._str_case('factbook')  # TODO encoding mess
     def power(self): return self._str_case('power')
 
     def delegatevotes(self): return self._int_case('delegatevotes')

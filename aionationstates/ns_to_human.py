@@ -3,6 +3,63 @@
 from collections import namedtuple
 
 
+def unscramble_encoding(text):
+    """This is a workaround for a bug in the NS server-side code.
+
+    Specifically, somewhere in the process W-1252 encoded text is wrongly
+    interpreted to be ISO-8859-1, resulting in *some* characters being
+    deterministically unintentionally replaced with Unicode control chars.
+
+    This is a very common problem. Common enough, in fact, to be accounted
+    for in the HTML treatment of Character References as defined by the
+    specification. Well, it is technically a parse error, but nobody really
+    cares since the correct, expected character is returned.
+    For this reason, the bug is not present (or at least not visible) on
+    the NS web interface, and only shows itself when dealing with the API.
+
+    Interestingly enough, these characters are not always serialized as
+    NCRs, in the dispatch CDATA they are represented literally, meaning
+    that even modifying the XML parser to include a bit of HTML leniency
+    would not be enough. Not that anyone would do that regardless.
+
+
+    This function reverses the process, substiuting the unprintable mess
+    returned by NS for the Unicode characters it must have originated from.
+
+    It's a bit ugly, but should get the job done.
+    """
+    return (
+        text
+        .replace('\u0080', '\u20AC')  # EURO SIGN
+        .replace('\u0082', '\u201A')  # SINGLE LOW-9 QUOTATION MARK
+        .replace('\u0083', '\u0192')  # LATIN SMALL LETTER F WITH HOOK
+        .replace('\u0084', '\u201E')  # DOUBLE LOW-9 QUOTATION MARK
+        .replace('\u0085', '\u2026')  # HORIZONTAL ELLIPSIS
+        .replace('\u0086', '\u2020')  # DAGGER
+        .replace('\u0087', '\u2021')  # DOUBLE DAGGER
+        .replace('\u0088', '\u02C6')  # MODIFIER LETTER CIRCUMFLEX ACCENT
+        .replace('\u0089', '\u2030')  # PER MILLE SIGN
+        .replace('\u008A', '\u0160')  # LATIN CAPITAL LETTER S WITH CARON
+        .replace('\u008B', '\u2039')  # SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+        .replace('\u008C', '\u0152')  # LATIN CAPITAL LIGATURE OE
+        .replace('\u008E', '\u017D')  # LATIN CAPITAL LETTER Z WITH CARON
+        .replace('\u0091', '\u2018')  # LEFT SINGLE QUOTATION MARK
+        .replace('\u0092', '\u2019')  # RIGHT SINGLE QUOTATION MARK
+        .replace('\u0093', '\u201C')  # LEFT DOUBLE QUOTATION MARK
+        .replace('\u0094', '\u201D')  # RIGHT DOUBLE QUOTATION MARK
+        .replace('\u0095', '\u2022')  # BULLET
+        .replace('\u0096', '\u2013')  # EN DASH
+        .replace('\u0097', '\u2014')  # EM DASH
+        .replace('\u0098', '\u02DC')  # SMALL TILDE
+        .replace('\u0099', '\u2122')  # TRADE MARK SIGN
+        .replace('\u009A', '\u0161')  # LATIN SMALL LETTER S WITH CARON
+        .replace('\u009B', '\u203A')  # SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+        .replace('\u009C', '\u0153')  # LATIN SMALL LIGATURE OE
+        .replace('\u009E', '\u017E')  # LATIN SMALL LETTER Z WITH CARON
+        .replace('\u009F', '\u0178')  # LATIN CAPITAL LETTER Y WITH DIAERESIS
+    )
+
+
 dispatch_categories = {
     'Factbook': (
         'Overview',

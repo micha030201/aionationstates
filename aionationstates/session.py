@@ -45,7 +45,7 @@ class ApiRequest:
         self.params = params or {}
 
     def __await__(self):
-        return self._wrap()
+        return self._wrap().__await__()
 
     async def _wrap(self):
         self.params['q'] = '+'.join(self.q)
@@ -125,15 +125,15 @@ class AuthSession(Session):
     Important note: does not check credentials upon initialization, you will
     only know if you've made a mistake after you try to make the first request.
     """
-    def __init__(self, name, autologin='', password=''):
-        self.name = normalize(name)
+    def __init__(self, id, autologin='', password=''):
+        self.id = normalize(id)  # TODO unmess
         self.password = password
         self.autologin = autologin
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
 
     async def _base_call_api(self, method, **kwargs):
-        logger.debug(f'Making authenticated API request as {self.name} to '
+        logger.debug(f'Making authenticated API request as {self.id} to '
                      f'{str(kwargs)}')
         headers = {
             'X-Password': self.password,
@@ -154,12 +154,12 @@ class AuthSession(Session):
     async def _call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
-            await self._call_api({'nation': self.name, 'q': 'nextissue'})
+            await self._call_api({'nation': self.id, 'q': 'nextissue'})
         logger.debug(f'Making authenticated web {method} request as'
-                     f' {self.name} to {path} {kwargs.get("data")}')
+                     f' {self.id} to {path} {kwargs.get("data")}')
         cookies = {
             # Will not work with unescaped equals sign
-            'autologin': self.name + '%3D' + self.autologin,
+            'autologin': self.id + '%3D' + self.autologin,
             'pin': self.pin
         }
         resp = await super()._call_web(path, method=method,
