@@ -352,7 +352,7 @@ class Post:
         likers_elem = elem.find('LIKERS')
         self.likers = likers_elem.text.split(':') if likers_elem else ()
         suppressor_elem = elem.find('SUPPRESSOR')
-        self.suppressor = suppressor_elem.text if suppressor else None
+        self.suppressor = suppressor_elem.text if suppressor_elem else None
 
 
 
