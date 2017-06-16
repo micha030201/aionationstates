@@ -356,7 +356,7 @@ class Post:
 
 
 
-class ZombieAction(Enum):
+class ZombieAction(str, Enum):
     EXTERMINATE = 'exterminate'
     RESEARCH = 'research'
     EXPORT = 'export'

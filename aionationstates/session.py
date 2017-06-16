@@ -1,6 +1,7 @@
 import logging
 from contextlib import suppress
 from collections import namedtuple
+from functools import wraps
 import xml.etree.ElementTree as ET
 
 import aiohttp
@@ -114,8 +115,28 @@ class Session:  # TODO self._useragent
             raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
 
-    def _compose_api_request(self, *, result, q, params=None):
-        return ApiRequest(session=self, q=q, params=params, result=result)
+    #def _compose_api_request(self, *, result, q, params=None):
+    #    return ApiRequest(session=self, q=q, params=params, result=result)
+
+def api_command(c, **data):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(self):
+            data['c'] = c
+            resp = await self._call_api_command(data)
+            root = ET.fromstring(resp.text)
+            return func(root)
+        return wrapper
+    return decorator
+
+def api_query(q, **params):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self):
+            return ApiRequest(session=self, q=q,
+                              params=params, result=func)
+        return wrapper
+    return decorator
 
 
 class AuthSession(Session):

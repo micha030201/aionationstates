@@ -30,33 +30,33 @@ def unscramble_encoding(text):
     """
     return (
         text
-        .replace('\u0080', '\u20AC')  # EURO SIGN
-        .replace('\u0082', '\u201A')  # SINGLE LOW-9 QUOTATION MARK
-        .replace('\u0083', '\u0192')  # LATIN SMALL LETTER F WITH HOOK
-        .replace('\u0084', '\u201E')  # DOUBLE LOW-9 QUOTATION MARK
-        .replace('\u0085', '\u2026')  # HORIZONTAL ELLIPSIS
-        .replace('\u0086', '\u2020')  # DAGGER
-        .replace('\u0087', '\u2021')  # DOUBLE DAGGER
-        .replace('\u0088', '\u02C6')  # MODIFIER LETTER CIRCUMFLEX ACCENT
-        .replace('\u0089', '\u2030')  # PER MILLE SIGN
-        .replace('\u008A', '\u0160')  # LATIN CAPITAL LETTER S WITH CARON
-        .replace('\u008B', '\u2039')  # SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-        .replace('\u008C', '\u0152')  # LATIN CAPITAL LIGATURE OE
-        .replace('\u008E', '\u017D')  # LATIN CAPITAL LETTER Z WITH CARON
-        .replace('\u0091', '\u2018')  # LEFT SINGLE QUOTATION MARK
-        .replace('\u0092', '\u2019')  # RIGHT SINGLE QUOTATION MARK
-        .replace('\u0093', '\u201C')  # LEFT DOUBLE QUOTATION MARK
-        .replace('\u0094', '\u201D')  # RIGHT DOUBLE QUOTATION MARK
-        .replace('\u0095', '\u2022')  # BULLET
-        .replace('\u0096', '\u2013')  # EN DASH
-        .replace('\u0097', '\u2014')  # EM DASH
-        .replace('\u0098', '\u02DC')  # SMALL TILDE
-        .replace('\u0099', '\u2122')  # TRADE MARK SIGN
-        .replace('\u009A', '\u0161')  # LATIN SMALL LETTER S WITH CARON
-        .replace('\u009B', '\u203A')  # SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-        .replace('\u009C', '\u0153')  # LATIN SMALL LIGATURE OE
-        .replace('\u009E', '\u017E')  # LATIN SMALL LETTER Z WITH CARON
-        .replace('\u009F', '\u0178')  # LATIN CAPITAL LETTER Y WITH DIAERESIS
+        .replace('\u0080', '\N{EURO SIGN}')
+        .replace('\u0082', '\N{SINGLE LOW-9 QUOTATION MARK}')
+        .replace('\u0083', '\N{LATIN SMALL LETTER F WITH HOOK}')
+        .replace('\u0084', '\N{DOUBLE LOW-9 QUOTATION MARK}')
+        .replace('\u0085', '\N{HORIZONTAL ELLIPSIS}')
+        .replace('\u0086', '\N{DAGGER}')
+        .replace('\u0087', '\N{DOUBLE DAGGER}')
+        .replace('\u0088', '\N{MODIFIER LETTER CIRCUMFLEX ACCENT}')
+        .replace('\u0089', '\N{PER MILLE SIGN}')
+        .replace('\u008A', '\N{LATIN CAPITAL LETTER S WITH CARON}')
+        .replace('\u008B', '\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}')
+        .replace('\u008C', '\N{LATIN CAPITAL LIGATURE OE}')
+        .replace('\u008E', '\N{LATIN CAPITAL LETTER Z WITH CARON}')
+        .replace('\u0091', '\N{LEFT SINGLE QUOTATION MARK}')
+        .replace('\u0092', '\N{RIGHT SINGLE QUOTATION MARK}')
+        .replace('\u0093', '\N{LEFT DOUBLE QUOTATION MARK}')
+        .replace('\u0094', '\N{RIGHT DOUBLE QUOTATION MARK}')
+        .replace('\u0095', '\N{BULLET}')
+        .replace('\u0096', '\N{EN DASH}')
+        .replace('\u0097', '\N{EM DASH}')
+        .replace('\u0098', '\N{SMALL TILDE}')
+        .replace('\u0099', '\N{TRADE MARK SIGN}')
+        .replace('\u009A', '\N{LATIN SMALL LETTER S WITH CARON}')
+        .replace('\u009B', '\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}')
+        .replace('\u009C', '\N{LATIN SMALL LIGATURE OE}')
+        .replace('\u009E', '\N{LATIN SMALL LETTER Z WITH CARON}')
+        .replace('\u009F', '\N{LATIN CAPITAL LETTER Y WITH DIAERESIS}')
     )
 
 

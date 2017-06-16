@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 from aionationstates.utils import normalize, timestamp, banner_url
 from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie, Issue, IssueResult, DispatchThumbnail
-from aionationstates.session import Session, AuthSession, NS_URL
+from aionationstates.session import Session, AuthSession, NS_URL, api_query
 from aionationstates.shards import Census, GeneralCases
 
 
@@ -15,7 +15,9 @@ class Nation(Census, GeneralCases, Session):
         params['nation'] = self.id
         return super()._call_api(params, **kwargs)
 
-    def name(self): return self._str_case('name')
+    @api_query('name')
+    def name(root): return root.find('NAME').text
+    #def name(self): return self._str_case('name')
     def type(self): return self._str_case('type')
     def fullname(self): return self._str_case('fullname')
     def motto(self): return self._str_case('motto')  # TODO encoding mess
