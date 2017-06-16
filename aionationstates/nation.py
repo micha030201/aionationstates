@@ -18,7 +18,9 @@ class Nation(Census, GeneralCases, Session):
     @api_query('name')
     def name(root): return root.find('NAME').text
     #def name(self): return self._str_case('name')
-    def type(self): return self._str_case('type')
+    @api_query('type')
+    def type(root): return root.find('TYPE').text
+    #def type(self): return self._str_case('type')
     def fullname(self): return self._str_case('fullname')
     def motto(self): return self._str_case('motto')  # TODO encoding mess
     def category(self): return self._str_case('category')
@@ -132,17 +134,30 @@ class Nation(Census, GeneralCases, Session):
             q='zombie',
             result=lambda root: NationZombie(root.find('ZOMBIE')))
 
+    #def verify(self, checksum, *, token=None):
+    #    params = {'a': 'verify', 'checksum': checksum}
+    #    if token:
+    #        params['token'] = token
+    #    return self._compose_api_request(
+    #        # Needed so that we get output in xml, as opposed to
+    #        # plain text. It doesn't actually matter what the
+    #        # q param is, it's just important that it's not empty.
+    #        q='i_need_the_output_in_xml',
+    #        params=params,
+    #        result=lambda root: bool(int(root.find('VERIFY').text)))
+
     def verify(self, checksum, *, token=None):
         params = {'a': 'verify', 'checksum': checksum}
         if token:
             params['token'] = token
-        return self._compose_api_request(
-            # Needed so that we get output in xml, as opposed to
-            # plain text. It doesn't actually matter what the
-            # q param is, it's just important that it's not empty.
-            q='i_need_the_output_in_xml',
-            params=params,
-            result=lambda root: bool(int(root.find('VERIFY').text)))
+        # Needed so that we get output in xml, as opposed to
+        # plain text. It doesn't actually matter what the
+        # q param is, it's just important that it's not empty.
+        @api_query('i_need_the_output_in_xml', **params)
+        def result(root):
+            return bool(int(root.find('VERIFY').text))
+        return result(self)
+
 
     def verification_url(self, *, token=None):
         if token:
