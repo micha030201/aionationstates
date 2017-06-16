@@ -61,7 +61,7 @@ def unscramble_encoding(text):
 
 
 dispatch_categories = {
-    'Factbook': (
+    'Factbook': {
         'Overview',
         'History',
         'Geography',
@@ -74,14 +74,14 @@ dispatch_categories = {
         'International',
         'Trivia',
         'Miscellaneous',
-    ),
-    'Bulletin': (
+    },
+    'Bulletin': {
         'Policy',
         'News',
         'Opinion',
         'Campaign',
-    ),
-    'Account': (
+    },
+    'Account': {
         'Military',
         'Trade',
         'Sport',
@@ -90,11 +90,11 @@ dispatch_categories = {
         'Science',
         'Culture',
         'Other',
-    ),
-    'Meta': (
+    },
+    'Meta': {
         'Gameplay',
         'Reference',
-    ),
+    },
 }
 
 

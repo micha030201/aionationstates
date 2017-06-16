@@ -121,9 +121,9 @@ class Session:  # TODO self._useragent
 def api_command(c, **data):
     def decorator(func):
         @wraps(func)
-        async def wrapper(self):
+        async def wrapper(session):
             data['c'] = c
-            resp = await self._call_api_command(data)
+            resp = await session._call_api_command(data)
             root = ET.fromstring(resp.text)
             return func(root)
         return wrapper
@@ -132,8 +132,8 @@ def api_command(c, **data):
 def api_query(q, **params):
     def decorator(func):
         @wraps(func)
-        def wrapper(self):
-            return ApiRequest(session=self, q=q,
+        def wrapper(session):
+            return ApiRequest(session=session, q=q,
                               params=params, result=func)
         return wrapper
     return decorator
