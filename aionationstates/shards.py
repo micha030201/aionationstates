@@ -5,7 +5,7 @@ with Session, otherwise useless."""
 
 
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
-
+from aionationstates.session import api_query
 
 class Census:
     def census(self, scale=None):

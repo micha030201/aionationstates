@@ -1,6 +1,3 @@
-from contextlib import suppress
-import xml.etree.ElementTree as ET
-
 from aionationstates.utils import normalize, timestamp, banner_url
 from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie, Issue, IssueResult, DispatchThumbnail
 from aionationstates.session import Session, AuthSession, NS_URL, api_query, api_command

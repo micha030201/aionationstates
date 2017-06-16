@@ -1,4 +1,4 @@
-from aionationstates.session import Session, @api_query
+from aionationstates.session import Session, api_query
 from aionationstates.types import Dispatch, DispatchThumbnail
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories
