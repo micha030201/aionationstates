@@ -1,4 +1,4 @@
-from aionationstates.session import Session
+from aionationstates.session import Session, @api_query
 from aionationstates.types import Dispatch, DispatchThumbnail
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories
@@ -10,18 +10,16 @@ class World(Census, Session):
         # We don't check for invalid tags here because the behaviour is
         # fairly intuitive - quering for a non-existent tag returns no
         # regions, excluding it returns all of them.
-        params = {'tags': ','.join(tags)}
+        @api_query('regionsbytag', tags=','.join(tags))
         def result(root):
             text = root.find('REGIONS').text
             return text.split(',') if text else ()
-        return self._compose_api_request(
-            q='regionsbytag', params=params, result=result)
+        return result()
 
     def dispatch(self, id):
-        return self._compose_api_request(
-            q='dispatch', params={'dispatchid': id},
-            result=lambda root: Dispatch(root.find('DISPATCH'))
-        )
+        @api_query('dispatch', id=id)
+        def result(root):
+            return Dispatch(root.find('DISPATCH'))
 
     def dispatchlist(self, *, author=None, category=None,
                      subcategory=None, sort='new'):
@@ -41,11 +39,11 @@ class World(Census, Session):
                 raise ValueError('Invalid category')
             params['dispatchcategory'] = category
 
+        @api_query('dispatchlist', **params)
         def result(root):
             return [
                 DispatchThumbnail(elem)
-                for elem in root.find('DISPATCHLIST')]
-        return self._compose_api_request(
-            q='dispatchlist', params=params, result=result)
+                for elem in root.find('DISPATCHLIST')
+            ]
 
 
