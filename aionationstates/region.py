@@ -2,11 +2,11 @@ from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer,
     Embassies, RegionZombie)
-from aionationstates.session import Session
-from aionationstates.shards import Census, GeneralCases
+from aionationstates.session import Session, api_query
+from aionationstates.shards import Census
 
 
-class Region(Census, GeneralCases, Session):
+class Region(Census, Session):
     def __init__(self, id):
         self.id = normalize(id)
 
@@ -14,82 +14,86 @@ class Region(Census, GeneralCases, Session):
         params['region'] = self.id
         return super()._call_api(*args, params=params, **kwargs)
 
-    def name(self): return self._str_case('name')
-    def flag(self): return self._str_case('flag')
-    def factbook(self): return self._str_case('factbook')  # TODO encoding mess
-    def power(self): return self._str_case('power')
 
-    def delegatevotes(self): return self._int_case('delegatevotes')
-    def numnations(self): return self._int_case('numnations')
-    population = numnations  # TODO it this necessary?
+    @api_query('name')
+    def name(root):
+        return root.find('NAME').text
 
-    def founded(self):
-        return self._compose_api_request(
-            q='foundedtime',
-            result=lambda root: timestamp(root.find('FOUNDEDTIME')))
+    @api_query('flag')
+    def flag(root):
+        return root.find('FLAG').text
 
-    def nations(self):
-        def result(root):
-            text = root.find('NATIONS').text
-            return text.split(':') if text else ()
-        return self._compose_api_request(q='nations', result=result)
+    @api_query('factbook')
+    def factbook(root):
+        return root.find('FACTBOOK').text  # TODO encoding mess
 
-    def embassies(self):
-        def result(root):
-            Embassies(root.find('EMBASSIES'))
-        return self._compose_api_request(q='embassies', result=result)
+    @api_query('power')
+    def power(root):
+        return root.find('POWER').text
 
-    def embassyrmb(self):
-        def result(root):
-            EmbassyPostingRights[root.find('EMBASSYRMB')]
-        return self._compose_api_request(q='embassyrmb', result=result)
+    @api_query('delegatevotes')
+    def delegatevotes(root):
+        return int(root.find('DELEGATEVOTES').text)
 
-    def delegate(self):
-        def result(root):
-            nation = root.find('DELEGATE').text
-            if nation == '0':  # No delegate
-                return None
-            return RegionalOfficer(
-                nation=nation,
-                authority=root.find('DELEGATEAUTH').text,
-                office='WA Delegate'
-            )
-        return self._compose_api_request(
-            q='delegate+delegateauth',  # TODO better API for this sorta things
-            result=result
+    @api_query('numnations')
+    def numnations(root):
+        return int(root.find('NUMNATIONS').text)
+
+    @api_query('foundedtime')
+    def founded(root):
+        return timestamp(root.find('FOUNDEDTIME'))
+
+    @api_query('nations')
+    def nations(root):
+        text = root.find('NATIONS').text
+        return text.split(':') if text else ()
+
+    @api_query('embassies')
+    def embassies(root):
+        Embassies(root.find('EMBASSIES'))
+
+    @api_query('embassyrmb')
+    def embassyrmb(root):
+        EmbassyPostingRights[root.find('EMBASSYRMB')]
+
+    @api_query('delegate', 'delegateauth')
+    def delegate(root):
+        nation = root.find('DELEGATE').text
+        if nation == '0':  # No delegate
+            return None
+        return RegionalOfficer(
+            nation=nation,
+            authority=root.find('DELEGATEAUTH').text,
+            office='WA Delegate'
         )
 
-    def founder(self):
-        def result(root):
-            nation = root.find('FOUNDER').text
-            if nation == '0':  # No founder, it's a GCR
-                return None
-            return RegionalOfficer(
-                nation=nation,
-                authority=root.find('FOUNDERAUTH').text,
-                office='Founder'
-            )
-        return self._compose_api_request(
-            q='founder+founderauth',    # TODO better API for this sorta things
-            result=result
+    @api_query('founder', 'founderauth')
+    def founder(root):
+        nation = root.find('FOUNDER').text
+        if nation == '0':  # No founder, it's a GCR
+            return None
+        return RegionalOfficer(
+            nation=nation,
+            authority=root.find('FOUNDERAUTH').text,
+            office='Founder'
         )
 
-    def officers(self):
-        def result(root):
-            officers = sorted(root.find('OFFICERS'),
-                              key=lambda elem: int(elem.find('ORDER').text))
-            return [AppointedRegionalOfficer(elem) for elem in officers]
-        return self._compose_api_request(q='officers', result=result)
+    @api_query('officers')
+    def officers(root):
+        officers = sorted(
+            root.find('OFFICERS'),
+            # I struggle to say what else this tag would be useful for.
+            key=lambda elem: int(elem.find('ORDER').text)
+        )
+        return [AppointedRegionalOfficer(elem) for elem in officers]
 
-    def tags(self):
-        def result(root):
-            return [elem.text for elem in root.find('TAGS')]
-        return self._compose_api_request(q='tags', result=result)
+    @api_query('tags')
+    def tags(root):
+        return [elem.text for elem in root.find('TAGS')]
 
-    def zombie(self):
-        return self._compose_api_request(
-            q='zombie',
-            result=lambda root: RegionZombie(root.find('ZOMBIE')))
+    @api_query('zombie')
+    def zombie(root):
+        return RegionZombie(root.find('ZOMBIE'))
 
     # TODO: history, messages
 

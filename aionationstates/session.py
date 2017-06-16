@@ -42,7 +42,7 @@ class ApiRequest:
     def __init__(self, *, session, result, q, params=None):
         self.session = session
         self.results = [result]
-        self.q = {q}
+        self.q = set(q)
         self.params = params or {}
 
     def __await__(self):
@@ -51,7 +51,7 @@ class ApiRequest:
     async def _wrap(self):
         self.params['q'] = '+'.join(self.q)
         resp = await self.session._call_api(self.params)
-        root = ET.fromstring(resp.text)  # TODO move into _call_api?
+        root = ET.fromstring(resp.text)
         results = tuple(result(root) for result in self.results)
         return results[0] if len(results) == 1 else results
 
@@ -115,8 +115,6 @@ class Session:  # TODO self._useragent
             raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
         return resp
 
-    #def _compose_api_request(self, *, result, q, params=None):
-    #    return ApiRequest(session=self, q=q, params=params, result=result)
 
 def api_command(c, **data):
     def decorator(func):
@@ -129,7 +127,7 @@ def api_command(c, **data):
         return wrapper
     return decorator
 
-def api_query(q, **params):
+def api_query(*q, **params):
     def decorator(func):
         @wraps(func)
         def wrapper(session):
