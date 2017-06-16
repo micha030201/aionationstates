@@ -18,15 +18,12 @@ API_URL = NS_URL + API_PATH
 
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
 
-class ExternalCallersError(Exception):
-    """Indicates that an external entity on the system is interfering with
-    our requests.
-    """
 
-class RateLimitError(ExternalCallersError):
+class RateLimitError(Exception):
     pass
 
-class SessionConflictError(ExternalCallersError):
+
+class SessionConflictError(Exception):
     pass
 
 
@@ -34,7 +31,7 @@ class AuthenticationError(Exception):
     pass
 
 
-class SuddenlyNationstates(Exception):  # TODO: move to another submodule
+class NotFound(Exception):
     pass
 
 
@@ -99,8 +96,9 @@ class Session:  # TODO self._useragent
                 f'ratelimited for {resp.headers["X-Retry-After"]} seconds')
         if resp.status == 409:
             raise SessionConflictError('previous login too recent')
-        if resp.status != 200:
-            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')  # TODO 404 handling
+        if resp.status == 404:
+            raise NotFound
+        assert resp.status == 200
         return resp
 
     async def _call_api(self, params, **kwargs):
@@ -111,8 +109,7 @@ class Session:  # TODO self._useragent
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
         if '<html lang="en" id="page_login">' in resp.text:
             raise AuthenticationError
-        if resp.status != 200:
-            raise SuddenlyNationstates(f'unexpected status code: {resp.status}')
+        assert resp.status == 200
         return resp
 
 
