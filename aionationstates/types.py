@@ -1,4 +1,5 @@
 # TODO slots
+# TODO split into submodules?
 
 from contextlib import suppress
 from collections import namedtuple
@@ -9,6 +10,23 @@ from operator import or_
 
 from aionationstates.utils import timestamp, banner_url
 from aionationstates.ns_to_human import census_info
+
+
+class RateLimitError(Exception):
+    pass
+
+
+class SessionConflictError(Exception):
+    pass
+
+
+class AuthenticationError(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
+
 
 
 class CensusScale:
@@ -356,12 +374,6 @@ class Post:
 
 
 
-class ZombieAction(str, Enum):
-    EXTERMINATE = 'exterminate'
-    RESEARCH = 'research'
-    EXPORT = 'export'
-
-
 class RegionZombie:
     def __init__(self, elem):
         self.survivors = int(elem.find('SURVIVORS').text)
@@ -372,8 +384,7 @@ class RegionZombie:
 class NationZombie(RegionZombie):
     def __init__(self, elem):
         super().__init__(elem)
-        action = elem.find('ZACTION').text
-        self.action = ZombieAction(action) if action else None
+        self.action = elem.find('ZACTION').text
 
 
 # TODO gavote, scvote

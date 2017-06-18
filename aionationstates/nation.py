@@ -1,16 +1,19 @@
 from aionationstates.utils import normalize, timestamp, banner_url
-from aionationstates.types import Freedom, FreedomScores, Govt, Sectors, NationZombie, Issue, IssueResult, DispatchThumbnail
-from aionationstates.session import Session, AuthSession, NS_URL, api_query, api_command
+from aionationstates.types import (
+    Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
+from aionationstates.session import Session, NS_URL, api_query
 from aionationstates.shards import Census
 
 
 class Nation(Census, Session):
     def __init__(self, id):
         self.id = normalize(id)
+        super().__init__(*args, **kwargs)
 
     def _call_api(self, params, **kwargs):
         params['nation'] = self.id
         return super()._call_api(params, **kwargs)
+
 
     @api_query('name')
     def name(root):
@@ -227,23 +230,5 @@ class Nation(Census, Session):
         if token:
             return f'{NS_URL}page=verify_login?token={token}'
         return f'{NS_URL}page=verify_login'
-
-
-class NationControl(AuthSession, Nation):
-    def _call_api_command(self, data, **kwargs):
-        data['nation'] = self.id
-        return super()._call_api(data, **kwargs)
-
-    def issues(self):
-        @api_query('issues')
-        def result(root):
-            return [Issue(elem, self) for elem in root.find('ISSUES')]
-        return result()
-
-    def _accept_issue(self, issue_id, option_id):
-        @api_command('issue', issue=str(issue_id), option=str(option_id))
-        def result(root):
-            return IssueResult(root.find('ISSUE'))
-        return result(self)
 
 
