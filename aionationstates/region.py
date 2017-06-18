@@ -7,7 +7,7 @@ from aionationstates.shards import Census
 
 
 class Region(Census, Session):
-    def __init__(self, id):
+    def __init__(self, id, *args, **kwargs):
         self.id = normalize(id)
         super().__init__(*args, **kwargs)
 
