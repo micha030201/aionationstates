@@ -12,14 +12,14 @@ class World(Census, Session):
         # fairly intuitive - quering for a non-existent tag returns no
         # regions, excluding it returns all of them.
         @api_query('regionsbytag', tags=','.join(tags))
-        def result(root):
+        async def result(self, root):
             text = root.find('REGIONS').text
             return text.split(',') if text else ()
         return result(self)
 
     def dispatch(self, id):
         @api_query('dispatch', id=id)
-        def result(root):
+        async def result(self, root):
             return Dispatch(root.find('DISPATCH'))
         return result(self)
 
@@ -42,7 +42,7 @@ class World(Census, Session):
             params['dispatchcategory'] = category
 
         @api_query('dispatchlist', **params)
-        def result(root):
+        async def result(self, root):
             return [
                 DispatchThumbnail(elem)
                 for elem in root.find('DISPATCHLIST')
@@ -53,7 +53,7 @@ class World(Census, Session):
         custom_banners = [CustomBanner(id) for id in ids if '/' in id]
         ids = [id for id in ids if '/' not in id]
         @api_query('banner', banner=','.join(ids))
-        def result(root):
+        async def result(self, root):
             return [Banner(elem) for elem in root.find('BANNERS')]
         return await result(self) + custom_banners
 

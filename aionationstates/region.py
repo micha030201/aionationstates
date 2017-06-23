@@ -17,48 +17,48 @@ class Region(Census, Session):
 
 
     @api_query('name')
-    def name(root):
+    async def name(self, root):
         return root.find('NAME').text
 
     @api_query('flag')
-    def flag(root):
+    async def flag(self, root):
         return root.find('FLAG').text
 
     @api_query('factbook')
-    def factbook(root):
+    async def factbook(self, root):
         return root.find('FACTBOOK').text  # TODO encoding mess
 
     @api_query('power')
-    def power(root):
+    async def power(self, root):
         return root.find('POWER').text
 
     @api_query('delegatevotes')
-    def delegatevotes(root):
+    async def delegatevotes(self, root):
         return int(root.find('DELEGATEVOTES').text)
 
     @api_query('numnations')
-    def numnations(root):
+    async def numnations(self, root):
         return int(root.find('NUMNATIONS').text)
 
     @api_query('foundedtime')
-    def founded(root):
+    async def founded(self, root):
         return timestamp(root.find('FOUNDEDTIME'))
 
     @api_query('nations')
-    def nations(root):
+    async def nations(self, root):
         text = root.find('NATIONS').text
         return text.split(':') if text else ()
 
     @api_query('embassies')
-    def embassies(root):
+    async def embassies(self, root):
         Embassies(root.find('EMBASSIES'))
 
     @api_query('embassyrmb')
-    def embassyrmb(root):
+    async def embassyrmb(self, root):
         EmbassyPostingRights[root.find('EMBASSYRMB')]
 
     @api_query('delegate', 'delegateauth')
-    def delegate(root):
+    async def delegate(self, root):
         nation = root.find('DELEGATE').text
         if nation == '0':  # No delegate
             return None
@@ -69,7 +69,7 @@ class Region(Census, Session):
         )
 
     @api_query('founder', 'founderauth')
-    def founder(root):
+    async def founder(self, root):
         nation = root.find('FOUNDER').text
         if nation == '0':  # No founder, it's a GCR
             return None
@@ -80,7 +80,7 @@ class Region(Census, Session):
         )
 
     @api_query('officers')
-    def officers(root):
+    async def officers(self, root):
         officers = sorted(
             root.find('OFFICERS'),
             # I struggle to say what else this tag would be useful for.
@@ -89,11 +89,11 @@ class Region(Census, Session):
         return [AppointedRegionalOfficer(elem) for elem in officers]
 
     @api_query('tags')
-    def tags(root):
+    async def tags(self, root):
         return [elem.text for elem in root.find('TAGS')]
 
     @api_query('zombie')
-    def zombie(root):
+    async def zombie(self, root):
         return RegionZombie(root.find('ZOMBIE'))
 
     # TODO: history, messages

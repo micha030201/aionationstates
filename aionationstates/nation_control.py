@@ -66,7 +66,7 @@ class NationControl(Nation, Session):
 
     async def issues(self):
         @api_query('issues')
-        def result(root):
+        async def result(self, root):
             return [Issue(elem, self) for elem in root.find('ISSUES')]
         issues = await result(self)
         for issue in issues:
@@ -75,7 +75,7 @@ class NationControl(Nation, Session):
 
     async def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
-        def result(root):
+        async def result(self, root):
             return IssueResult(root.find('ISSUE'))
         issue_result = await result(self)
         issue_result.banners = await self._make_banners(issue_result.banners)

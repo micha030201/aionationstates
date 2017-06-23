@@ -33,8 +33,10 @@ class ApiQuery:
         self.params['q'] = '+'.join(self.q)
         resp = await self.session._call_api(self.params)
         root = ET.fromstring(resp.text)
-        # TODO make results coros and pass session to them
-        results = tuple(result(root) for result in self.results)
+        results = tuple(
+            await result(self.session, root)
+            for result in self.results
+        )
         return results[0] if len(results) == 1 else results
 
     def __add__(self, other):
@@ -69,7 +71,7 @@ def api_command(c, **data):
             data['c'] = c
             resp = await session._call_api_command(data)
             root = ET.fromstring(resp.text)
-            return func(root)
+            return await func(session, root)
         return wrapper
     return decorator
 

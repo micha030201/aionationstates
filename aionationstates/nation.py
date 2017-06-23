@@ -20,195 +20,195 @@ class Nation(Census, Session):
 
 
     @api_query('name')
-    def name(root):
+    async def name(self, root):
         return root.find('NAME').text
 
     @api_query('type')
-    def type(root):
+    async def type(self, root):
         return root.find('TYPE').text
 
     @api_query('fullname')
-    def fullname(root):
+    async def fullname(self, root):
         return root.find('FULLNAME').text
 
     @api_query('motto')
-    def motto(root):
+    async def motto(self, root):
         return root.find('MOTTO').text  # TODO encoding mess
 
     @api_query('category')
-    def category(root):
+    async def category(self, root):
         return root.find('CATEGORY').text
 
     @api_query('region')
-    def region(root):
+    async def region(self, root):
         return root.find('REGION').text
 
     @api_query('animal')
-    def animal(root):
+    async def animal(self, root):
         return root.find('ANIMAL').text
 
     @api_query('currency')
-    def currency(root):
+    async def currency(self, root):
         return root.find('CURRENCY').text
 
     @api_query('demonym')
-    def demonym(root):
+    async def demonym(self, root):
         return root.find('DEMONYM').text
 
     @api_query('demonym2')
-    def demonym2(root):
+    async def demonym2(self, root):
         return root.find('DEMONYM2').text
 
     @api_query('demonym2plural')
-    def demonym2plural(root):
+    async def demonym2plural(self, root):
         return root.find('DEMONYM2PLURAL').text
 
     @api_query('flag')
-    def flag(root):
+    async def flag(self, root):
         return root.find('FLAG').text
 
     @api_query('majorindustry')
-    def majorindustry(root):
+    async def majorindustry(self, root):
         return root.find('MAJORINDUSTRY').text
 
     @api_query('govtpriority')
-    def govtpriority(root):
+    async def govtpriority(self, root):
         return root.find('GOVTPRIORITY').text
 
     @api_query('lastactivity')
-    def lastactivity(root):
+    async def lastactivity(self, root):
         return root.find('LASTACTIVITY').text  # TODO there's no timestamp; decide
 
     @api_query('influence')
-    def influence(root):
+    async def influence(self, root):
         return root.find('INFLUENCE').text
 
     @api_query('leader')
-    def leader(root):
+    async def leader(self, root):
         return root.find('LEADER').text
 
     @api_query('capital')
-    def capital(root):
+    async def capital(self, root):
         return root.find('CAPITAL').text
 
     @api_query('religion')
-    def religion(root):
+    async def religion(self, root):
         return root.find('RELIGION').text
 
     @api_query('admirable')
-    def admirable(root):
+    async def admirable(self, root):
         return root.find('ADMIRABLE').text
 
     @api_query('animaltrait')
-    def animaltrait(root):
+    async def animaltrait(self, root):
         return root.find('ANIMALTRAIT').text
 
     @api_query('crime')
-    def crime(root):
+    async def crime(self, root):
         return root.find('CRIME').text
 
     @api_query('govtdesc')
-    def govtdesc(root):
+    async def govtdesc(self, root):
         return root.find('GOVTDESC').text
 
     @api_query('industrydesc')
-    def industrydesc(root):
+    async def industrydesc(self, root):
         return root.find('INDUSTRYDESC').text
 
     @api_query('notable')
-    def notable(root):
+    async def notable(self, root):
         return root.find('NOTABLE').text
 
     @api_query('sensibilities')
-    def sensibilities(root):
+    async def sensibilities(self, root):
         return root.find('SENSIBILITIES').text
 
 
     @api_query('population')
-    def population(root):
+    async def population(self, root):
         return int(root.find('POPULATION').text)
 
     @api_query('factbooks')
-    def factbooks(root):
+    async def factbooks(self, root):
         return int(root.find('FACTBOOKS').text)
 
     @api_query('dispatches')
-    def dispatches(root):
+    async def dispatches(self, root):
         return int(root.find('DISPATCHES').text)
 
     @api_query('gdp')
-    def gdp(root):
+    async def gdp(self, root):
         return int(root.find('GDP').text)
 
     @api_query('income')
-    def income(root):
+    async def income(self, root):
         return int(root.find('INCOME').text)
 
     @api_query('poorest')
-    def poorest(root):
+    async def poorest(self, root):
         return int(root.find('POOREST').text)
 
     @api_query('richest')
-    def richest(root):
+    async def richest(self, root):
         return int(root.find('RICHEST').text)
 
     @api_query('foundedtime')
-    def founded(root):
+    async def founded(self, root):
         return timestamp(root.find('FOUNDEDTIME').text)
 
     @api_query('firstlogin')
-    def firstlogin(root):
+    async def firstlogin(self, root):
         return timestamp(root.find('FIRSTLOGIN').text)
 
     @api_query('lastlogin')
-    def lastlogin(root):
+    async def lastlogin(self, root):
         return timestamp(root.find('LASTLOGIN').text)
 
     @api_query('wa')
-    def wa(root):
+    async def wa(self, root):
         return root.find('UNSTATUS').text == 'WA Member'
 
     @api_query('freedom')
-    def freedom(root):
+    async def freedom(self, root):
         return Freedom(root.find('FREEDOM'))
 
     @api_query('freedomscores')
-    def freedomscores(root):
+    async def freedomscores(self, root):
         return FreedomScores(root.find('FREEDOMSCORES'))
 
     @api_query('govt')
-    def govt(root):
+    async def govt(self, root):
         return Govt(root.find('GOVT'))
 
     @api_query('deaths')
-    def deaths(root):
+    async def deaths(self, root):
         return {
             elem.get('type'): float(elem.text)
             for elem in root.find('DEATHS')
         }
 
     @api_query('endorsements')
-    def endorsements(root):
+    async def endorsements(self, root):
         text = root.find('ENDORSEMENTS').text
         return text.split(',') if text else ()
 
     @api_query('legislation')
-    def legislation(root):
+    async def legislation(self, root):
         return [elem.text for elem in root.find('LEGISLATION')]
 
     @api_query('sectors')
-    def sectors(root):
+    async def sectors(self, root):
         return Sectors(root.find('SECTORS'))
 
     @api_query('dispatchlist')
-    def dispatchlist(root):
+    async def dispatchlist(self, root):
         return [
             DispatchThumbnail(elem)
             for elem in root.find('DISPATCHLIST')
         ]
 
     @api_query('zombie')
-    def zombie(root):
+    async def zombie(self, root):
         return NationZombie(root.find('ZOMBIE'))
 
     def verify(self, checksum, *, token=None):
@@ -219,7 +219,7 @@ class Nation(Census, Session):
         # plain text. It doesn't actually matter what the
         # q param is, it's just important that it's not empty.
         @api_query('i_need_the_output_in_xml', **params)
-        def result(root):
+        async def result(self, root):
             return bool(int(root.find('VERIFY').text))
         return result(self)
 
@@ -229,7 +229,7 @@ class Nation(Census, Session):
         return f'{NS_URL}page=verify_login'
 
     @api_query('banners')
-    def _banner_ids(root):
+    async def _banner_ids(self, root):
         return [elem.text for elem in root.find('BANNERS')]
 
     async def banners(self):
