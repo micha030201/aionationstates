@@ -10,10 +10,6 @@ def normalize(identifier):
     return identifier
 
 
-def banner_url(banner_id):
-    return f'https://www.nationstates.net/images/banners/{banner_id}.jpg'
-
-
 def timestamp(line):
     return datetime.utcfromtimestamp(int(line))
 

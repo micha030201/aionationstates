@@ -14,12 +14,13 @@ class World(Census, Session):
         def result(root):
             text = root.find('REGIONS').text
             return text.split(',') if text else ()
-        return result()
+        return result(self)
 
     def dispatch(self, id):
         @api_query('dispatch', id=id)
         def result(root):
             return Dispatch(root.find('DISPATCH'))
+        return result(self)
 
     def dispatchlist(self, *, author=None, category=None,
                      subcategory=None, sort='new'):
@@ -45,5 +46,11 @@ class World(Census, Session):
                 DispatchThumbnail(elem)
                 for elem in root.find('DISPATCHLIST')
             ]
+        return result(self)
 
+    def _make_banners(self, ids):
+        @api_query('banner', banner=','.join(ids))
+        def result(root):
+            return [Banner(elem) for elem in root.find('BANNERS')]
+        return result(self)
 

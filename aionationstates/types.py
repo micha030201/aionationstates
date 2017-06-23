@@ -167,6 +167,17 @@ class Sectors:
         self.public = float(elem.find('PUBLIC').text)
 
 
+class Banner:
+    def __init__(self, elem):
+        self.id = elem.get('id')
+        self.name = elem.find('NAME').text
+        self.validity = elem.find('VALIDITY').text
+
+    @property
+    def url(self):
+        return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
+
+
 
 class IssueOption:
     def __init__(self, elem, issue):

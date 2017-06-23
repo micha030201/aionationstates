@@ -164,13 +164,6 @@ class Nation(Census, Session):
     def wa(root):
         return root.find('UNSTATUS').text == 'WA Member'
 
-    @api_query('banners')
-    def banners(root):
-        return [
-            banner_url(elem.text)
-            for elem in root.find('BANNERS')
-        ]
-
     @api_query('freedom')
     def freedom(root):
         return Freedom(root.find('FREEDOM'))
@@ -231,4 +224,36 @@ class Nation(Census, Session):
             return f'{NS_URL}page=verify_login?token={token}'
         return f'{NS_URL}page=verify_login'
 
+    @api_query('banners')
+    def _banner_ids(root):
+        return [elem.text for elem in root.find('BANNERS')]
+
+    async def banners(self):
+        return await self._make_banners(await self._banner_ids())
+
+    async def _make_banners(self, ids):
+        banners = await world._make_banners(ids)
+        expand_macros = None
+        for banner in banners:
+            if '@@' in banner.name:
+                if expand_macros is None:
+                    # only request macros data if we need it
+                    solve_macros = await self._get_macros_expander()
+                banner.name = expand_macros(banner.name)
+        return banners
+
+    async def _get_macros_expander(self):
+    """Expands only the macros present in banner names, since that (thank
+    Violet!) is the only place in the API to supply unexpanded macros.
+    """
+    name, demonym, faith = await (
+        self.name() + self.demonym() + self.religion())
+    def expand_macros(line):
+        return (
+            line
+            .replace('@@NAME@@', name)
+            .replace('@@FAITH@@', faith)
+            .replace('@@DEMONYM@@', demonym)
+        )
+    return expand_macros
 
