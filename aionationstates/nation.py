@@ -229,11 +229,8 @@ class Nation(Census, Session):
         return f'{NS_URL}page=verify_login'
 
     @api_query('banners')
-    async def _banner_ids(self, root):
-        return [elem.text for elem in root.find('BANNERS')]
-
-    async def banners(self):
-        ids = await self._banner_ids()
+    async def banners(self, root):
+        ids =  [elem.text for elem in root.find('BANNERS')]
         banners = await self._make_banners(ids)
         banners.sort(key=lambda banner: ids.index(banner.id))
         return banners

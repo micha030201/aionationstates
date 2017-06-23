@@ -64,20 +64,21 @@ class NationControl(Nation, Session):
     # Away from the boring Session nonsense, onto the new and
     # exciting API private shards and commands!
 
-    async def issues(self):
+    def issues(self):
         @api_query('issues')
         async def result(self, root):
-            return [Issue(elem, self) for elem in root.find('ISSUES')]
-        issues = await result(self)
-        for issue in issues:
-            issue.banners = await self._make_banners(issue.banners)
-        return issues
+            issues = [Issue(elem, self) for elem in root.find('ISSUES')]
+            for issue in issues:
+                issue.banners = await self._make_banners(issue.banners)
+            return issues
+        return result(self)
 
-    async def _accept_issue(self, issue_id, option_id):
+    def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         async def result(self, root):
-            return IssueResult(root.find('ISSUE'))
-        issue_result = await result(self)
-        issue_result.banners = await self._make_banners(issue_result.banners)
-        return issue_result
+            issue_result = IssueResult(root.find('ISSUE'))
+            issue_result.banners = \
+                await self._make_banners(issue_result.banners)
+            return issue_result
+        return result(self)
 
