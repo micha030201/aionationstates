@@ -1,8 +1,12 @@
-from aionationstates.utils import normalize, timestamp, banner_url
+from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
 from aionationstates.session import Session, NS_URL, api_query
 from aionationstates.shards import Census
+from aionationstates.world import World
+
+
+world = World()
 
 
 class Nation(Census, Session):
@@ -241,22 +245,23 @@ class Nation(Census, Session):
             if '@@' in banner.name:
                 if expand_macros is None:
                     # Only request macros data if we need it
-                    solve_macros = await self._get_macros_expander()
+                    expand_macros = await self._get_macros_expander()
                 banner.name = expand_macros(banner.name)
         return banners
 
     async def _get_macros_expander(self):
-    """Expands only the macros present in banner names, since that (thank
-    Violet!) is the only place in the API to supply unexpanded macros.
-    """
-    name, demonym, faith = await (
-        self.name() + self.demonym() + self.religion())
-    def expand_macros(line):
-        return (
-            line
-            .replace('@@NAME@@', name)
-            .replace('@@FAITH@@', faith)
-            .replace('@@DEMONYM@@', demonym)
-        )
-    return expand_macros
+        """Expands only the macros present in banner names, since
+        that (thank Violet!) is the only place in the API to supply
+        unexpanded macros.
+        """
+        name, demonym, faith = await (
+            self.name() + self.demonym() + self.religion())
+        def expand_macros(line):
+            return (
+                line
+                .replace('@@NAME@@', name)
+                .replace('@@FAITH@@', faith)
+                .replace('@@DEMONYM@@', demonym)
+            )
+        return expand_macros
 

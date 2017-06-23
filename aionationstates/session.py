@@ -1,5 +1,4 @@
 import logging
-from contextlib import suppress
 from collections import namedtuple
 from functools import wraps
 import xml.etree.ElementTree as ET
@@ -7,7 +6,6 @@ import xml.etree.ElementTree as ET
 import aiohttp
 
 from aionationstates import ratelimit
-from aionationstates.utils import normalize
 from aionationstates.types import (
     RateLimitError, SessionConflictError, AuthenticationError, NotFound)
 
@@ -35,6 +33,7 @@ class ApiQuery:
         self.params['q'] = '+'.join(self.q)
         resp = await self.session._call_api(self.params)
         root = ET.fromstring(resp.text)
+        # TODO make results coros and pass session to them
         results = tuple(result(root) for result in self.results)
         return results[0] if len(results) == 1 else results
 

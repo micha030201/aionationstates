@@ -1,6 +1,12 @@
+import logging
+from contextlib import suppress
+
 from aionationstates.types import Issue, IssueResult
 from aionationstates.nation import Nation
 from aionationstates.session import Session, api_query, api_command
+
+
+logger = logging.getLogger('discord-plays-nationstates')
 
 
 class NationControl(Nation, Session):

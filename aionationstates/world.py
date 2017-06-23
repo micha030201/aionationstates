@@ -51,7 +51,7 @@ class World(Census, Session):
 
     async def _make_banners(self, ids):
         custom_banners = [CustomBanner(id) for id in ids if '/' in id]
-        ids = [id in ids if '/' not in id]
+        ids = [id for id in ids if '/' not in id]
         @api_query('banner', banner=','.join(ids))
         def result(root):
             return [Banner(elem) for elem in root.find('BANNERS')]
