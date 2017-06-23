@@ -55,17 +55,23 @@ class NationControl(Nation, Session):
         data['nation'] = self.id
         return await self._base_call_api('POST', data=data, **kwargs)
 
+    # Away from the boring Session nonsense, onto the new and
+    # exciting API private shards and commands!
 
-    def issues(self):
+    async def issues(self):
         @api_query('issues')
         def result(root):
             return [Issue(elem, self) for elem in root.find('ISSUES')]
-        return result()
+        issues = await result(self)
+        for issue in issues:
+            issue.banners = await self._make_banners(issue.banners)
+        return issues
 
-    def _accept_issue(self, issue_id, option_id):
+    async def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         def result(root):
             return IssueResult(root.find('ISSUE'))
-        return result(self)
-
+        issue_result = await result(self)
+        issue_result.banners = await self._make_banners(issue_result.banners)
+        return issue_result
 

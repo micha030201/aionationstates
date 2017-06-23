@@ -8,7 +8,7 @@ from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
 
-from aionationstates.utils import timestamp, banner_url
+from aionationstates.utils import timestamp
 from aionationstates.ns_to_human import census_info
 
 
@@ -210,7 +210,7 @@ class Issue:
         def issue_banners(elem):
             for x in range(1, 10):  # Should be more than enough.
                 try:
-                    yield banner_url(elem.find(f'PIC{x}').text)
+                    yield elem.find(f'PIC{x}').text
                 except AttributeError:
                     break
         self.banners = list(issue_banners(elem))
@@ -263,13 +263,13 @@ class IssueResult:
                 raise ValueError('invalid issue')
         assert elem.find('OK').text == '1'  # honestly no idea
 
-        self.desc = getattr(elem.find('DESC'), 'text', None)  # TODO rename?
-        self.rankings = [  # TODO rename?
+        self.happening = getattr(elem.find('DESC'), 'text', None)
+        self.census = [
             CensusScaleChange(sub_elem) for sub_elem
             in elem.find('RANKINGS') or ()
         ]
-        self.unlocks = [  # TODO rename?
-            banner_url(sub_elem.text) for sub_elem
+        self.banners = [
+            sub_elem.text for sub_elem
             in elem.find('UNLOCKS') or ()
         ]
         self.reclassifications = Reclassifications(
