@@ -229,7 +229,10 @@ class Nation(Census, Session):
         return [elem.text for elem in root.find('BANNERS')]
 
     async def banners(self):
-        return await self._make_banners(await self._banner_ids())
+        ids = await self._banner_ids()
+        banners = await self._make_banners(ids)
+        banners.sort(key=lambda banner: ids.index(banner.id))
+        return banners
 
     async def _make_banners(self, ids):
         banners = await world._make_banners(ids)
@@ -237,7 +240,7 @@ class Nation(Census, Session):
         for banner in banners:
             if '@@' in banner.name:
                 if expand_macros is None:
-                    # only request macros data if we need it
+                    # Only request macros data if we need it
                     solve_macros = await self._get_macros_expander()
                 banner.name = expand_macros(banner.name)
         return banners

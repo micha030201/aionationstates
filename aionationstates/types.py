@@ -177,6 +177,12 @@ class Banner:
     def url(self):
         return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
 
+class CustomBanner(Banner):
+    def __init__(self, id):
+        self.id = id
+        self.name = 'Custom'
+        self.validity = 'Reach a certain population threshold'
+
 
 
 class IssueOption:

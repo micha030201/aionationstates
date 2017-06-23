@@ -1,5 +1,6 @@
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch, DispatchThumbnail
+from aionationstates.types import (
+    Dispatch, DispatchThumbnail, CustomBanner, Banner)
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories
 
@@ -48,9 +49,11 @@ class World(Census, Session):
             ]
         return result(self)
 
-    def _make_banners(self, ids):
+    async def _make_banners(self, ids):
+        custom_banners = [CustomBanner(id) for id in ids if '/' in id]
+        ids = [id in ids if '/' not in id]
         @api_query('banner', banner=','.join(ids))
         def result(root):
             return [Banner(elem) for elem in root.find('BANNERS')]
-        return result(self)
+        return await result(self) + custom_banners
 
