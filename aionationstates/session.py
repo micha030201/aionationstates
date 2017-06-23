@@ -8,6 +8,8 @@ import aiohttp
 
 from aionationstates import ratelimit
 from aionationstates.utils import normalize
+from aionationstates.types import (
+    RateLimitError, SessionConflictError, AuthenticationError, NotFound)
 
 
 logger = logging.getLogger('aionationstates')
@@ -17,22 +19,6 @@ API_PATH = 'cgi-bin/api.cgi'
 API_URL = NS_URL + API_PATH
 
 USER_AGENT = 'https://github.com/micha030201/aionationstates'
-
-
-class RateLimitError(Exception):
-    pass
-
-
-class SessionConflictError(Exception):
-    pass
-
-
-class AuthenticationError(Exception):
-    pass
-
-
-class NotFound(Exception):
-    pass
 
 
 class ApiQuery:
