@@ -33,11 +33,11 @@ class ApiQuery:
         self.params['q'] = '+'.join(self.q)
         resp = await self.session._call_api(self.params)
         root = ET.fromstring(resp.text)
-        results = tuple(
+        results = [
             await result(self.session, root)
             for result in self.results
-        )
-        return results[0] if len(results) == 1 else results
+        ]
+        return results[0] if len(results) == 1 else tuple(results)
 
     def __add__(self, other):
         if self.session is not other.session:
@@ -101,6 +101,7 @@ class Session:  # TODO self._useragent
 
     @ratelimit.api
     async def _base_call_api(self, method, **kwargs):
+        logger.debug(f'Calling API {kwargs}')  # TODO sort out logging levels
         resp = await self._request(method, API_URL, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
