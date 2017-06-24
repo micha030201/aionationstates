@@ -231,49 +231,49 @@ class Nation(Census, Session):
     @api_query('banners')
     async def banners(self, root):
         ids = [elem.text for elem in root.find('BANNERS')]
-        return await self._make_banners(ids)
+        return await world._make_banners(
+            ids, expand_macros=self._get_macros_expander())
 
-    async def _make_banners(self, ids, expand_macros=None):
-        banners = await world._make_banners(ids)
-        for banner in banners:
-            if '@@' in banner.name:
-                if expand_macros is None:
-                    # Only request macros data if we need it
-                    expand_macros = await self._get_macros_expander()
-                banner.name = expand_macros(banner.name)
-        return banners
-
-    async def _get_macros_expander(self):
+    def _get_macros_expander(self):
         # TODO rewrite to join this request with the one that returns banner ids?
 
         # The only macros present in the banner names are name,
         # demonym, and faith.  If the NS admins ever choose to answer
         # my request and fix the unexpanded macros in issue effect
         # headlines, the rest should probably be removed as unnecessary.
-        demonym, demonym2, pl_demonym2, name, faith, animal, capital = await (
+        query = (
             self.demonym() + self.demonym2() + self.demonym2plural()
             + self.name() + self.religion() + self.animal() + self.capital()
         )
-        def expand_macros(line):
-            return (
-                line
-                .replace('@@DEMONYM@@', demonym)
-                .replace('@@DEMONYM2@@', demonym2)
-                # Not documented, or even mentioned anywhere.
-                # Discovered through experimentation.  No idea if
-                # that's a pattern or not.
-                # More experimentation will tell, I guess?
-                .replace('@@PL(DEMONYM2)@@', pl_demonym2)
-                .replace('@@NAME@@', name)
-                .replace('@@FAITH@@', faith)
-                .replace('@@ANIMAL@@', animal)
-                # I feel filthy just looking at this.  Surely, NS
-                # wouldn't put bits of Perl code to be executed into
-                # macros?  Surely, their code can't be that bad?
-                # Yeah right.  Ha ha.  Ha.
-                .replace('@@$nation->query_capital()@@', capital)
-                # I wasn't that nihilistic before starting to write
-                # this library, was I?
-            )
+        query_result = None
+
+        async def expand_macros(line):
+            nonlocal query_result
+            if '@@' in line:
+                if query_result is None:
+                    # Only request macros data if we need it
+                    query_result = await query
+                return (
+                    line
+                    .replace('@@DEMONYM@@', query_result[0])
+                    .replace('@@DEMONYM2@@', query_result[1])
+                    # Not documented, or even mentioned anywhere.
+                    # Discovered through experimentation.  No idea if
+                    # that's a pattern or not.
+                    # More experimentation will tell, I guess?
+                    .replace('@@PL(DEMONYM2)@@', query_result[2])
+                    .replace('@@NAME@@', query_result[3])
+                    .replace('@@FAITH@@', query_result[4])
+                    .replace('@@ANIMAL@@', query_result[5])
+                    # I feel filthy just looking at this.  Surely, NS
+                    # wouldn't put bits of Perl code to be executed into
+                    # macros?  Surely, their systems can't be that bad?
+                    # Yeah right.  Ha ha.  Ha.
+                    .replace('@@$nation->query_capital()@@', query_result[6])
+                    # I wasn't that nihilistic before starting to write
+                    # this library, was I?
+                )
+            return line
+
         return expand_macros
 

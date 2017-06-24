@@ -101,7 +101,7 @@ class Session:  # TODO self._useragent
 
     @ratelimit.api
     async def _base_call_api(self, method, **kwargs):
-        logger.debug(f'Calling API {kwargs}')  # TODO sort out logging levels
+        logger.debug(f'Calling API {method} {kwargs}')
         resp = await self._request(method, API_URL, **kwargs)
         if resp.status == 403:
             raise AuthenticationError
@@ -120,6 +120,7 @@ class Session:  # TODO self._useragent
 
     @ratelimit.web
     async def _call_web(self, path, *, method='GET', **kwargs):
+        logger.debug(f'Calling web {method} {path} {kwargs}')
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
         if '<html lang="en" id="page_login">' in resp.text:
             raise AuthenticationError

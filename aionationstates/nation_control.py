@@ -6,9 +6,11 @@ from contextlib import suppress
 from aionationstates.types import Issue, IssueResult
 from aionationstates.nation import Nation
 from aionationstates.session import Session, api_query, api_command
+from aionationstates.world import World
 
 
 logger = logging.getLogger('discord-plays-nationstates')
+world = World()
 
 
 class NationControl(Nation, Session):
@@ -26,8 +28,6 @@ class NationControl(Nation, Session):
         super().__init__(*args, **kwargs)
 
     async def _base_call_api(self, method, **kwargs):
-        logger.debug(f'Making authenticated API request as {self.id} to '
-                     f'{str(kwargs)}')
         headers = {
             'X-Password': self.password,
             'X-Autologin': self.autologin,
@@ -36,17 +36,15 @@ class NationControl(Nation, Session):
         resp = await super()._base_call_api(method, headers=headers, **kwargs)
         with suppress(KeyError):
             self.pin = resp.headers['X-Pin']
-            logger.debug('Updating pin from API header')
+            logger.info(f'Updating pin for {self.id} from API header')
             self.autologin = resp.headers['X-Autologin']
-            logger.debug('Setting autologin from API header')
+            logger.debug(f'Setting autologin for {self.id} from API header')
         return resp
 
     async def _call_web(self, path, method='GET', **kwargs):
         if not self.autologin:
             # Obtain autologin in case only password was provided
             await self._call_api({'nation': self.id, 'q': 'nextissue'})
-        logger.debug(f'Making authenticated web {method} request as'
-                     f' {self.id} to {path} {kwargs.get("data")}')
         cookies = {
             # Will not work with unescaped equals sign
             'autologin': self.id + '%3D' + self.autologin,
@@ -56,7 +54,7 @@ class NationControl(Nation, Session):
                                       cookies=cookies, **kwargs)
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
-            logger.debug('Updating pin from web cookie')
+            logger.info(f'Updating pin for {self.id} from web cookie')
         return resp
 
     async def _call_api_command(self, data, **kwargs):
@@ -72,8 +70,10 @@ class NationControl(Nation, Session):
 
         # The idea is to call make_banners only once, as it makes
         # a request to the API
-        banners = await self._make_banners(
-            reduce(add, (issue.banners for issue in issues)))
+        banners = await world._make_banners(
+            reduce(add, (issue.banners for issue in issues)),
+            expand_macros=self._get_macros_expander()
+        )
         for issue in issues:
             # If there even is a better way of doing this, I'm
             # sure not seeing it
@@ -86,13 +86,13 @@ class NationControl(Nation, Session):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         async def result(self, root):
             issue_result = IssueResult(root.find('ISSUE'))
-            expand_macros = await self._get_macros_expander()
-            issue_result.banners = await self._make_banners(
+            expand_macros = self._get_macros_expander()
+            issue_result.banners = await world._make_banners(
                 issue_result.banners,
                 expand_macros=expand_macros
             )
             issue_result.headlines = [
-                expand_macros(headline)
+                await expand_macros(headline)
                 for headline in issue_result.headlines
             ]
             return issue_result
