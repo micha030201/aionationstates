@@ -1,4 +1,6 @@
 import logging
+from operator import add
+from functools import reduce
 from contextlib import suppress
 
 from aionationstates.types import Issue, IssueResult
@@ -64,21 +66,35 @@ class NationControl(Nation, Session):
     # Away from the boring Session nonsense, onto the new and
     # exciting API private shards and commands!
 
-    def issues(self):
-        @api_query('issues')
-        async def result(self, root):
-            issues = [Issue(elem, self) for elem in root.find('ISSUES')]
-            for issue in issues:
-                issue.banners = await self._make_banners(issue.banners)
-            return issues
-        return result(self)
+    @api_query('issues')
+    async def issues(self, root):
+        issues = [Issue(elem, self) for elem in root.find('ISSUES')]
+
+        # The idea is to call make_banners only once, as it makes
+        # a request to the API
+        banners = await self._make_banners(
+            reduce(add, (issue.banners for issue in issues)))
+        for issue in issues:
+            # If there even is a better way of doing this, I'm
+            # sure not seeing it
+            issue.banners = banners[:len(issue.banners)]
+            del banners[:len(issue.banners)]
+
+        return issues
 
     def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         async def result(self, root):
             issue_result = IssueResult(root.find('ISSUE'))
-            issue_result.banners = \
-                await self._make_banners(issue_result.banners)
+            expand_macros = await self._get_macros_expander()
+            issue_result.banners = await self._make_banners(
+                issue_result.banners,
+                expand_macros=expand_macros
+            )
+            issue_result.headlines = [
+                expand_macros(headline)
+                for headline in issue_result.headlines
+            ]
             return issue_result
         return result(self)
 

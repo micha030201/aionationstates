@@ -49,14 +49,16 @@ class World(Census, Session):
             ]
         return result(self)
 
-    def _make_banners(self, ids):
+    async def _make_banners(self, ids):
         custom_banners = [CustomBanner(id) for id in ids if '/' in id]
-        ids = [id for id in ids if '/' not in id]
-        @api_query('banner', banner=','.join(ids))
+        generic_banner_ids = [id for id in ids if '/' not in id]
+        if not ids:
+            return custom_banners
+        @api_query('banner', banner=','.join(generic_banner_ids))
         async def result(self, root):
-            return (
-                [Banner(elem) for elem in root.find('BANNERS')]
-                + custom_banners
-            )
-        return result(self)
+            return [Banner(elem) for elem in root.find('BANNERS')]
+        banners =  await result(self) + custom_banners
+        # Order needs to be preserved, otherwise things will break
+        banners.sort(key=lambda banner: ids.index(banner.id))
+        return banners
 
