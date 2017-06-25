@@ -4,7 +4,7 @@ from html import unescape
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
-from aionationstates.session import Session, NS_URL, api_query
+from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 from aionationstates.world import World
 
@@ -228,8 +228,9 @@ class Nation(Census, Session):
 
     def verification_url(self, *, token=None):
         if token:
-            return f'{NS_URL}page=verify_login?token={token}'
-        return f'{NS_URL}page=verify_login'
+            return 'https://www.nationstates.net/'
+                   f'page=verify_login?token={token}'
+        return f'https://www.nationstates.net/page=verify_login'
 
     @api_query('banners')
     async def banners(self, root):

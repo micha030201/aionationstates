@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 from collections import namedtuple
 from functools import wraps
 import xml.etree.ElementTree as ET
@@ -10,13 +11,16 @@ from aionationstates.types import (
     RateLimitError, SessionConflictError, AuthenticationError, NotFound)
 
 
-logger = logging.getLogger('aionationstates')
+# I too am surprised that this doesn't cause an ImportError
+from aionationstates import __version__
 
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
 API_URL = NS_URL + API_PATH
 
-USER_AGENT = 'https://github.com/micha030201/aionationstates'
+USER_AGENT = None  # To be set by the user
+
+logger = logging.getLogger('aionationstates')
 
 
 class ApiQuery:
@@ -88,7 +92,14 @@ class Session:  # TODO self._useragent
 
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
-        headers['User-Agent'] = USER_AGENT
+
+        standard_user_agent = f'aionationstates/{__version__}'
+        if not USER_AGENT:
+            warn('Please supply a useragent by setting the'
+                 ' aionationstates.USER_AGENT variable.')
+            headers['User-Agent'] = standard_user_agent
+        headers['User-Agent'] = f'{USER_AGENT} ({standard_user_agent})'
+
         async with aiohttp.request(method, url, headers=headers,
                                    allow_redirects=False, **kwargs) as resp:
             return RawResponse(
