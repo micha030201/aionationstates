@@ -1,3 +1,6 @@
+import re
+from html import unescape
+
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
@@ -244,6 +247,7 @@ class Nation(Census, Session):
         query = (
             self.demonym() + self.demonym2() + self.demonym2plural()
             + self.name() + self.religion() + self.animal() + self.capital()
+            + self.leader()
         )
         query_result = None
 
@@ -272,8 +276,24 @@ class Nation(Census, Session):
                     .replace('@@$nation->query_capital()@@', query_result[6])
                     # I wasn't that nihilistic before starting to write
                     # this library, was I?
+                    .replace('@@LEADER@@', query_result[7])
                 )
             return line
 
         return expand_macros
+
+    async def description(self):
+        resp = await self._call_web(f'nation={self.id}')
+        return unescape(
+            re.search(
+                '<div class="nationsummary">(.+?)<p class="nationranktext">',
+                resp.text,
+                flags=re.DOTALL
+            )
+            .group(1)
+            .replace('\n', '')
+            .replace('</p>', '')
+            .replace('<p>', '\n\n')
+            .strip()
+        )
 
