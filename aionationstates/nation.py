@@ -228,8 +228,8 @@ class Nation(Census, Session):
 
     def verification_url(self, *, token=None):
         if token:
-            return 'https://www.nationstates.net/'
-                   f'page=verify_login?token={token}'
+            return ('https://www.nationstates.net/'
+                    f'page=verify_login?token={token}')
         return f'https://www.nationstates.net/page=verify_login'
 
     @api_query('banners')
