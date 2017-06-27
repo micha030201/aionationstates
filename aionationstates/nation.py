@@ -23,7 +23,8 @@ class Nation(Census, Session):
 
 
     @api_query('name')
-    async def name(self, root):
+    async def name(self, root) -> str:
+        """Get the name of the nation."""
         return root.find('NAME').text
 
     @api_query('type')
