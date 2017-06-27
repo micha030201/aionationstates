@@ -93,12 +93,13 @@ class Session:  # TODO self._useragent
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
 
-        standard_user_agent = f'aionationstates/{__version__}'
-        if not USER_AGENT:
+        standard_user_agent = f'aionationstates/{aionationstates.__version__}'
+        if not aionationstates.USER_AGENT:
             warn('Please supply a useragent by setting the'
                  ' aionationstates.USER_AGENT variable.')
             headers['User-Agent'] = standard_user_agent
-        headers['User-Agent'] = f'{USER_AGENT} ({standard_user_agent})'
+        headers['User-Agent'] = \
+            f'{aionationstates.USER_AGENT} ({standard_user_agent})'
 
         async with aiohttp.request(method, url, headers=headers,
                                    allow_redirects=False, **kwargs) as resp:
