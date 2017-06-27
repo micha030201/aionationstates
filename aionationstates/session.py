@@ -3,6 +3,8 @@ from warnings import warn
 from collections import namedtuple
 from functools import wraps
 import xml.etree.ElementTree as ET
+from contextlib import suppress
+from typing import Union, Tuple, Awaitable, Coroutine
 
 import aiohttp
 
@@ -12,18 +14,17 @@ from aionationstates.types import (
 
 
 # I too am surprised that this doesn't cause an ImportError
-from aionationstates import __version__
+import aionationstates
 
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
 API_URL = NS_URL + API_PATH
 
-USER_AGENT = None  # To be set by the user
 
 logger = logging.getLogger('aionationstates')
 
 
-class ApiQuery:
+class ApiQuery(Awaitable[Union[Coroutine, Tuple[Coroutine, ...]]]):
     def __init__(self, *, session, result, q, params=None):
         self.session = session
         self.results = [result]
@@ -64,6 +65,9 @@ def api_query(*q, **params):
         def wrapper(session):
             return ApiQuery(session=session, q=q,
                             params=params, result=func)
+        with suppress(KeyError):
+            wrapper.__annotations__['return'] = \
+                ApiQuery[wrapper.__annotations__['return']]
         return wrapper
     return decorator
 
@@ -76,6 +80,9 @@ def api_command(c, **data):
             resp = await session._call_api_command(data)
             root = ET.fromstring(resp.text)
             return await func(session, root)
+        with suppress(KeyError):
+            wrapper.__annotations__['return'] = \
+                Awaitable[wrapper.__annotations__['return']]
         return wrapper
     return decorator
 
