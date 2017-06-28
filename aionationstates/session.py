@@ -4,7 +4,7 @@ from collections import namedtuple
 from functools import wraps
 import xml.etree.ElementTree as ET
 from contextlib import suppress
-from typing import TypeVar, Generic, Tuple, Awaitable, Coroutine
+from typing import TypeVar, Tuple, Awaitable, Coroutine
 
 import aiohttp
 
@@ -24,9 +24,9 @@ API_URL = NS_URL + API_PATH
 logger = logging.getLogger('aionationstates')
 
 
-T = TypeVar('T', Coroutine, Tuple[Coroutine, ...])
+T = TypeVar('T')
 
-class ApiQuery(Awaitable, Generic[T]):
+class ApiQuery(Awaitable[T]):
     def __init__(self, *, session, result, q, params=None):
         self.session = session
         self.results = [result]
