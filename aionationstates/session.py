@@ -8,13 +8,10 @@ from typing import TypeVar, Tuple, Awaitable, Coroutine
 
 import aiohttp
 
+import aionationstates
 from aionationstates import ratelimit
 from aionationstates.types import (
     RateLimitError, SessionConflictError, AuthenticationError, NotFound)
-
-
-# I too am surprised that this doesn't cause an ImportError
-import aionationstates
 
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
@@ -27,6 +24,52 @@ logger = logging.getLogger('aionationstates')
 T = TypeVar('T')
 
 class ApiQuery(Awaitable[T]):
+    """A request to the NationStates API.
+
+    Although you, as a user, will never need to interact with this
+    class "directly," it is quite a bit more than an implementation
+    detail.
+
+    It it here to provide a way to combine multiple API shards into a
+    single HTTP request.
+
+    To achieve that, it overloads the ``+`` operator. By "adding"
+    ApiQueries together, you get an ApiQuery which, when awaited, will
+    return a tuple of what the original ApiQueries would have
+    returned by themselves. Let me illustrate.
+
+    This code::
+
+        name = await nation.name()
+        population = await nation.population()
+        wa = await nation.wa()
+
+    is functionally equivalent to this::
+
+        name, population, wa = await (
+            nation.name() + nation.population() + nation.wa())
+
+    with the tiny difference that the latter sample sends but a single
+    HTTP request to the API, as opposed to the former, which bombards
+    the poor server hamsters with all three.
+
+    As you may have already realized at this point, combining shards
+    into a single request this way is preferable, and you should do
+    that in your code wherever possible.
+
+    .. note::
+
+        As sad and depressing as it is, the cruel bounds of this
+        abominable existence have not been released just yet, and the
+        standard NS rules for combining shards still apply. So code
+        such as this won't work::
+
+            nation.name() + region.name()
+            # ValueError: ApiQueries do not share the same session
+
+            nation.census() + nation.censushistory()
+            # ValueError: ApiQueries contain conflicting params
+    """
     def __init__(self, *, session, result, q, params=None):
         self.session = session
         self.results = [result]
