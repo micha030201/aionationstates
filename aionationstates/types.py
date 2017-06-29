@@ -7,6 +7,9 @@ from html import unescape
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
+# Needed for type annotations
+import datetime
+from typing import List, Optional, Awaitable
 
 from aionationstates.utils import timestamp
 from aionationstates.ns_to_human import census_info
@@ -55,7 +58,7 @@ class CensusScaleCurrent(CensusScale):
         return f'<CensusScaleCurrent #{self.info.id} "{self.info.title}">'
 
 
-class CensusPoint:
+class CensusPoint:  # TODO make a namedtuple
     def __init__(self, elem):
         super().__init__(elem)
         self.timestamp = timestamp(elem.find('TIMESTAMP').text)
@@ -95,7 +98,7 @@ class DispatchThumbnail:
         return f'<DispatchThumbnail id={self.id}>'
 
 
-class Dispatch(DispatchThumbnail):
+class Dispatch(DispatchThumbnail):  # TODO join with DispatchThumbnail
     def __init__(self, elem):
         super().__init__(elem)
         self.text = elem.find('TEXT').text
@@ -106,19 +109,49 @@ class Dispatch(DispatchThumbnail):
 
 
 class PollOption:
+    """An option in a poll.
+
+    Attributes:
+        text: Text of the option.
+        voters: Nations that picked this option.  Not normalized.
+    """
+    text: str
+    voters: List[str]
+
     def __init__(self, elem):
         self.text = elem.find('OPTIONTEXT').text
-        voters = elem.find('VOTERS').text
-        self.voters = voters.split(':') if voters else ()
+        voters = elem.find('VOTERS').text  # TODO normalize?
+        self.voters = voters.split(':') if voters else []
 
 
 class Poll:
+    """A regional poll.
+
+    Attributes:
+        id: The poll id.
+        title: The poll title.  May contain HTML elements and character
+            references.
+        text: The poll text.  May contain HTML elements and character
+            references.
+        region: Region the poll was posted in.  Not normalized.
+        author: Nation that posted the poll.  Not normalized.
+        options: The poll options.
+    """
+    id: int
+    title: str
+    text: str
+    region: str
+    author: str
+    start: datetime.datetime
+    stop: datetime.datetime
+    options: List[PollOption]
+
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text
-        self.text = elem.find('TEXT').text
-        self.region = elem.find('REGION').text
-        self.author = elem.find('AUTHOR').text
+        self.title = elem.find('TITLE').text  # TODO HTML mess
+        self.text = elem.find('TEXT').text  # TODO HTML mess
+        self.region = elem.find('REGION').text  # TODO normalize?
+        self.author = elem.find('AUTHOR').text  # TODO normalize?
         self.start = timestamp(elem.find('START').text)
         self.stop = timestamp(elem.find('STOP').text)
         self.options = [PollOption(option_elem)
@@ -130,6 +163,19 @@ class Poll:
 
 
 class Freedom:
+    """Nation's `Freedoms`: three basic indicators of the nation's
+    Civil Rights, Economy, and Political Freedom, as expressive
+    adjectives.
+
+    Attributes:
+        civilrights: Nation's Civil Rights.
+        economy: Nation's Economic Prosperity.
+        politicalfreedom: Nation's Political Freedom.
+    """
+    civilrights: str
+    economy: str
+    politicalfreedom: str
+
     def __init__(self, elem):
         self.civilrights = elem.find('CIVILRIGHTS').text
         self.economy = elem.find('ECONOMY').text
@@ -137,6 +183,18 @@ class Freedom:
 
 
 class FreedomScores:
+    """Nation's `Freedoms`: three basic indicators of the nation's
+    Civil Rights, Economy, and Political Freedom, as percentages.
+
+    Attributes:
+        civilrights: Nation's Civil Rights.
+        economy: Nation's Economic Prosperity.
+        politicalfreedom: Nation's Political Freedom.
+    """
+    civilrights: int
+    economy: int
+    politicalfreedom: int
+
     def __init__(self, elem):
         self.civilrights = int(elem.find('CIVILRIGHTS').text)
         self.economy = int(elem.find('ECONOMY').text)
@@ -144,6 +202,47 @@ class FreedomScores:
 
 
 class Govt:
+    """Nation's government expenditure, as percentages.
+
+    Attributes:
+        administration: The percentage of nation's budget spent on
+            Administration.
+        defence: The percentage of nation's budget spent on
+            Defence.
+        education: The percentage of nation's budget spent on
+            Public Education.
+        environment: The percentage of nation's budget spent on
+            Enviromental Protection.
+        healthcare: The percentage of nation's budget spent on
+            Public Healthcare.
+        commerce: The percentage of nation's budget spent on
+            Industry.
+        internationalaid: The percentage of nation's budget spent on
+            International Aid.
+        lawandorder: The percentage of nation's budget spent on
+            Law & Order.
+        publictransport: The percentage of nation's budget spent on
+            Public Transportation.
+        socialequality: The percentage of nation's budget spent on
+            Social Policy.
+        spirituality: The percentage of nation's budget spent on
+            Spirituality.
+        welfare: The percentage of nation's budget spent on
+            Welfare.
+    """
+    administration: float
+    defence: float
+    education: float
+    environment: float
+    healthcare: float
+    commerce: float
+    internationalaid: float
+    lawandorder: float
+    publictransport: float
+    socialequality: float
+    spirituality: float
+    welfare: float
+
     def __init__(self, elem):
         self.administration = float(elem.find('ADMINISTRATION').text)
         self.defence = float(elem.find('DEFENCE').text)
@@ -168,55 +267,34 @@ class Sectors:
 
 
 class Banner:
+    """A Rift banner.
+
+    Attributes:
+        id: The banner id.
+        name: The banner name.
+        validity: A requirement the nation has to meet in order to get
+            the banner.
+    """
+    id: str
+    name: str
+    validity: str
+
     def __init__(self, elem):
         self.id = elem.get('id')
         self.name = elem.find('NAME').text
         self.validity = elem.find('VALIDITY').text
 
     @property
-    def url(self):
+    def url(self) -> str:
+        """Link to the banner image."""
         return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
 
-class CustomBanner(Banner):
+class CustomBanner(Banner):  # TODO join with Banner
     def __init__(self, id):
         self.id = id
         self.name = 'Custom'
         self.validity = 'Reach a certain population threshold'
 
-
-
-class IssueOption:
-    def __init__(self, elem, issue):
-        self._issue = issue
-        self.id = int(elem.get('id'))
-        self.text = elem.text
-
-    def accept(self):
-        return self._issue._nation._accept_issue(self._issue.id, self.id)
-
-
-class Issue:
-    def __init__(self, elem, nation):
-        self._nation = nation
-        self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text
-        self.text = elem.find('TEXT').text
-        self.author = getattr(elem.find('AUTHOR'), 'text', None)
-        self.editor = getattr(elem.find('EDITOR'), 'text', None)
-        self.options = [
-            IssueOption(sub_elem, self)
-            for sub_elem in elem.findall('OPTION')
-        ]
-        def issue_banners(elem):
-            for x in range(1, 10):  # Should be more than enough.
-                try:
-                    yield elem.find(f'PIC{x}').text
-                except AttributeError:
-                    break
-        self.banners = list(issue_banners(elem))
-
-    def dismiss(self):
-        return self._nation._accept_issue(self.id, -1)
 
 
 Reclassification = namedtuple('Reclassification', 'before after')
@@ -252,6 +330,29 @@ class CensusScaleChange(CensusScale):
 
 
 class IssueResult:
+    """Result of an issue.
+
+    Attributes:
+        happening: The issue effect line.  Not a sentence, mind you --
+            it's uncapitalized and does not end with a period.
+            ``None`` if the issue was dismissed.
+        census: Changes in census scores of the nation.
+        banners: The banners unlocked by answering the issue.
+        reclassifications: WA Category and Freedoms reclassifications.
+        headlines: Newspaper headlines.  NationStates returns this
+            field with unexpanded macros.  I did my best to try and
+            expand them all client-side, however there does not exist
+            a document in which they are formally defined (that is
+            sort of a pattern throughout NationStates, maybe you've
+            noticed), so I can only do so much.  Please report any
+            unexpanded macros you encounter as bugs.
+    """
+    happening: Optional[str]
+    census: List[CensusScaleChange]
+    banners: List[Banner]
+    reclassifications: Reclassifications
+    headlines: List[str]
+
     def __init__(self, elem):
         with suppress(AttributeError):
             error = elem.find('ERROR').text
@@ -269,7 +370,10 @@ class IssueResult:
             in elem.find('RANKINGS') or ()
         ]
         self.banners = [
-            sub_elem.text for sub_elem
+            # A list of ids here, but gets updated down the line to
+            # contain full-blown Banner objects.
+            # I don't like this design either.
+            sub_elem.text for sub_elem  # TODO make less terrible
             in elem.find('UNLOCKS') or ()
         ]
         self.reclassifications = Reclassifications(
@@ -278,6 +382,71 @@ class IssueResult:
             sub_elem.text for sub_elem
             in elem.find('HEADLINES') or ()
         ]
+
+
+
+class IssueOption:
+    """An option of an issue.
+
+    Attributes:
+        text: The option text. May contain HTML elements and character
+            references.
+    """
+    text: str
+
+    def __init__(self, elem, issue):
+        self._issue = issue
+        self._id = int(elem.get('id'))
+        self.text = elem.text
+
+    def accept(self) -> Awaitable[IssueResult]:
+        return self._issue._nation._accept_issue(self._issue.id, self._id)
+
+
+class Issue:
+    """An issue.
+
+    Attributes:
+        id: The issue id.
+        title: The issue title.  May contain HTML elements and
+            character references.
+        text: The issue text.  May contain HTML elements and character
+            references.
+        author: Author of the issue, usually a nation.
+        editor: Editor of the issue, usually a nation.
+        options: Issue options.
+        banners: Issue banners.
+    """
+    id: int
+    title: str
+    text: str
+    author: Optional[str]
+    editor: Optional[str]
+    options: List[IssueOption]
+    banners: List[Banner]
+
+    def __init__(self, elem, nation):
+        self._nation = nation
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.text = elem.find('TEXT').text
+        self.author = getattr(elem.find('AUTHOR'), 'text', None)
+        self.editor = getattr(elem.find('EDITOR'), 'text', None)
+        self.options = [
+            IssueOption(sub_elem, self)
+            for sub_elem in elem.findall('OPTION')
+        ]
+        def issue_banners(elem):
+            for x in range(1, 10):  # Should be more than enough.
+                try:
+                    yield elem.find(f'PIC{x}').text
+                except AttributeError:
+                    break
+        self.banners = list(issue_banners(elem))
+
+    def dismiss(self) -> Awaitable[IssueResult]:
+        """Dismiss the issue."""
+        return self._nation._accept_issue(self.id, -1)
 
 
 

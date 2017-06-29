@@ -30,7 +30,7 @@ class Nation(Census, Session):
     """
     id: str
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.id = normalize(name)
 
     def _call_api(self, params, **kwargs):
@@ -284,8 +284,8 @@ class Nation(Census, Session):
     @api_query('freedom')
     async def freedom(self, root) -> Freedom:
         """Nation's `Freedoms`: three basic indicators of the nation's
-        Civil Rights, Economy, and Political Freedom, as short
-        descriptive strings.
+        Civil Rights, Economy, and Political Freedom, as expressive
+        adjectives.
         """
         return Freedom(root.find('FREEDOM'))
 
@@ -298,7 +298,7 @@ class Nation(Census, Session):
 
     @api_query('govt')
     async def govt(self, root) -> Govt:
-        """Nation's government spendings, as percentages."""
+        """Nation's government expenditure, as percentages."""
         return Govt(root.find('GOVT'))
 
     @api_query('deaths')
@@ -319,7 +319,7 @@ class Nation(Census, Session):
     async def legislation(self, root) -> List[str]:
         """Effects of the most recently passed legislation.
 
-        May include HTML elements and character references.
+        May contain HTML elements and character references.
         """
         return [elem.text for elem in root.find('LEGISLATION')]
 
