@@ -259,6 +259,19 @@ class Govt:
 
 
 class Sectors:
+    """Components of a nation's economy.
+
+    Attributes:
+        blackmarket: Part of the economy taken up by Black Market.
+        government: Part of the economy taken up by Government.
+        industry: Part of the economy taken up by Private Industry.
+        public: Part of the economy taken up by State-Owned Industry.
+    """
+    blackmarket: float
+    government: float
+    industry: float
+    public: float
+
     def __init__(self, elem):
         self.blackmarket = float(elem.find('BLACKMARKET').text)
         self.government = float(elem.find('GOVERNMENT').text)
@@ -288,6 +301,8 @@ class Banner:
     def url(self) -> str:
         """Link to the banner image."""
         return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
+
+    # TODO repr
 
 class CustomBanner(Banner):  # TODO join with Banner
     def __init__(self, id):
@@ -322,6 +337,18 @@ class Reclassifications:
 
 
 class CensusScaleChange(CensusScale):
+    """Change in one of the World Census scales of a nation
+
+    Attributes:
+        score: The scale score, after the change.
+        change: Change of the score.
+        pchange: The semi-user-friendly percentage change NationStates
+            shows by default.
+    """
+    score: float
+    change: float
+    pchange: float
+
     def __init__(self, elem):
         super().__init__(elem)
         self.score = float(elem.find('SCORE').text)  # TODO docs score *after*
@@ -402,6 +429,8 @@ class IssueOption:
     def accept(self) -> Awaitable[IssueResult]:
         return self._issue._nation._accept_issue(self._issue.id, self._id)
 
+    # TODO repr
+
 
 class Issue:
     """An issue.
@@ -448,9 +477,28 @@ class Issue:
         """Dismiss the issue."""
         return self._nation._accept_issue(self.id, -1)
 
+    # TODO repr
+
 
 
 class Embassies:
+    """Embassies of a region.
+
+    Attributes:
+        active: Normal, alive embassies.
+        closing: Embassies the demolition of which has been initiated,
+            but did not yet finish.
+        pending: Embassies the creation of which has been initiated,
+            but did not yet finish.
+        invited: Embassy invitations that have not yet been processed.
+        rejected: Embassy invitations that have been denied.
+    """
+    active: List[str]
+    closing: List[str]
+    pending: List[str]
+    invited: List[str]
+    rejected: List[str]
+
     def __init__(self, elem):
         # I know I'm iterating through them five times; I don't care.
         self.active = [sub_elem.text for sub_elem in elem
@@ -467,6 +515,7 @@ class Embassies:
 
 
 class OfficerAuthority(Flag):
+    """Authority of a Regional Officer."""
     EXECUTIVE      = X = auto()
     WORLD_ASSEMBLY = W = auto()
     APPEARANCE     = A = auto()
@@ -476,13 +525,13 @@ class OfficerAuthority(Flag):
     POLLS          = P = auto()
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}.{self.name}>'
+        return f'<OfficerAuthority.{self.name}>'
 
 def _officer_auth(string):
-    """This is he best way I could find to make Flag enums work with
+    """This is the best way I could find to make Flag enums work with
     individual characters as flags.
     """
-    reduce(or_, (OfficerAuthority[char] for char in string))
+    return reduce(or_, (OfficerAuthority[char] for char in string))
 
 
 class RegionalOfficer:
@@ -494,7 +543,7 @@ class RegionalOfficer:
         self.authority = _officer_auth(authority)
 
 
-class AppointedRegionalOfficer(RegionalOfficer):
+class AppointedRegionalOfficer(RegionalOfficer):  # TODO join with RegionalOfficer
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
@@ -511,7 +560,7 @@ class _EmbassyPostingRightsParent(Enum):
             return self.value < other.value
         return NotImplemented
 
-EmbassyPostingRights = _EmbassyPostingRightsParent(
+EmbassyPostingRights = _EmbassyPostingRightsParent(  # TODO create with a function instead
     value='EmbassyPostingRights',
     names=(
         ('NOBODY',                  1),
@@ -536,12 +585,24 @@ EmbassyPostingRights = _EmbassyPostingRightsParent(
 
 
 class PostStatus(Enum):
+    """Status of a post on a Regional Message Board.
+
+    Attributes:
+        NORMAL: A regular post.
+        SUPPRESSED: The post got suppressed by a regional official.
+        DELETED: The post got deleted by its author.
+        MODERATED: The post got suppressed by a game moderator.
+    """
     NORMAL     = 0
     SUPPRESSED = 1
     DELETED    = 2
     MODERATED  = 9
+
     @property
-    def viewable(self):
+    def viewable(self) -> bool:
+        """Whether the post content can still be accessed.  Shortcut
+        for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.
+        """
         return self.value in (0, 1)
 
 
@@ -558,6 +619,8 @@ class Post:
         suppressor_elem = elem.find('SUPPRESSOR')
         self.suppressor = suppressor_elem.text if suppressor_elem else None
 
+    # TODO repr
+
 
 
 class RegionZombie:
@@ -567,7 +630,7 @@ class RegionZombie:
         self.dead = int(elem.find('DEAD').text)
 
 
-class NationZombie(RegionZombie):
+class NationZombie:  # TODO join with RegionZombie
     def __init__(self, elem):
         super().__init__(elem)
         self.action = elem.find('ZACTION').text
