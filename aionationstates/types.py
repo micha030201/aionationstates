@@ -2,7 +2,7 @@
 # TODO split into submodules?
 
 from contextlib import suppress
-from collections import namedtuple
+from typing import NamedTuple
 from html import unescape
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
@@ -312,9 +312,26 @@ class CustomBanner(Banner):  # TODO join with Banner
 
 
 
-Reclassification = namedtuple('Reclassification', 'before after')
+class Reclassification(NamedTuple):
+    """Change in a `Freedom` classification or the WA Category."""
+    before: str
+    after: str
 
 class Reclassifications:
+    """Reclassifications of the nation's `Freedoms` and WA Category.
+    For convenience, this is falsey when no reclassifications occured.
+
+    Attributes:
+        civilrights: Reclassification of nation's Civil Rights.
+        economy: Reclassification of nation's Economy.
+        politicalfreedom: Reclassification of nation's Political Freedom.
+        govt: Change of nation's World Assembly Category.
+    """
+    civilrights: Optional[Reclassification]
+    economy: Optional[Reclassification]
+    politicalfreedom: Optional[Reclassification]
+    govt: Optional[Reclassification]
+
     def __init__(self, elem):
         self.civilrights = self.economy = \
             self.politicalfreedom = self.govt = None
@@ -334,6 +351,10 @@ class Reclassifications:
                     after=sub_elem.find('TO').text
                 )
             )
+
+    def __bool__(self):
+        return (self.civilrights or self.economy
+                or self.politicalfreedom or self.govt)
 
 
 class CensusScaleChange(CensusScale):
