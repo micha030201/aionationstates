@@ -4,7 +4,7 @@ from collections import namedtuple
 from functools import wraps
 import xml.etree.ElementTree as ET
 from contextlib import suppress
-from typing import TypeVar, Tuple, Awaitable, Coroutine
+from typing import TypeVar, Awaitable
 
 import aiohttp
 

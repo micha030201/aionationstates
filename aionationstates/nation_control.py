@@ -1,16 +1,12 @@
 import logging
-from operator import add
-from functools import reduce
 from contextlib import suppress
 
 from aionationstates.types import Issue, IssueResult
 from aionationstates.nation import Nation
 from aionationstates.session import Session, api_query, api_command
-from aionationstates.world import World
 
 
 logger = logging.getLogger('discord-plays-nationstates')
-world = World()
 
 
 class NationControl(Nation, Session):
@@ -66,31 +62,17 @@ class NationControl(Nation, Session):
 
     @api_query('issues')
     async def issues(self, root):
-        issues = [Issue(elem, self) for elem in root.find('ISSUES')]
-
-        # The idea is to call make_banners only once, as it makes
-        # a request to the API
-        banners = await world._make_banners(
-            reduce(add, (issue.banners for issue in issues)),
-            expand_macros=self._get_macros_expander()
-        )
-        for issue in issues:
-            # If there even is a better way of doing this, I'm
-            # sure not seeing it
-            issue.banners = banners[:len(issue.banners)]
-            del banners[:len(issue.banners)]
-
-        return issues
+        return [Issue(elem, self) for elem in root.find('ISSUES')]
 
     def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         async def result(self, root):
             issue_result = IssueResult(root.find('ISSUE'))
             expand_macros = self._get_macros_expander()
-            issue_result.banners = await world._make_banners(
-                issue_result.banners,
-                expand_macros=expand_macros
-            )
+            issue_result.banners = [
+                await banner._expand_macros(expand_macros)
+                for banner in issue_result.banners
+            ]
             issue_result.headlines = [
                 await expand_macros(headline)
                 for headline in issue_result.headlines

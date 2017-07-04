@@ -3,7 +3,7 @@ from html import unescape
 # Needed for type annotations
 import datetime
 from typing import Dict, List
-from aionationstates.types import Banner
+from aionationstates.ns_to_human import Banner
 from aionationstates.session import ApiQuery
 
 from aionationstates.utils import normalize, timestamp
@@ -11,10 +11,7 @@ from aionationstates.types import (
     Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
-from aionationstates.world import World
-
-
-world = World()
+from aionationstates.ns_to_human import banner
 
 
 class Nation(Census, Session):
@@ -382,9 +379,11 @@ class Nation(Census, Session):
         """Nation's visible banners.  If the user has set a primary
         banner, it will be the first element in the list.
         """
-        ids = [elem.text for elem in root.find('BANNERS')]
-        return await world._make_banners(
-            ids, expand_macros=self._get_macros_expander())
+        expand_macros = self._get_macros_expander()
+        return [
+            await banner(elem.text)._expand_macros(expand_macros)
+            for elem in root.find('BANNERS')
+        ]
 
     def _get_macros_expander(self):
         # TODO rewrite to join this request with the one that returns banner ids?

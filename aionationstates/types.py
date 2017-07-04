@@ -10,9 +10,10 @@ from operator import or_
 # Needed for type annotations
 import datetime
 from typing import List, Optional, Awaitable
+from aionationstates.ns_to_human import Banner, ScaleInfo
 
 from aionationstates.utils import timestamp
-from aionationstates.ns_to_human import census_info
+from aionationstates.ns_to_human import banner, census_info
 
 
 class RateLimitError(Exception):
@@ -279,38 +280,6 @@ class Sectors:
         self.public = float(elem.find('PUBLIC').text)
 
 
-class Banner:
-    """A Rift banner.
-
-    Attributes:
-        id: The banner id.
-        name: The banner name.
-        validity: A requirement the nation has to meet in order to get
-            the banner.
-    """
-    id: str
-    name: str
-    validity: str
-
-    def __init__(self, elem):
-        self.id = elem.get('id')
-        self.name = elem.find('NAME').text
-        self.validity = elem.find('VALIDITY').text
-
-    @property
-    def url(self) -> str:
-        """Link to the banner image."""
-        return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
-
-    # TODO repr
-
-class CustomBanner(Banner):  # TODO join with Banner
-    def __init__(self, id):
-        self.id = id
-        self.name = 'Custom'
-        self.validity = 'Reach a certain population threshold'
-
-
 
 class Reclassification(NamedTuple):
     """Change in a `Freedom` classification or the WA Category."""
@@ -418,10 +387,7 @@ class IssueResult:
             in elem.find('RANKINGS') or ()
         ]
         self.banners = [
-            # A list of ids here, but gets updated down the line to
-            # contain full-blown Banner objects.
-            # I don't like this design either.
-            sub_elem.text for sub_elem  # TODO make less terrible
+            banner(sub_elem.text) for sub_elem
             in elem.find('UNLOCKS') or ()
         ]
         self.reclassifications = Reclassifications(
@@ -489,7 +455,7 @@ class Issue:
         def issue_banners(elem):
             for x in range(1, 10):  # Should be more than enough.
                 try:
-                    yield elem.find(f'PIC{x}').text
+                    yield banner(elem.find(f'PIC{x}').text)
                 except AttributeError:
                     break
         self.banners = list(issue_banners(elem))
