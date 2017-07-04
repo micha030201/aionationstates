@@ -52,7 +52,7 @@ class World(Census, Session):
     async def _make_banners(self, ids, expand_macros):
         custom_banners = [CustomBanner(id) for id in ids if '/' in id]
         generic_banner_ids = [id for id in ids if '/' not in id]
-        if not ids:
+        if not generic_banner_ids:
             return custom_banners
         @api_query('banner', banner=','.join(generic_banner_ids))
         async def result(self, root):

@@ -38,7 +38,7 @@ class NationControl(Nation, Session):
             self.pin = resp.headers['X-Pin']
             logger.info(f'Updating pin for {self.id} from API header')
             self.autologin = resp.headers['X-Autologin']
-            logger.debug(f'Setting autologin for {self.id} from API header')
+            logger.info(f'Setting autologin for {self.id} from API header')
         return resp
 
     async def _call_web(self, path, method='GET', **kwargs):

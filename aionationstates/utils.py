@@ -15,6 +15,9 @@ def timestamp(line):
 
 
 def datetime_to_ns(then):
+    if then == datetime(1970, 1, 1, 0, 0):
+        return 'Antiquity'
+
     now = datetime.utcnow()
     delta = now - then
     seconds = delta.total_seconds()

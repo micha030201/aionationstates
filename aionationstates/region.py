@@ -51,11 +51,11 @@ class Region(Census, Session):
 
     @api_query('embassies')
     async def embassies(self, root):
-        Embassies(root.find('EMBASSIES'))
+        return Embassies(root.find('EMBASSIES'))
 
     @api_query('embassyrmb')
     async def embassyrmb(self, root):
-        EmbassyPostingRights[root.find('EMBASSYRMB').text]
+        return EmbassyPostingRights[root.find('EMBASSYRMB').text]
 
     @api_query('delegate', 'delegateauth')
     async def delegate(self, root):
