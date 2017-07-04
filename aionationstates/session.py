@@ -8,15 +8,15 @@ from typing import TypeVar, Awaitable
 
 import aiohttp
 
-import aionationstates
+from aionationstates import __version__
 from aionationstates import ratelimit
 from aionationstates.types import (
     RateLimitError, SessionConflictError, AuthenticationError, NotFound)
 
+
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
 API_URL = NS_URL + API_PATH
-
 
 logger = logging.getLogger('aionationstates')
 
@@ -133,26 +133,30 @@ def api_command(c, **data):
     return decorator
 
 
+def set_user_agent(user_agent: str) -> None:
+    Session.USER_AGENT = user_agent
+    logger.info(f'User Agent set to "{user_agent}"')
+
+
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
 RawResponse = namedtuple('RawResponse', ('status url text'
                                          ' cookies headers'))
 
 
-class Session:  # TODO self._useragent
-    def __init__(self, *args, **kwargs):
-        ...
+class Session:
+    USER_AGENT = None
 
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
 
-        standard_user_agent = f'aionationstates/{aionationstates.__version__}'
-        if not aionationstates.USER_AGENT:
-            warn('Please supply a useragent by setting the'
-                 ' aionationstates.USER_AGENT variable.')
+        standard_user_agent = f'aionationstates/{__version__}'
+        if not self.USER_AGENT:
+            warn('Please supply a useragent by calling aionationstates.'
+                 'set_user_agent("your useragent here")')
             headers['User-Agent'] = standard_user_agent
         headers['User-Agent'] = \
-            f'{aionationstates.USER_AGENT} ({standard_user_agent})'
+            f'{self.USER_AGENT} ({standard_user_agent})'
 
         async with aiohttp.request(method, url, headers=headers,
                                    allow_redirects=False, **kwargs) as resp:
