@@ -1,7 +1,10 @@
+# Needed for type annotations
+from typing import Optional
+
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, AppointedRegionalOfficer, RegionalOfficer,
-    Embassies, RegionZombie)
+    EmbassyPostingRights, Officer, Authority,
+    Embassies, Zombie)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 
@@ -53,30 +56,45 @@ class Region(Census, Session):
         return Embassies(root.find('EMBASSIES'))
 
     @api_query('embassyrmb')
-    async def embassyrmb(self, root):
-        return EmbassyPostingRights[root.find('EMBASSYRMB').text]
+    async def embassyrmb(self, root) -> EmbassyPostingRights:
+        """Posting rights for members the of embassy regions."""
+        return EmbassyPostingRights.from_ns(root.find('EMBASSYRMB').text)
 
-    @api_query('delegate', 'delegateauth')
-    async def delegate(self, root):
-        nation = root.find('DELEGATE').text
-        if nation == '0':  # No delegate
+    @api_query('delegate')
+    async def delegate(self, root) -> Optional[str]:
+        """Regional World Assembly Delegate.  ``None`` if the region
+        has no delegate.
+        """
+        nation = root.find('DELEGATE').text  # TODO normalize
+        if nation == '0':
             return None
-        return RegionalOfficer(
-            nation=nation,
-            authority=root.find('DELEGATEAUTH').text,
-            office='WA Delegate'
-        )
+        return nation
 
-    @api_query('founder', 'founderauth')
-    async def founder(self, root):
-        nation = root.find('FOUNDER').text
-        if nation == '0':  # No founder, it's a GCR
+    @api_query('delegateauth')
+    async def delegateauth(self, root) -> Authority:
+        """Regional World Assembly Delegate's authority.  Always set,
+        no matter if the region has a delegate or not.
+        """
+
+        return Authority.from_ns(root.find('DELEGATEAUTH').text)
+
+    @api_query('founder')
+    async def founder(self, root) -> Optional[str]:
+        """Regional Founder.  Returned even if the nation has ceased to
+        exist.  ``None`` if the region is Game-Created and doesn't have
+        a founder.
+        """
+        nation = root.find('FOUNDER').text  # TODO normalize
+        if nation == '0':
             return None
-        return RegionalOfficer(
-            nation=nation,
-            authority=root.find('FOUNDERAUTH').text,
-            office='Founder'
-        )
+        return nation
+
+    @api_query('founderauth')
+    async def founderauth(self, root) -> Authority:
+        """Regional Founder's authority.  Always set,
+        no matter if the region has a founder or not.
+        """
+        return Authority.from_ns(root.find('FOUNDERAUTH').text)
 
     @api_query('officers')
     async def officers(self, root):
@@ -85,15 +103,15 @@ class Region(Census, Session):
             # I struggle to say what else this tag would be useful for.
             key=lambda elem: int(elem.find('ORDER').text)
         )
-        return [AppointedRegionalOfficer(elem) for elem in officers]
+        return [Officer(elem) for elem in officers]
 
     @api_query('tags')
     async def tags(self, root):
         return [elem.text for elem in root.find('TAGS')]
 
     @api_query('zombie')
-    async def zombie(self, root):
-        return RegionZombie(root.find('ZOMBIE'))
+    async def zombie(self, root) -> Zombie:
+        return Zombie(root.find('ZOMBIE'))
 
     # TODO: history, messages
 

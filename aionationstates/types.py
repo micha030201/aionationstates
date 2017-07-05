@@ -79,11 +79,39 @@ class CensusScaleHistory(CensusScale):
 
 
 
-class DispatchThumbnail:
+class Dispatch:
+    """A dispatch.
+
+    Attributes:
+        id: The dispatch id.  Use with the World dispatch shard until I
+            manage to think of a better interface.
+        title: The dispatch title.
+        author: Nation that posted the dispatch. Not normalized.
+        category: The dispatch category.
+        subcategory: The dispatch subcategory.
+        views: Number of times the dispatch got viewed.
+        score: Votes te dispatch received.
+        created: When the dispatch was created.
+        edited: When the dispatch last got edited.  Equal to
+            ``created`` for dispatches that were never edited.
+        text: The dispatch text.  ``None`` if the dispatch came from
+            anywhere other than the World dispatch shard.
+    """
+    id: int
+    title: str
+    author: str
+    category: str
+    subcategory: str
+    views: int
+    score: int
+    created: datetime.datetime
+    edited: datetime.datetime
+    text: Optional[str] = None
+
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.title = elem.find('TITLE').text
-        self.author = elem.find('AUTHOR').text
+        self.author = elem.find('AUTHOR').text  # TODO normalize
         self.category = elem.find('CATEGORY').text
         self.subcategory = elem.find('SUBCATEGORY').text
         self.views = int(elem.find('VIEWS').text)
@@ -95,18 +123,11 @@ class DispatchThumbnail:
         self.created = timestamp(created)
         self.edited = timestamp(edited)
 
-    def __repr__(self):
-        return f'<DispatchThumbnail id={self.id}>'
-
-
-class Dispatch(DispatchThumbnail):  # TODO join with DispatchThumbnail
-    def __init__(self, elem):
-        super().__init__(elem)
-        self.text = elem.find('TEXT').text
+        with suppress(AttributeError):
+            self.text = elem.find('TEXT').text
 
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
-
 
 
 class PollOption:
@@ -347,7 +368,7 @@ class CensusScaleChange(CensusScale):
 
     def __init__(self, elem):
         super().__init__(elem)
-        self.score = float(elem.find('SCORE').text)  # TODO docs score *after*
+        self.score = float(elem.find('SCORE').text)
         self.change = float(elem.find('CHANGE').text)
         self.pchange = float(elem.find('PCHANGE').text)
 
@@ -507,8 +528,8 @@ class Embassies:
 
 
 
-class OfficerAuthority(Flag):
-    """Authority of a Regional Officer."""
+class Authority(Flag):
+    """Authority of a Regional Officer, Delegate, or Founder."""
     EXECUTIVE      = X = auto()
     WORLD_ASSEMBLY = W = auto()
     APPEARANCE     = A = auto()
@@ -517,64 +538,53 @@ class OfficerAuthority(Flag):
     EMBASSIES      = E = auto()
     POLLS          = P = auto()
 
+    @classmethod
+    def from_ns(cls, string):
+        """This is the only sane way I could find to make Flag enums
+        work with individual characters as flags.
+        """
+        return reduce(or_, (cls[char] for char in string))
+
     def __repr__(self):
         return f'<OfficerAuthority.{self.name}>'
 
-def _officer_auth(string):
-    """This is the best way I could find to make Flag enums work with
-    individual characters as flags.
-    """
-    return reduce(or_, (OfficerAuthority[char] for char in string))
 
-
-class RegionalOfficer:
-    def __init__(self, *, nation, authority, office):
-        # Not using elem here because founder/delegate stuff is spread
-        # across multiple shards.
-        self.nation = nation
-        self.office = office
-        self.authority = _officer_auth(authority)
-
-
-class AppointedRegionalOfficer(RegionalOfficer):  # TODO join with RegionalOfficer
+class Officer:
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
-        self.authority = _officer_auth(elem.find('AUTHORITY').text)
+        self.authority = Authority.from_ns(elem.find('AUTHORITY').text)
         self.time = self.appointed_at = timestamp(elem.find('TIME').text)
         self.by = self.appointed_by = elem.find('BY').text
 
 
 
 @total_ordering
-class _EmbassyPostingRightsParent(Enum):
+class EmbassyPostingRights(Enum):
+    """Who out of embassy regions' residents can post on the Regional
+    Message Board.
+    """
+    NOBODY = 1
+    DELEGATES_AND_FOUNDERS = 2
+    COMMUNICATIONS_OFFICERS = 3
+    OFFICERS = 4
+    EVERYBODY = 5
+
+    @classmethod
+    def from_ns(cls, string):
+        values = {
+            '0': 1,  # The reason I have to do all this nonsense.
+            'con':  2,
+            'com':  3,
+            'off':  4,
+            'all':  5,        
+        }
+        return cls(values[string])
+
     def __lt__(self, other):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
-
-EmbassyPostingRights = _EmbassyPostingRightsParent(  # TODO create with a function instead
-    value='EmbassyPostingRights',
-    names=(
-        ('NOBODY',                  1),
-        # Why must you be like this NS? Why?
-        # Could you not have gone for 'none'? 'dis'? 'zero'?
-        # Why does it have to be '0'? Why?
-        ('0',                       1),
-        # '0' is not a valid identifier, and we need the values as
-        # integers for comparison operations to work.
-        # *sigh*
-        ('DELEGATES_AND_FOUNDERS',  2),
-        ('con',                     2),
-        ('COMMUNICATIONS_OFFICERS', 3),
-        ('com',                     3),
-        ('OFFICERS',                4),
-        ('off',                     4),
-        ('EVERYBODY',               5),
-        ('all',                     5),
-    )
-)
-
 
 
 class PostStatus(Enum):
@@ -616,17 +626,28 @@ class Post:
 
 
 
-class RegionZombie:
+class Zombie:
+    """The situation in a nation/region during the anual Z-Day event.
+
+    Attributes:
+        survivors: The number of citizens surviving, in millions.
+        zombies: The number of undead citizens, in millions.
+        dead: The number of dead citizens, in millions.
+        action: The nation's strategy for dealing with the disaster.
+            Either "research", "exterminate", or "export".  ``None``
+            if the instance represents regional situation.
+    """
+    survivors: int
+    zombies: int
+    dead: int
+    action: Optional[str]
+
     def __init__(self, elem):
         self.survivors = int(elem.find('SURVIVORS').text)
         self.zombies = int(elem.find('ZOMBIES').text)
         self.dead = int(elem.find('DEAD').text)
-
-
-class NationZombie:  # TODO join with RegionZombie
-    def __init__(self, elem):
-        super().__init__(elem)
-        self.action = elem.find('ZACTION').text
+        with suppress(AttributeError):
+            self.action = elem.find('ZACTION').text
 
 
 # TODO gavote, scvote

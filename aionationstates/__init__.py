@@ -13,7 +13,6 @@ from aionationstates.types import (
     NotFound, CensusScaleCurrent, CensusPoint, CensusScaleHistory,
     Dispatch, PollOption, Poll, Freedom, FreedomScores, Govt, Sectors,
     Reclassification, Reclassifications, CensusScaleChange, IssueResult,
-    IssueOption, Issue, Embassies, OfficerAuthority, RegionalOfficer,
-    AppointedRegionalOfficer, EmbassyPostingRights, PostStatus, Post,
-    RegionZombie, NationZombie)
+    IssueOption, Issue, Embassies, Authority, Officer, EmbassyPostingRights,
+    PostStatus, Post, Zombie)
 from aionationstates.ns_to_human import ScaleInfo, Banner

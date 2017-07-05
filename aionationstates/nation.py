@@ -8,7 +8,7 @@ from aionationstates.session import ApiQuery
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    Freedom, FreedomScores, Govt, Sectors, NationZombie, DispatchThumbnail)
+    Freedom, FreedomScores, Govt, Sectors, Zombie, Dispatch)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import banner
@@ -326,17 +326,17 @@ class Nation(Census, Session):
         return Sectors(root.find('SECTORS'))
 
     @api_query('dispatchlist')
-    async def dispatchlist(self, root) -> List[DispatchThumbnail]:
+    async def dispatchlist(self, root) -> List[Dispatch]:
         """Nation's published dispatches."""
         return [
-            DispatchThumbnail(elem)
+            Dispatch(elem)
             for elem in root.find('DISPATCHLIST')
         ]
 
     @api_query('zombie')
-    async def zombie(self, root) -> NationZombie:
+    async def zombie(self, root) -> Zombie:
         """Nation's condition during the annual Z-Day event."""
-        return NationZombie(root.find('ZOMBIE'))
+        return Zombie(root.find('ZOMBIE'))
 
     def verify(self, checksum: str, *, token: str = None) -> ApiQuery[bool]:
         """Interface to the `NationStates Verification API

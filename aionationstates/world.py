@@ -1,6 +1,5 @@
 from aionationstates.session import Session, api_query
-from aionationstates.types import (
-    Dispatch, DispatchThumbnail)
+from aionationstates.types import Dispatch
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories
 
@@ -44,7 +43,7 @@ class World(Census, Session):
         @api_query('dispatchlist', **params)
         async def result(self, root):
             return [
-                DispatchThumbnail(elem)
+                Dispatch(elem)
                 for elem in root.find('DISPATCHLIST')
             ]
         return result(self)
