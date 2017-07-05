@@ -170,7 +170,7 @@ class Freedom:
 
     Attributes:
         civilrights: Nation's Civil Rights.
-        economy: Nation's Economic Prosperity.
+        economy: Nation's Economy.
         politicalfreedom: Nation's Political Freedom.
     """
     civilrights: str
@@ -282,9 +282,15 @@ class Sectors:
 
 
 class Reclassification(NamedTuple):
-    """Change in a `Freedom` classification or the WA Category."""
+    """Change in a `Freedom` classification or the WA Category.
+
+    Attributes:
+        before: The old category or `Freedom` adjective.
+        after: The new category or `Freedom` adjective.
+    """
     before: str
     after: str
+
 
 class Reclassifications:
     """Reclassifications of the nation's `Freedoms` and WA Category.
