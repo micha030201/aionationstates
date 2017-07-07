@@ -118,16 +118,16 @@ class ScaleInfo(NamedTuple):
         measurement: The measurement scale. For example, `Martin Luther
             King, Jr. Units.`
         image: An identifier NS uses for the Census tropy picture urls.
-        region_description: Description for nations.
-        nation_description: Description for regions.
+        nation_description: Description for nations.
+        region_description: Description for regions.
     """
     id: int
     title: str
     ranked: str
     measurement: str
     image: str
-    region_description: str
     nation_description: str
+    region_description: str
 
 
 census_info = {

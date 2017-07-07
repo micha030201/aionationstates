@@ -32,15 +32,37 @@ class NotFound(Exception):
     pass
 
 
+class CensusScaleCurrent:
+    """World Census scale data about a nation.
 
-class CensusScale:
+    Attributes:
+        info: Static information about the scale.
+        score: The absolute census score.  All the other scale values
+            are calculated (by NationStates) from scale scores of
+            multiple nations.  `Should` always be there if you request
+            it.
+        rank: World rank by the scale.  Note that in some cases this
+            field may be missing even if requested, such as if the
+            nation just got founded.
+        prank: Percentage World rank by the scale.  Note that in some
+            cases this field may be missing even if requested, such as
+            if the nation just got founded.
+        rrank: Regional rank by the scale.  Note that in some cases
+            this field may be missing even if requested, such as if
+            the nation just got founded.
+        prrank: Percentage Regional rank by the scale.  Note that in
+            some cases this field may be missing even if requested,
+            such as if the nation just got founded.
+    """
+    info: ScaleInfo
+    score: Optional[float]
+    rank: Optional[int]
+    prank: Optional[float]
+    rrank: Optional[int]
+    prrank: Optional[float]
+
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
-
-
-class CensusScaleCurrent(CensusScale):
-    def __init__(self, elem):
-        super().__init__(elem)
         # For recently-founded nations (and maybe in other cases as well, who
         # knows) the ranks & percentages may not show up even if requested.
         self.score = self.rank = self.prank = self.rrank = self.prrank = None
@@ -56,26 +78,40 @@ class CensusScaleCurrent(CensusScale):
             self.prrank = float(elem.find('PRRANK').text)
 
     def __repr__(self):
-        return f'<CensusScaleCurrent #{self.info.id} "{self.info.title}">'
+        return f'<CensusScaleCurrent #{self.info.id} {self.info.title}>'
 
 
-class CensusPoint:  # TODO make a namedtuple
+class CensusPoint(NamedTuple):
+    """What the scale score was on a particular date.
+
+    Attributes:
+        timestamp: When the score was recorded.
+        score: What it was.
+    """
+    timestamp: datetime.datetime
+    score: float
+
+
+class CensusScaleHistory:
+    """Change of a World Census scale score of a nation through time.
+
+    Attributes:
+        info: Static information about the scale.
+        history: The data itself.
+    """
+    info: ScaleInfo
+    history: List[CensusPoint]
+
     def __init__(self, elem):
-        super().__init__(elem)
-        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.score = float(elem.find('SCORE').text)
+        self.info = census_info[int(elem.get('id'))]
+        self.history = [
+            CensusPoint(
+                timestamp=timestamp(sub_elem.find('TIMESTAMP').text),
+                score=float(sub_elem.find('SCORE').text)
+            ) for sub_elem in elem]
 
     def __repr__(self):
-        return f'<CensusPoint timestamp={self.timestamp}>'
-
-
-class CensusScaleHistory(CensusScale):
-    def __init__(self, elem):
-        super().__init__(elem)
-        self.history = [CensusPoint(sub_elem) for sub_elem in elem]
-
-    def __repr__(self):
-        return f'<CensusScaleHistory #{self.info.id} "{self.info.title}">'
+        return f'<CensusScaleHistory #{self.info.id} {self.info.title}>'
 
 
 
@@ -106,7 +142,7 @@ class Dispatch:
     score: int
     created: datetime.datetime
     edited: datetime.datetime
-    text: Optional[str] = None
+    text: Optional[str]
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
@@ -123,6 +159,7 @@ class Dispatch:
         self.created = timestamp(created)
         self.edited = timestamp(edited)
 
+        self.text = None
         with suppress(AttributeError):
             self.text = elem.find('TEXT').text
 
@@ -353,21 +390,23 @@ class Reclassifications:
                 or self.politicalfreedom or self.govt)
 
 
-class CensusScaleChange(CensusScale):
+class CensusScaleChange:
     """Change in one of the World Census scales of a nation
 
     Attributes:
+        info: Static information about the scale.
         score: The scale score, after the change.
         change: Change of the score.
         pchange: The semi-user-friendly percentage change NationStates
             shows by default.
     """
+    info: ScaleInfo
     score: float
     change: float
     pchange: float
 
     def __init__(self, elem):
-        super().__init__(elem)
+        self.info = census_info[int(elem.get('id'))]
         self.score = float(elem.find('SCORE').text)
         self.change = float(elem.find('CHANGE').text)
         self.pchange = float(elem.find('PCHANGE').text)
@@ -441,6 +480,7 @@ class IssueOption:
         self.text = elem.text
 
     def accept(self) -> Awaitable[IssueResult]:
+        """Accept the option."""
         return self._issue._nation._accept_issue(self._issue.id, self._id)
 
     # TODO repr
@@ -550,12 +590,27 @@ class Authority(Flag):
 
 
 class Officer:
+    """A Regional Officer.
+
+    Attributes:
+        nation: Officer's nation.
+        office: The (user-specified) office held by the officer.
+        authority: Officer's authority.
+        appointed_at: When the officer got appointed.
+        appointed_by: The nation that appointed the officer.
+    """
+    nation: str
+    office: str
+    authority: Authority
+    appointed_at: datetime.datetime
+    appointed_by: str
+
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
         self.authority = Authority.from_ns(elem.find('AUTHORITY').text)
-        self.time = self.appointed_at = timestamp(elem.find('TIME').text)
-        self.by = self.appointed_by = elem.find('BY').text
+        self.appointed_at = timestamp(elem.find('TIME').text)
+        self.appointed_by = elem.find('BY').text
 
 
 
@@ -574,10 +629,10 @@ class EmbassyPostingRights(Enum):
     def from_ns(cls, string):
         values = {
             '0': 1,  # The reason I have to do all this nonsense.
-            'con':  2,
-            'com':  3,
-            'off':  4,
-            'all':  5,        
+            'con': 2,
+            'com': 3,
+            'off': 4,
+            'all': 5,
         }
         return cls(values[string])
 
@@ -596,10 +651,10 @@ class PostStatus(Enum):
         DELETED: The post got deleted by its author.
         MODERATED: The post got suppressed by a game moderator.
     """
-    NORMAL     = 0
+    NORMAL = 0
     SUPPRESSED = 1
-    DELETED    = 2
-    MODERATED  = 9
+    DELETED = 2
+    MODERATED = 9
 
     @property
     def viewable(self) -> bool:
@@ -610,17 +665,36 @@ class PostStatus(Enum):
 
 
 class Post:
+    """A post on a Regional Message Board.
+
+    Attributes:
+        id: The unique (or so it would seem) id of the post.
+        timestamp: When the post was, well, posted.
+        author: The author nation.
+        status: Status of the post.
+        text: The post text.
+        likers: Nations that liked the post.
+        suppressor: Nation that suppressed the post.  ``None`` if the
+            post has not been suppressed.
+    """
+    id: int
+    timestamp: datetime.datetime
+    author: str
+    status: PostStatus
+    text: str
+    likers: List[str]
+    suppressor: Optional[str]
+
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.nation = self.author = elem.find('NATION').text
+        self.author = elem.find('NATION').text  # TODO normalize
         self.status = PostStatus(int(elem.find('STATUS').text))
-        self.message = self.text = elem.find('MESSAGE').text
+        self.text = elem.find('MESSAGE').text  # TODO unescape?
 
-        likers_elem = elem.find('LIKERS')
-        self.likers = likers_elem.text.split(':') if likers_elem else ()
-        suppressor_elem = elem.find('SUPPRESSOR')
-        self.suppressor = suppressor_elem.text if suppressor_elem else None
+        likers_elem = elem.find('LIKERS')  # TODO normalize
+        self.likers = likers_elem.text.split(':') if likers_elem else []
+        self.suppressor = getattr(elem.find('SUPPRESSOR'), 'text', None)  # TODO normalize
 
     # TODO repr
 
@@ -646,8 +720,7 @@ class Zombie:
         self.survivors = int(elem.find('SURVIVORS').text)
         self.zombies = int(elem.find('ZOMBIES').text)
         self.dead = int(elem.find('DEAD').text)
-        with suppress(AttributeError):
-            self.action = elem.find('ZACTION').text
+        self.action = getattr(elem.find('ZACTION'), 'text', None)
 
 
 # TODO gavote, scvote
