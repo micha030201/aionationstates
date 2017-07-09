@@ -1,5 +1,6 @@
 # Needed for type annotations
-from typing import Optional
+import datetime
+from typing import Optional, List
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
@@ -10,7 +11,19 @@ from aionationstates.shards import Census
 
 
 class Region(Census, Session):
-    def __init__(self, name):
+    """A class to interact with the NationStates Region API.
+
+    Parameters:
+        name: Name of the region.
+
+    Attributes:
+        id: The defining characteristic of a region, its normalized
+            name.  No two regions share the same id, and no one id
+            is shared by multiple regions.
+    """
+    id: str
+
+    def __init__(self, name: str):
         self.id = normalize(name)
 
     def _call_api(self, params, *args, **kwargs):
@@ -19,40 +32,53 @@ class Region(Census, Session):
 
 
     @api_query('name')
-    async def name(self, root):
+    async def name(self, root) -> str:
+        """Name of the region."""
         return root.find('NAME').text
 
     @api_query('flag')
-    async def flag(self, root):
+    async def flag(self, root) -> str:
+        """URL of the region's flag."""
         return root.find('FLAG').text
 
     @api_query('factbook')
-    async def factbook(self, root):
+    async def factbook(self, root) -> str:
+        """Region's World Factbook Entry."""
         return root.find('FACTBOOK').text  # TODO encoding mess
 
     @api_query('power')
-    async def power(self, root):
+    async def power(self, root) -> str:
+        """An adjective describing region's power on the interregional
+        scene.
+        """
         return root.find('POWER').text
 
     @api_query('delegatevotes')
-    async def delegatevotes(self, root):
+    async def delegatevotes(self, root) -> int:
+        """Number of the World Assembly votes the region's Delegate
+        has.
+        """
         return int(root.find('DELEGATEVOTES').text)
 
     @api_query('numnations')
-    async def numnations(self, root):
+    async def numnations(self, root) -> int:
+        """The number of nations in the region."""
         return int(root.find('NUMNATIONS').text)
 
     @api_query('foundedtime')
-    async def founded(self, root):
+    async def founded(self, root) -> datetime.datetime:
+        """When the region was founded."""
         return timestamp(root.find('FOUNDEDTIME'))
 
     @api_query('nations')
-    async def nations(self, root):
-        text = root.find('NATIONS').text
-        return text.split(':') if text else ()
+    async def nations(self, root) -> List[str]:
+        """All the nations in the region."""
+        text = root.find('NATIONS').text  # TODO normalize?
+        return text.split(':') if text else []
 
     @api_query('embassies')
-    async def embassies(self, root):
+    async def embassies(self, root) -> Embassies:
+        """Embassies the region has."""
         return Embassies(root.find('EMBASSIES'))
 
     @api_query('embassyrmb')
@@ -75,7 +101,6 @@ class Region(Census, Session):
         """Regional World Assembly Delegate's authority.  Always set,
         no matter if the region has a delegate or not.
         """
-
         return Authority.from_ns(root.find('DELEGATEAUTH').text)
 
     @api_query('founder')
@@ -97,7 +122,11 @@ class Region(Census, Session):
         return Authority.from_ns(root.find('FOUNDERAUTH').text)
 
     @api_query('officers')
-    async def officers(self, root):
+    async def officers(self, root) -> List[Officer]:
+        """Regional Officers.  Does not include the Founder or
+        the Delegate, unless they have additional litles as Officers.
+        In the correct order.
+        """
         officers = sorted(
             root.find('OFFICERS'),
             # I struggle to say what else this tag would be useful for.
@@ -106,11 +135,13 @@ class Region(Census, Session):
         return [Officer(elem) for elem in officers]
 
     @api_query('tags')
-    async def tags(self, root):
+    async def tags(self, root) -> List[str]:
+        """Tags the region has."""
         return [elem.text for elem in root.find('TAGS')]
 
     @api_query('zombie')
     async def zombie(self, root) -> Zombie:
+        """Region's state during the annual Z-Day event."""
         return Zombie(root.find('ZOMBIE'))
 
     # TODO: history, messages
