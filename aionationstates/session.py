@@ -92,11 +92,7 @@ class ApiQuery(Awaitable[T]):
     def __add__(self, other):
         if self.session is not other.session:
             raise ValueError('ApiQueries do not share the same session')
-        if not len(self.q & other.q) == 0:
-            # XXX is this actually necessary?
-            raise ValueError('ApiQueries contain the same query')
-        if not len(set(self.params) & set(other.params)) == 0:
-            # XXX is this actually necessary?
+        if not set(self.params) & set(other.params):
             raise ValueError('ApiQueries contain conflicting params')
 
         self.q |= other.q
