@@ -414,16 +414,24 @@ class Nation(Census, Session):
                     # that's a pattern or not.
                     # More experimentation will tell, I guess?
                     .replace('@@PL(DEMONYM2)@@', query_result[2])
+                    # I feel filthy just looking at this.  Surely, NS
+                    # wouldn't put bits of Perl code to be executed
+                    # into macros?  Surely, their implementation can't
+                    # be that bad?
+                    # Yeah right.  Ha ha.  Ha.
+                    .replace('@@uc($nation->query("name"))@@',
+                             query_result[3].upper())
+                    # I wasn't that nihilistic before starting to write
+                    # this library, was I?
                     .replace('@@NAME@@', query_result[3])
                     .replace('@@FAITH@@', query_result[4])
                     .replace('@@ANIMAL@@', query_result[5])
-                    # I feel filthy just looking at this.  Surely, NS
-                    # wouldn't put bits of Perl code to be executed into
-                    # macros?  Surely, their systems can't be that bad?
-                    # Yeah right.  Ha ha.  Ha.
+                    # Am I surprised that even in their code they have
+                    # two ways to query data, used interchangeably?
+                    # At this point, not really, no.
                     .replace('@@$nation->query_capital()@@', query_result[6])
-                    # I wasn't that nihilistic before starting to write
-                    # this library, was I?
+                    # I just hope there aren't enough headlines with
+                    # macros to force me into using regex.
                     .replace('@@LEADER@@', query_result[7])
                 )
             return line
