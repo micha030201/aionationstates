@@ -35,27 +35,30 @@ class NotFound(Exception):
 class CensusScaleCurrent:
     """World Census scale data about a nation.
 
+    .. warning::
+
+        With the exception of score, you must not expect the fields
+        to update instantly.
+
+        For the exact same reason of NationStates' excessive
+        quirkiness, those fields may be missing (set to ``None``) on
+        newly-founded nations (perhaps also in other cases, there is
+        not a way to reliably test).  You will need to account for
+        that in your code.
+
     Attributes:
         info: Static information about the scale.
         score: The absolute census score.  All the other scale values
             are calculated (by NationStates) from scale scores of
-            multiple nations.  `Should` always be there if you request
+            multiple nations.  Should always be there if you request
             it.
-        rank: World rank by the scale.  Note that in some cases this
-            field may be missing even if requested, such as if the
-            nation just got founded.
-        prank: Percentage World rank by the scale.  Note that in some
-            cases this field may be missing even if requested, such as
-            if the nation just got founded.
-        rrank: Regional rank by the scale.  Note that in some cases
-            this field may be missing even if requested, such as if
-            the nation just got founded.
-        prrank: Percentage Regional rank by the scale.  Note that in
-            some cases this field may be missing even if requested,
-            such as if the nation just got founded.
+        rank: World rank by the scale.
+        prank: Percentage World rank by the scale.
+        rrank: Regional rank by the scale.
+        prrank: Percentage Regional rank by the scale.
     """
     info: ScaleInfo
-    score: Optional[float]
+    score: float
     rank: Optional[int]
     prank: Optional[float]
     rrank: Optional[int]
@@ -63,11 +66,10 @@ class CensusScaleCurrent:
 
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
+        self.score = float(elem.find('SCORE').text)
         # For recently-founded nations (and maybe in other cases as well, who
         # knows) the ranks & percentages may not show up even if requested.
-        self.score = self.rank = self.prank = self.rrank = self.prrank = None
-        with suppress(AttributeError, TypeError):
-            self.score = float(elem.find('SCORE').text)
+        self.rank = self.prank = self.rrank = self.prrank = None
         with suppress(AttributeError, TypeError):
             self.rank = int(elem.find('RANK').text)
         with suppress(AttributeError, TypeError):

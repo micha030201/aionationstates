@@ -23,7 +23,7 @@ class Region(Census, Session):
     """
     id: str
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.id = normalize(name)
 
     def _call_api(self, params, *args, **kwargs):

@@ -3,15 +3,25 @@ with Session, otherwise useless."""
 
 # TODO: happenings (region history as well?), poll, censusranks, wabadges
 
+# Needed for type annotations
+import datetime
+from typing import Optional, List
 
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
 from aionationstates.session import api_query
 
 class Census:
-    def census(self, scale=None):
+    def census(self, *scales: int) -> List[CensusScaleCurrent]:
+        """Current World Census data.
+
+        By default returns data on today's featured World Census
+        scale, use arguments to get results on specific scales.  In
+        order to request data on all scales at once you can do
+        ``x.census(*range(81))``.
+        """
         params = {'mode': 'score+rank+rrank+prank+prrank'}
-        if scale:
-            params['scale'] = _scale_to_str(scale)
+        if scales:
+            params['scale'] = '+'.join(str(x) for x in scales)
         @api_query('census', **params)
         async def result(self, root):
             return [
@@ -21,10 +31,23 @@ class Census:
         return result(self)
 
 
-    def censushistory(self, scale=None):  # TODO to, from?
+    def censushistory(self, *scales: int) -> List[CensusScaleHistory]:
+        """Historical World Census data.
+
+        Was split into its own method for the sake of simplicity and
+        intuitiveness when combinind shards.
+
+        By default returns data on today's featured World Census
+        scale, use arguments to get results on specific scales.  In
+        order to request data on all scales at once you can do
+        ``x.censushistory(*range(81))``.
+
+        Returns data for the entire length of history NationStates
+        stores.  There is no way to override that.
+        """
         params = {'mode': 'history'}
-        if scale:
-            params['scale'] = _scale_to_str(scale)
+        if scales:
+            params['scale'] = '+'.join(str(x) for x in scales)
         @api_query('census', **params)
         async def result(self, root):
             return [
@@ -32,13 +55,5 @@ class Census:
                 for scale_elem in root.find('CENSUS')
             ]
 
-
-def _scale_to_str(scale):
-    if type(scale) is str:
-        return scale
-    elif type(scale) is int:
-        return str(scale)
-    else:
-        return '+'.join(str(x) for x in scale)
 
 
