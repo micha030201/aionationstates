@@ -12,7 +12,7 @@ import datetime
 from typing import List, Optional, Awaitable
 from aionationstates.ns_to_human import Banner, ScaleInfo
 
-from aionationstates.utils import timestamp
+from aionationstates.utils import timestamp, banner_url
 from aionationstates.ns_to_human import banner, census_info
 
 
@@ -500,7 +500,7 @@ class Issue:
         author: Author of the issue, usually a nation.
         editor: Editor of the issue, usually a nation.
         options: Issue options.
-        banners: Issue banners.
+        banners: URLs of issue banners.
     """
     id: int
     title: str
@@ -508,7 +508,7 @@ class Issue:
     author: Optional[str]
     editor: Optional[str]
     options: List[IssueOption]
-    banners: List[Banner]
+    banners: List[str]
 
     def __init__(self, elem, nation):
         self._nation = nation
@@ -524,7 +524,7 @@ class Issue:
         def issue_banners(elem):
             for x in range(1, 10):  # Should be more than enough.
                 try:
-                    yield banner(elem.find(f'PIC{x}').text)
+                    yield banner_url(elem.find(f'PIC{x}').text)
                 except AttributeError:
                     break
         self.banners = list(issue_banners(elem))

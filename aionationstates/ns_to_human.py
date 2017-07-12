@@ -10,6 +10,8 @@ hope my usage of it can be considered Fair Use.
 
 from typing import NamedTuple
 
+from aionationstates.utils import banner_url
+
 
 def unscramble_encoding(text):
     """This is a workaround for a bug in the NS server-side code.
@@ -1325,7 +1327,7 @@ class Banner(NamedTuple):
     @property
     def url(self) -> str:
         """Link to the banner image."""
-        return f'https://www.nationstates.net/images/banners/{self.id}.jpg'
+        return banner_url(self.id)
 
     async def _expand_macros(self, expand_macros):
         return self._replace(
