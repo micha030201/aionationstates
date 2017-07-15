@@ -3,15 +3,16 @@ with Session, otherwise useless."""
 
 # TODO: happenings (region history as well?), poll, censusranks, wabadges
 
-# Needed for type annotations
-import datetime
-from typing import Optional, List
-
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
 from aionationstates.session import api_query
 
+# Needed for type annotations
+from typing import List
+from aionationstates.session import ApiQuery
+
+
 class Census:
-    def census(self, *scales: int) -> List[CensusScaleCurrent]:
+    def census(self, *scales: int) -> ApiQuery[List[CensusScaleCurrent]]:
         """Current World Census data.
 
         By default returns data on today's featured World Census
@@ -34,7 +35,8 @@ class Census:
         return result(self)
 
 
-    def censushistory(self, *scales: int) -> List[CensusScaleHistory]:
+    def censushistory(self, *scales: int
+                      ) -> ApiQuery[List[CensusScaleHistory]]:
         """Historical World Census data.
 
         Was split into its own method for the sake of simplicity and
