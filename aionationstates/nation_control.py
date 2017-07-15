@@ -5,23 +5,38 @@ from aionationstates.types import Issue, IssueResult
 from aionationstates.nation import Nation
 from aionationstates.session import Session, api_query, api_command
 
+# Needed for type annotations
+from typing import List
 
-logger = logging.getLogger('discord-plays-nationstates')
+
+logger = logging.getLogger('aionationstates')
 
 
 class NationControl(Nation, Session):
-    """Allows you to make authenticated requests to NationStates' API,
-    as well as its web interface, sharing the session between the two.
+    """Interface to the NationStates private Nation API.  Subclasses
+    :any:`aionationstates.Nation`.
 
-    Does not check credentials upon initialization, you will only know
+    Credentials are not checked upon initialization, you will only know
     if you've made a mistake after you try to make the first request.
+
+    You need to supply either password or autologin.
+
+    Parameters:
+        name: Name of the nation.
+        autologin: Nation's `autologin <https://www.nationstates.net/\
+            pages/api.html#nationapi-privateshards>`_.
+        password: Nation's password.  It is recommended you use
+            autologin instead.
     """
-    def __init__(self, *args, autologin='', password='', **kwargs):
+    def __init__(self, name: str, autologin: str = '',
+                 password: str = '') -> None:
+        if not password and not autologin:
+            raise ValueError('No password or autologin supplied.')
         self.password = password
         self.autologin = autologin
         # Weird things happen if the supplied pin doesn't follow the format
         self.pin = '0000000000'
-        super().__init__(*args, **kwargs)
+        super().__init__(name)
 
     async def _base_call_api(self, method, **kwargs):
         headers = {
@@ -57,16 +72,16 @@ class NationControl(Nation, Session):
         data['nation'] = self.id
         return await self._base_call_api('POST', data=data, **kwargs)
 
-    # Away from the boring Session nonsense, onto the new and
-    # exciting API private shards and commands!
+    # End of authenticated session handling
 
     @api_query('issues')
-    async def issues(self, root):
+    async def issues(self, root) -> List[Issue]:
+        """Issues the nation currently faces."""
         return [Issue(elem, self) for elem in root.find('ISSUES')]
 
     def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
-        async def result(self, root):
+        async def result(_, root):
             issue_result = IssueResult(root.find('ISSUE'))
             expand_macros = self._get_macros_expander()
             issue_result.banners = [
