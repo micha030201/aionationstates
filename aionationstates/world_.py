@@ -1,5 +1,5 @@
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch
+from aionationstates.types import Dispatch, Poll
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories
 
@@ -73,6 +73,15 @@ class World(Census, Session):
             ]
         return result(self)
 
+    def poll(self, id: int) -> ApiQuery[Poll]:
+        """Poll with a given id."""
+        @api_query('poll', pollid=str(id))
+        async def result(_, root):
+            elem = root.find('POLL')
+            if not elem:
+                raise ValueError(f'No poll found with id {id}')
+            return Poll(elem)
+        return result(self)
 
 world = World()
 

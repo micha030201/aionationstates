@@ -4,8 +4,7 @@ from typing import Optional, List
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority,
-    Embassies, Zombie)
+    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 
@@ -143,6 +142,12 @@ class Region(Census, Session):
     async def zombie(self, root) -> Zombie:
         """Region's state during the annual Z-Day event."""
         return Zombie(root.find('ZOMBIE'))
+
+    @api_query('poll')
+    async def poll(self, root) -> Optional[Poll]:
+        """Current regional poll."""
+        elem = root.find('POLL')
+        return Poll(elem) if elem else None
 
     # TODO: history, messages
 

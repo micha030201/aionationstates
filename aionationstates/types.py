@@ -194,13 +194,13 @@ class Poll:
             references.
         text: The poll text.  May contain HTML elements and character
             references.
-        region: Region the poll was posted in.  Not normalized.
-        author: Nation that posted the poll.  Not normalized.
+        region: Region the poll was posted in.
+        author: Nation that posted the poll.
         options: The poll options.
     """
     id: int
     title: str
-    text: str
+    text: Optional[str]
     region: str
     author: str
     start: datetime.datetime
@@ -210,9 +210,9 @@ class Poll:
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.title = elem.find('TITLE').text  # TODO HTML mess
-        self.text = elem.find('TEXT').text  # TODO HTML mess
-        self.region = elem.find('REGION').text  # TODO normalize?
-        self.author = elem.find('AUTHOR').text  # TODO normalize?
+        self.text = elem.findtext('TEXT')  # TODO HTML mess
+        self.region = elem.find('REGION').text
+        self.author = elem.find('AUTHOR').text
         self.start = timestamp(elem.find('START').text)
         self.stop = timestamp(elem.find('STOP').text)
         self.options = [PollOption(option_elem)
