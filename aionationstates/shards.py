@@ -18,6 +18,9 @@ class Census:
         scale, use arguments to get results on specific scales.  In
         order to request data on all scales at once you can do
         ``x.census(*range(81))``.
+
+        Parameters:
+            scales: World Census scales, integers between 0 and 80.
         """
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scales:
@@ -44,6 +47,9 @@ class Census:
 
         Returns data for the entire length of history NationStates
         stores.  There is no way to override that.
+
+        Parameters:
+            scales: World Census scales, integers between 0 and 80.
         """
         params = {'mode': 'history'}
         if scales:
