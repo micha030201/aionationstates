@@ -26,7 +26,7 @@ class Census:
         if scales:
             params['scale'] = '+'.join(str(x) for x in scales)
         @api_query('census', **params)
-        async def result(self, root):
+        async def result(_, root):
             return [
                 CensusScaleCurrent(scale_elem)
                 for scale_elem in root.find('CENSUS')
@@ -55,7 +55,7 @@ class Census:
         if scales:
             params['scale'] = '+'.join(str(x) for x in scales)
         @api_query('census', **params)
-        async def result(self, root):
+        async def result(_, root):
             return [
                 CensusScaleHistory(scale_elem)
                 for scale_elem in root.find('CENSUS')
