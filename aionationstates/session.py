@@ -130,8 +130,7 @@ def api_command(c, **data):
 
 
 def set_user_agent(user_agent: str) -> None:
-    Session.USER_AGENT = user_agent
-    logger.info(f'User Agent set to "{user_agent}"')
+    Session._USER_AGENT = user_agent
 
 
 # Needed because aiohttp's API is weird and every my attempt at making
@@ -141,18 +140,19 @@ RawResponse = namedtuple('RawResponse', ('status url text'
 
 
 class Session:
-    USER_AGENT = None
+    _USER_AGENT = None
 
     async def _request(self, method, url, headers=None, **kwargs):
         headers = headers or {}
 
         standard_user_agent = f'aionationstates/{__version__}'
-        if not self.USER_AGENT:
+        if not self._USER_AGENT:
             warn('Please supply a useragent by calling aionationstates.'
                  'set_user_agent("your useragent here")')
             headers['User-Agent'] = standard_user_agent
-        headers['User-Agent'] = \
-            f'{self.USER_AGENT} ({standard_user_agent})'
+        else:
+            headers['User-Agent'] = \
+                f'{self._USER_AGENT} ({standard_user_agent})'
 
         async with aiohttp.request(method, url, headers=headers,
                                    allow_redirects=False, **kwargs) as resp:
