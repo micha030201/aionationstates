@@ -10,6 +10,39 @@ from aionationstates.session import ApiQuery
 
 class World(Census, Session):
     """Interface to the NationStates World API."""
+
+    @api_query('featuredregion')
+    async def featuredregion(self, root) -> str:
+        """Today's featured region."""
+        return root.find('FEATUREDREGION').text
+
+    @api_query('newnations')
+    async def newnations(self, root) -> List[str]:
+        """Most recently founded nations, from newest."""
+        return root.find('NEWNATIONS').text.split(',')
+
+    @api_query('nations')
+    async def nations(self, root) -> List[str]:
+        """List of all the nations, seemingly in order of creation."""
+        return root.find('NATIONS').text.split(',')
+
+    @api_query('numnations')
+    async def numnations(self, root) -> int:
+        """Total number of nations."""
+        return int(root.find('NUMNATIONS').text)
+
+    @api_query('regions')
+    async def regions(self, root) -> List[str]:
+        """List of all the regions, seemingly in order of creation.
+        Not normalized.
+        """
+        return root.find('REGIONS').text.split(',')  # TODO normalize?
+
+    @api_query('numregions')
+    async def numregions(self, root) -> int:
+        """Total number of regions."""
+        return int(root.find('NUMREGIONS').text)
+
     def regionsbytag(self, *tags: str) -> ApiQuery[List[str]]:
         """All regions belonging to any of the named tags.  Tags can be
         preceded by a ``-`` to select regions without that tag.
