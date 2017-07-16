@@ -12,9 +12,6 @@ from aionationstates.shards import Census
 class Region(Census, Session):
     """A class to interact with the NationStates Region API.
 
-    Parameters:
-        name: Name of the region.
-
     Attributes:
         id: The defining characteristic of a region, its normalized
             name.  No two regions share the same id, and no one id

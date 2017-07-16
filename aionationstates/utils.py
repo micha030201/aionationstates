@@ -18,7 +18,10 @@ def timestamp(line):
     return datetime.utcfromtimestamp(int(line))
 
 
-def datetime_to_ns(then):
+def datetime_to_ns(then: datetime) -> str:
+    """Transform a ``datetime`` object into a NationStates-style
+    string, for example "6 days ago", "105 minutes ago", etc.
+    """
     if then == datetime(1970, 1, 1, 0, 0):
         return 'Antiquity'
 

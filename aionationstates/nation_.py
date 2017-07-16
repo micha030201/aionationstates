@@ -17,9 +17,6 @@ from aionationstates.ns_to_human import banner
 class Nation(Census, Session):
     """A class to interact with the NationStates Nation public API.
 
-    Parameters:
-        name: Name of the nation.
-
     Attributes:
         id: The defining characteristic of a nation, its
             normalized name.  No two nations share the same id, and no

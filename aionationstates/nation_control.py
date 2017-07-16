@@ -2,7 +2,7 @@ import logging
 from contextlib import suppress
 
 from aionationstates.types import Issue, IssueResult
-from aionationstates.nation import Nation
+from aionationstates.nation_ import Nation
 from aionationstates.session import Session, api_query, api_command
 
 # Needed for type annotations
@@ -18,15 +18,6 @@ class NationControl(Nation, Session):
 
     Credentials are not checked upon initialization, you will only know
     if you've made a mistake after you try to make the first request.
-
-    You need to supply either password or autologin.
-
-    Parameters:
-        name: Name of the nation.
-        autologin: Nation's `autologin <https://www.nationstates.net/\
-            pages/api.html#nationapi-privateshards>`_.
-        password: Nation's password.  It is recommended you use
-            autologin instead.
     """
     def __init__(self, name: str, autologin: str = '',
                  password: str = '') -> None:

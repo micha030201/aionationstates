@@ -9,9 +9,7 @@ from aionationstates.session import ApiQuery
 
 
 class World(Census, Session):
-    """Interface to the NationStates World API.  Don't create this
-    object yourself, instead use ``aionationstates.world``.
-    """
+    """Interface to the NationStates World API."""
     def regionsbytag(self, *tags: str) -> ApiQuery[List[str]]:
         """All regions belonging to any of the named tags.  Tags can be
         preceded by a ``-`` to select regions without that tag.
@@ -83,5 +81,4 @@ class World(Census, Session):
             return Poll(elem)
         return result(self)
 
-world = World()
 
