@@ -33,10 +33,10 @@ class ApiQuery(Awaitable[T]):
     It it here to provide a way to combine multiple API shards into a
     single HTTP request.
 
-    To achieve that, it overloads the ``+`` operator. By "adding"
+    To achieve that, it overloads the ``+`` operator.  By "adding"
     ApiQueries together, you get an ApiQuery which, when awaited, will
     return a tuple of what the original ApiQueries would have
-    returned by themselves. Let me illustrate.
+    returned by themselves.  Let me illustrate.
 
     This code::
 
@@ -59,10 +59,8 @@ class ApiQuery(Awaitable[T]):
 
     .. note::
 
-        As sad and depressing as it is, the cruel bounds of this
-        abominable existence have not been released just yet, and the
-        standard NS rules for combining shards still apply. So code
-        such as this won't work::
+        Standard NS rules for combining shards still apply.  Code such
+        as this is not going to work::
 
             nation.name() + region.name()
             # ValueError: ApiQueries do not share the same session
