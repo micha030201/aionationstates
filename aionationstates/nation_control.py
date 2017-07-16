@@ -31,7 +31,7 @@ class NationControl(Nation, Session):
     def __init__(self, name: str, autologin: str = '',
                  password: str = '') -> None:
         if not password and not autologin:
-            raise ValueError('No password or autologin supplied.')
+            raise ValueError('No password or autologin supplied')
         self.password = password
         self.autologin = autologin
         # Weird things happen if the supplied pin doesn't follow the format
