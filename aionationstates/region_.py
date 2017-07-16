@@ -80,7 +80,7 @@ class Region(Census, Session):
     @api_query('embassyrmb')
     async def embassyrmb(self, root) -> EmbassyPostingRights:
         """Posting rights for members the of embassy regions."""
-        return EmbassyPostingRights.from_ns(root.find('EMBASSYRMB').text)
+        return EmbassyPostingRights._from_ns(root.find('EMBASSYRMB').text)
 
     @api_query('delegate')
     async def delegate(self, root) -> Optional[str]:
@@ -97,7 +97,7 @@ class Region(Census, Session):
         """Regional World Assembly Delegate's authority.  Always set,
         no matter if the region has a delegate or not.
         """
-        return Authority.from_ns(root.find('DELEGATEAUTH').text)
+        return Authority._from_ns(root.find('DELEGATEAUTH').text)
 
     @api_query('founder')
     async def founder(self, root) -> Optional[str]:
@@ -115,7 +115,7 @@ class Region(Census, Session):
         """Regional Founder's authority.  Always set,
         no matter if the region has a founder or not.
         """
-        return Authority.from_ns(root.find('FOUNDERAUTH').text)
+        return Authority._from_ns(root.find('FOUNDERAUTH').text)
 
     @api_query('officers')
     async def officers(self, root) -> List[Officer]:

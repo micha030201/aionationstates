@@ -581,7 +581,7 @@ class Authority(Flag):
     POLLS          = P = auto()
 
     @classmethod
-    def from_ns(cls, string):
+    def _from_ns(cls, string):
         """This is the only sane way I could find to make Flag enums
         work with individual characters as flags.
         """
@@ -610,7 +610,7 @@ class Officer:
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
         self.office = elem.find('OFFICE').text
-        self.authority = Authority.from_ns(elem.find('AUTHORITY').text)
+        self.authority = Authority._from_ns(elem.find('AUTHORITY').text)
         self.appointed_at = timestamp(elem.find('TIME').text)
         self.appointed_by = elem.find('BY').text
 
@@ -628,7 +628,7 @@ class EmbassyPostingRights(Enum):
     EVERYBODY = 5
 
     @classmethod
-    def from_ns(cls, string):
+    def _from_ns(cls, string):
         values = {
             '0': 1,  # The reason I have to do all this nonsense.
             'con': 2,
