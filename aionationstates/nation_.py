@@ -18,6 +18,17 @@ from aionationstates.session import ApiQuery
 class Nation(Census, Session):
     """A class to interact with the NationStates Nation public API.
 
+    Shards absent (incomplete):
+
+    * **lastactivity** - There is no timestamp version, and the value
+      is kind of useless anyways.
+    * **govtpriority** - Use the govt shard.
+    * **factbooks**, **dispatches**, **factbooklist** - Use the
+      dispatchlist shard.
+    * **income**, **poorest**, **richest** - Use census scales 72, 73,
+      and 74 respectively.  The gdp shard has been kept, as it appears
+      to be slightly different from scale 76.
+
     Attributes:
         id: The defining characteristic of a nation, its
             normalized name.  No two nations share the same id, and no
@@ -108,17 +119,6 @@ class Nation(Census, Session):
     async def majorindustry(self, root) -> str:
         """The industry prioritized by the nation."""
         return root.find('MAJORINDUSTRY').text
-
-    @api_query('govtpriority')
-    async def govtpriority(self, root) -> str:
-        """Part of government (Welfare, Administration, Defence, ...)
-        prioritized by the nation.
-        """
-        return root.find('GOVTPRIORITY').text  # TODO we have the govt shard, is this necessary?
-
-    @api_query('lastactivity')
-    async def lastactivity(self, root) -> str:
-        return root.find('LASTACTIVITY').text  # TODO there's no timestamp; decide
 
     @api_query('influence')
     async def influence(self, root) -> str:
@@ -221,33 +221,10 @@ class Nation(Census, Session):
         """Nation's population, in millions."""
         return int(root.find('POPULATION').text)
 
-    @api_query('factbooks')
-    async def factbooks(self, root) -> int:
-        return int(root.find('FACTBOOKS').text)  # TODO we have the dispatch shard, is this necessary?
-
-    @api_query('dispatches')
-    async def dispatches(self, root) -> int:
-        return int(root.find('DISPATCHES').text)  # TODO we have the dispatch shard, is this necessary?
-
     @api_query('gdp')
     async def gdp(self, root) -> int:
         """Nation's gross domestic product."""
         return int(root.find('GDP').text)
-
-    @api_query('income')
-    async def income(self, root) -> int:
-        """Average income in the nation."""
-        return int(root.find('INCOME').text)  # TODO we have census, is this necessary?
-
-    @api_query('poorest')
-    async def poorest(self, root) -> int:
-        """Average income of poor in the nation."""
-        return int(root.find('POOREST').text)  # TODO we have census, is this necessary?
-
-    @api_query('richest')
-    async def richest(self, root) -> int:
-        """Average income of rich in the nation."""
-        return int(root.find('RICHEST').text)    # TODO we have census, is this necessary?
 
     @api_query('foundedtime')
     async def founded(self, root) -> datetime.datetime:
@@ -384,12 +361,10 @@ class Nation(Census, Session):
         ]
 
     def _get_macros_expander(self):
-        # TODO rewrite to join this request with the one that returns banner ids?
-
         # The only macros present in the banner names are name,
         # demonym, and faith.  If the NS admins ever choose to answer
         # my request and fix the unexpanded macros in issue effect
-        # headlines, the rest should probably be removed as unnecessary.
+        # headlines, the rest should be removed as unnecessary.
         query = (
             self.demonym() + self.demonym2() + self.demonym2plural()
             + self.name() + self.religion() + self.animal() + self.capital()
