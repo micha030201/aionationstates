@@ -1,17 +1,18 @@
 import re
-from html import unescape
-# Needed for type annotations
-import datetime
-from typing import Dict, List
-from aionationstates.ns_to_human import Banner
-from aionationstates.session import ApiQuery
+import html
 
-from aionationstates.utils import normalize, timestamp
+from aionationstates.utils import normalize, timestamp, unscramble_encoding
 from aionationstates.types import (
     Freedom, FreedomScores, Govt, Sectors, Zombie, Dispatch)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import banner
+
+# Needed for type annotations
+import datetime
+from typing import Dict, List
+from aionationstates.ns_to_human import Banner
+from aionationstates.session import ApiQuery
 
 
 class Nation(Census, Session):
@@ -52,7 +53,7 @@ class Nation(Census, Session):
     @api_query('motto')
     async def motto(self, root) -> str:
         """Motto of the nation."""
-        return root.find('MOTTO').text  # TODO encoding mess
+        return unscramble_encoding(html.unescape(root.find('MOTTO').text))
 
     @api_query('category')
     async def category(self, root) -> str:
@@ -438,7 +439,7 @@ class Nation(Census, Session):
     async def description(self) -> str:
         """Nation's full description, as seen on its in-game page."""
         resp = await self._call_web(f'nation={self.id}')
-        return unescape(
+        return html.unescape(
             re.search(
                 '<div class="nationsummary">(.+?)<p class="nationranktext">',
                 resp.text,

@@ -56,7 +56,7 @@ class World(Census, Session):
         # regions, excluding it returns all of them.
         @api_query('regionsbytag', tags=','.join(tags))
         async def result(_, root):
-            text = root.find('REGIONS').text
+            text = root.find('REGIONS').text  # TODO normalize?
             return text.split(',') if text else []
         return result(self)
 
@@ -64,9 +64,12 @@ class World(Census, Session):
         """Dispatch by id.  Primarily useful for getting dispatch
         texts, as this is the only way to do so.
         """
-        @api_query('dispatch', id=str(id))
+        @api_query('dispatch', dispatchid=str(id))
         async def result(_, root):
-            return Dispatch(root.find('DISPATCH'))
+            elem = root.find('DISPATCH')
+            if not elem:
+                raise ValueError(f'No dispatch found with id {id}')
+            return Dispatch(elem)
         return result(self)
 
     def dispatchlist(self, *, author: str = None, category: str = None,

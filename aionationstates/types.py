@@ -1,9 +1,9 @@
 # TODO slots
 # TODO split into submodules?
 
+import html
 from contextlib import suppress
 from typing import NamedTuple
-from html import unescape
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
@@ -12,7 +12,7 @@ import datetime
 from typing import List, Optional, Awaitable
 from aionationstates.ns_to_human import Banner, ScaleInfo
 
-from aionationstates.utils import timestamp, banner_url
+from aionationstates.utils import timestamp, banner_url, unscramble_encoding
 from aionationstates.ns_to_human import banner, census_info
 
 
@@ -124,7 +124,7 @@ class Dispatch:
         id: The dispatch id.  Use with the World dispatch shard until I
             manage to think of a better interface.
         title: The dispatch title.
-        author: Nation that posted the dispatch. Not normalized.
+        author: Nation that posted the dispatch.
         category: The dispatch category.
         subcategory: The dispatch subcategory.
         views: Number of times the dispatch got viewed.
@@ -148,8 +148,9 @@ class Dispatch:
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text
-        self.author = elem.find('AUTHOR').text  # TODO normalize
+        self.title = unscramble_encoding(
+            html.unescape(elem.find('TITLE').text))
+        self.author = elem.find('AUTHOR').text
         self.category = elem.find('CATEGORY').text
         self.subcategory = elem.find('SUBCATEGORY').text
         self.views = int(elem.find('VIEWS').text)
@@ -163,7 +164,8 @@ class Dispatch:
 
         self.text = None
         with suppress(AttributeError):
-            self.text = elem.find('TEXT').text
+            self.text = unscramble_encoding(
+                html.unescape(elem.find('TEXT').text))
 
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
@@ -174,14 +176,14 @@ class PollOption:
 
     Attributes:
         text: Text of the option.
-        voters: Nations that picked this option.  Not normalized.
+        voters: Nations that picked this option.
     """
     text: str
     voters: List[str]
 
     def __init__(self, elem):
-        self.text = elem.find('OPTIONTEXT').text
-        voters = elem.find('VOTERS').text  # TODO normalize?
+        self.text = html.unescape(elem.findtext('OPTIONTEXT'))
+        voters = elem.find('VOTERS').text
         self.voters = voters.split(':') if voters else []
 
 
@@ -190,10 +192,8 @@ class Poll:
 
     Attributes:
         id: The poll id.
-        title: The poll title.  May contain HTML elements and character
-            references.
-        text: The poll text.  May contain HTML elements and character
-            references.
+        title: The poll title.
+        text: The poll text.
         region: Region the poll was posted in.
         author: Nation that posted the poll.
         options: The poll options.
@@ -209,8 +209,11 @@ class Poll:
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.title = elem.find('TITLE').text  # TODO HTML mess
-        self.text = elem.findtext('TEXT')  # TODO HTML mess
+        self.title = html.unescape(elem.findtext('TITLE'))
+        try:
+            self.text = html.unescape(elem.findtext('TEXT'))
+        except AttributeError:
+            self.text = None
         self.region = elem.find('REGION').text
         self.author = elem.find('AUTHOR').text
         self.start = timestamp(elem.find('START').text)
@@ -449,7 +452,7 @@ class IssueResult:
                 raise ValueError('invalid issue')
         assert elem.find('OK').text == '1'  # honestly no idea
 
-        self.happening = getattr(elem.find('DESC'), 'text', None)
+        self.happening = elem.findtext('DESC')
         self.census = [
             CensusScaleChange(sub_elem) for sub_elem
             in elem.find('RANKINGS') or ()
@@ -515,8 +518,8 @@ class Issue:
         self.id = int(elem.get('id'))
         self.title = elem.find('TITLE').text
         self.text = elem.find('TEXT').text
-        self.author = getattr(elem.find('AUTHOR'), 'text', None)
-        self.editor = getattr(elem.find('EDITOR'), 'text', None)
+        self.author = elem.findtext('AUTHOR')
+        self.editor = elem.findtext('EDITOR')
         self.options = [
             IssueOption(sub_elem, self)
             for sub_elem in elem.findall('OPTION')
@@ -609,7 +612,7 @@ class Officer:
 
     def __init__(self, elem):
         self.nation = elem.find('NATION').text
-        self.office = elem.find('OFFICE').text
+        self.office = elem.findtext('OFFICE')
         self.authority = Authority._from_ns(elem.find('AUTHORITY').text)
         self.appointed_at = timestamp(elem.find('TIME').text)
         self.appointed_by = elem.find('BY').text
@@ -690,13 +693,13 @@ class Post:
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.author = elem.find('NATION').text  # TODO normalize
+        self.author = elem.find('NATION').text
         self.status = PostStatus(int(elem.find('STATUS').text))
         self.text = elem.find('MESSAGE').text  # TODO unescape?
 
-        likers_elem = elem.find('LIKERS')  # TODO normalize
+        likers_elem = elem.find('LIKERS')
         self.likers = likers_elem.text.split(':') if likers_elem else []
-        self.suppressor = getattr(elem.find('SUPPRESSOR'), 'text', None)  # TODO normalize
+        self.suppressor = elem.findtext('SUPPRESSOR')
 
     # TODO repr
 
@@ -722,7 +725,7 @@ class Zombie:
         self.survivors = int(elem.find('SURVIVORS').text)
         self.zombies = int(elem.find('ZOMBIES').text)
         self.dead = int(elem.find('DEAD').text)
-        self.action = getattr(elem.find('ZACTION'), 'text', None)
+        self.action = elem.findtext('ZACTION')
 
 
 # TODO gavote, scvote

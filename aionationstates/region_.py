@@ -1,12 +1,14 @@
-# Needed for type annotations
-import datetime
-from typing import Optional, List
+import html
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
     EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
+
+# Needed for type annotations
+import datetime
+from typing import Optional, List
 
 
 class Region(Census, Session):
@@ -40,7 +42,9 @@ class Region(Census, Session):
     @api_query('factbook')
     async def factbook(self, root) -> str:
         """Region's World Factbook Entry."""
-        return root.find('FACTBOOK').text  # TODO encoding mess
+        # This lib might have been a mistake, but the line below
+        # definitely isn't.
+        return html.unescape(html.unescape(root.find('FACTBOOK').text))
 
     @api_query('power')
     async def power(self, root) -> str:
@@ -69,7 +73,7 @@ class Region(Census, Session):
     @api_query('nations')
     async def nations(self, root) -> List[str]:
         """All the nations in the region."""
-        text = root.find('NATIONS').text  # TODO normalize?
+        text = root.find('NATIONS').text
         return text.split(':') if text else []
 
     @api_query('embassies')
@@ -87,7 +91,7 @@ class Region(Census, Session):
         """Regional World Assembly Delegate.  ``None`` if the region
         has no delegate.
         """
-        nation = root.find('DELEGATE').text  # TODO normalize
+        nation = root.find('DELEGATE').text
         if nation == '0':
             return None
         return nation
@@ -105,7 +109,7 @@ class Region(Census, Session):
         exist.  ``None`` if the region is Game-Created and doesn't have
         a founder.
         """
-        nation = root.find('FOUNDER').text  # TODO normalize
+        nation = root.find('FOUNDER').text
         if nation == '0':
             return None
         return nation
