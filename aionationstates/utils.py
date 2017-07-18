@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def normalize(identifier):
@@ -16,6 +16,10 @@ def banner_url(id):
 
 def timestamp(line):
     return datetime.utcfromtimestamp(int(line))
+
+
+def utc_seconds(datetime_):
+    return int(datetime_.replace(tzinfo=timezone.utc).timestamp())
 
 
 def unscramble_encoding(text):

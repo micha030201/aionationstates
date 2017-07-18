@@ -13,6 +13,12 @@ from typing import NamedTuple
 from aionationstates.utils import banner_url
 
 
+happening_filters = {
+    'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject', 'admin',
+    'move', 'founding', 'cte', 'vote', 'resolution', 'member', 'endo',
+}
+
+
 dispatch_categories = {
     'Factbook': {
         'Overview',

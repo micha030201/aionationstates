@@ -728,6 +728,25 @@ class Zombie:
         self.action = elem.findtext('ZACTION')
 
 
+
+class Happening:
+    """A happening.
+
+    Attributes:
+        id: The happening id.
+        timestamp: Time of the happening.
+        text: The happening text.
+    """
+    id: int
+    timestamp: datetime.datetime
+    text: str
+
+    def __init__(self, elem):
+        self.id = int(elem.get('id'))
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
+        self.text = elem.findtext('TEXT')
+
+
 # TODO gavote, scvote
 
 

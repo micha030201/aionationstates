@@ -1,10 +1,16 @@
+from contextlib import suppress
+from asyncio import ensure_future, sleep, CancelledError
+
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch, Poll
+from aionationstates.types import Dispatch, Poll, Happening
 from aionationstates.shards import Census
-from aionationstates.ns_to_human import dispatch_categories
+from aionationstates.ns_to_human import dispatch_categories, happening_filters
+from aionationstates.utils import utc_seconds, normalize
 
 # Needed for type annotations
-from typing import List
+import datetime
+from typing import List, Callable, Awaitable, AsyncIterable, Iterable, Union
+from asyncio import Task
 from aionationstates.session import ApiQuery
 
 
@@ -117,4 +123,128 @@ class World(Census, Session):
             return Poll(elem)
         return result(self)
 
+    # Happenings interface:
+
+    def _get_happenings(self, *, nation, region, filter, limit=100,
+                        beforeid=None, beforetime=None):
+        params = {'limit': str(limit)}
+        if filter:
+            filter = (filter,) if type(filter) is str else filter
+            for filter_item in filter:
+                if filter_item not in happening_filters:
+                    raise ValueError(f'No such filter "{filter_item}"')
+            params['filter'] = '+'.join(filter)
+
+        if nation and region:
+            raise ValueError('You cannot specify both nation and region views')
+        if nation:
+            nation = (nation,) if type(nation) is str else nation
+            nation = '+'.join(map(normalize, nation))
+            params['view'] = f'nation.{nation}'
+        elif region:
+            region = (region,) if type(region) is str else region
+            region = '+'.join(map(normalize, region))
+            params['view'] = f'region.{region}'
+
+        if beforetime:
+            params['beforetime'] = str(utc_seconds(beforetime))
+        elif beforeid:
+            params['beforeid'] = str(beforeid)
+
+        @api_query('happenings', **params)
+        async def result(_, root):
+            return [Happening(elem) for elem in root.find('HAPPENINGS')]
+        return result(self)
+
+    async def happenings(self, *,
+                         nation: Union[str, Iterable[str]] = None,
+                         region: Union[str, Iterable[str]] = None,
+                         filter: Union[str, Iterable[str]] = None,
+                         beforeid: int = None,
+                         beforetime: datetime.datetime = None
+                         ) -> AsyncIterable[Happening]:
+        """Iterate through happenings from newest to oldest."""
+        while True:
+            happening_bunch = await self._get_happenings(
+                nation=nation, region=region, filter=filter,
+                beforeid=beforeid, beforetime=beforetime
+            )
+            for happening in happening_bunch:
+                yield happening
+            if len(happening_bunch) < 100:
+                break
+            beforeid = happening_bunch[-1].id
+
+    async def _poll_happenings(self, *, callback, poll_period,
+                               nation, region, filter):
+        try:
+            # We only need the happenings from this point forwards
+            last_id = (await self._get_happenings(
+                nation=nation, region=region, filter=filter, limit=1))[0].id
+        except IndexError:
+            # Happenings before this point have all been deleted
+            last_id = 0
+
+        while True:
+            # Sleep before the loop body to avoid wasting the first request
+            await sleep(poll_period)
+
+            # I don't think there's a cleaner solution, sadly.
+            happenings = []
+            async for happening in self.happenings(
+                    nation=nation, region=region, filter=filter):
+                if happening.id <= last_id:
+                    break
+                happenings.append(happening)
+
+            with suppress(IndexError):
+                last_id = happenings[0].id
+
+            for happening in reversed(happenings):
+                ensure_future(callback(happening))
+                #await callback(happening)
+
+    def on_happening(self, poll_period: int = 30, *,
+                     nation: Union[str, Iterable[str]] = None,
+                     region: Union[str, Iterable[str]] = None,
+                     filter: Union[str, Iterable[str]] = None,
+                     ) -> Callable[[Callable[[Happening], Awaitable]], Task]:
+        """A decorator to subscribe to a feed of new happenings.
+
+        Guarantees that:
+
+        * The decorated coroutine function will be called for each
+          happening since the task is first run;
+        * Every happening will only be fed to the decorated coroutine
+          function exactly once;
+        * 
+
+        The interface will be easier to illustrate::
+
+            @world.on_happening(region='the north pacific')
+            async def process_happenings(happening):
+                # Your processing code here
+                print(happening.text)  # As an example
+
+        ``process_happenings`` is now a :any:`asyncio.Task`.  Please
+        read up on what that implies, paying special attention to `this
+        bit <https://docs.python.org/3/library/asyncio-dev.html#detect-\
+        exceptions-never-consumed>`_.
+
+        Moreover, 
+
+        Parameters:
+            poll_period: How long to wait between requesting the next
+                bunch of happenings.  Note that this only 
+                     nation: Union[str, Iterable[str]] = None,
+                     region: Union[str, Iterable[str]] = None,
+                     filter:
+        """
+        def decorator(func):
+            return ensure_future(self._poll_happenings(
+                callback=func,
+                poll_period=poll_period,
+                nation=nation, region=region, filter=filter
+            ))
+        return decorator
 
