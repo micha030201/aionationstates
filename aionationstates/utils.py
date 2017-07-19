@@ -2,6 +2,12 @@ import re
 from datetime import datetime, timezone
 
 
+def raise_task_exception(task):
+    """For tasks that are not intended to be awaited."""
+    if task.exception():
+        task.result()
+
+
 def normalize(identifier):
     identifier = identifier.lower().replace(' ', '_')
     if not re.match('^[a-z0-9_-]+$', identifier):

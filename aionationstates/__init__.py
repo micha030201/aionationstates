@@ -24,7 +24,7 @@ from aionationstates.types import (
     Dispatch, PollOption, Poll, Freedom, FreedomScores, Govt, Sectors,
     Reclassification, Reclassifications, CensusScaleChange, IssueResult,
     IssueOption, Issue, Embassies, Authority, Officer, EmbassyPostingRights,
-    PostStatus, Post, Zombie)
+    PostStatus, Post, Zombie, Happening)
 from aionationstates.ns_to_human import ScaleInfo, Banner
 
 from aionationstates.utils import datetime_to_ns
