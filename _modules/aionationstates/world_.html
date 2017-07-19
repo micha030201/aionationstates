@@ -1,0 +1,357 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.world_ &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.world_</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">CancelledError</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span><span class="p">,</span> <span class="n">Happening</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
+<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">dispatch_categories</span><span class="p">,</span> <span class="n">happening_filters</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">raise_task_exception</span>
+
+<span class="c1"># Needed for type annotations</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">AsyncIterable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">Task</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
+
+
+<div class="viewcode-block" id="World"><a class="viewcode-back" href="../../reference.html#aionationstates.World">[docs]</a><span class="k">class</span> <span class="nc">World</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interface to the NationStates World API.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="World.featuredregion"><a class="viewcode-back" href="../../reference.html#aionationstates.World.featuredregion">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;featuredregion&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">featuredregion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Today&#39;s featured region.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FEATUREDREGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="World.newnations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.newnations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;newnations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">newnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Most recently founded nations, from newest.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NEWNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.nations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.nations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;nations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">nations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;List of all the nations, seemingly in order of creation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.numnations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.numnations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numnations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">numnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Total number of nations.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.regions"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regions">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;regions&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;List of all the regions, seemingly in order of creation.</span>
+<span class="sd">        Not normalized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>  <span class="c1"># TODO normalize?</span></div>
+
+<div class="viewcode-block" id="World.numregions"><a class="viewcode-back" href="../../reference.html#aionationstates.World.numregions">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numregions&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">numregions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Total number of regions.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMREGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.regionsbytag"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regionsbytag">[docs]</a>    <span class="k">def</span> <span class="nf">regionsbytag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tags</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;All regions belonging to any of the named tags.  Tags can be</span>
+<span class="sd">        preceded by a ``-`` to select regions without that tag.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You can specify up to 10 tags&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tags</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No tags specified&#39;</span><span class="p">)</span>
+        <span class="c1"># We don&#39;t check for invalid tags here because the behaviour is</span>
+        <span class="c1"># fairly intuitive - quering for a non-existent tag returns no</span>
+        <span class="c1"># regions, excluding it returns all of them.</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;regionsbytag&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>  <span class="c1"># TODO normalize?</span>
+            <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.dispatch"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">Dispatch</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Dispatch by id.  Primarily useful for getting dispatch</span>
+<span class="sd">        texts, as this is the only way to do so.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatch&#39;</span><span class="p">,</span> <span class="n">dispatchid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCH&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">elem</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No dispatch found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.dispatchlist"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatchlist">[docs]</a>    <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">author</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">category</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">subcategory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;new&#39;</span>
+                     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dispatch</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Find dispatches by certain criteria.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            author: Nation authoring the dispatch.</span>
+<span class="sd">            category: Dispatch&#39;s primary category.</span>
+<span class="sd">            subcategory: Dispatch&#39;s secondary category.</span>
+<span class="sd">            sort: Sort order, &#39;new&#39; or &#39;best&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sort&#39;</span><span class="p">:</span> <span class="n">sort</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">author</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;dispatchauthor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">author</span>
+        <span class="c1"># Here we do need to ensure that our categories are valid, cause</span>
+        <span class="c1"># NS just ignores the categories it doesn&#39;t recognise and returns</span>
+        <span class="c1"># whatever it feels like.</span>
+        <span class="k">if</span> <span class="n">category</span> <span class="ow">and</span> <span class="n">subcategory</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dispatch_categories</span> <span class="ow">or</span>
+                    <span class="n">subcategory</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dispatch_categories</span><span class="p">[</span><span class="n">category</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid category/subcategory&#39;</span><span class="p">)</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;dispatchcategory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{category}</span><span class="s1">:</span><span class="si">{subcategory}</span><span class="s1">&#39;</span>
+        <span class="k">elif</span> <span class="n">category</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dispatch_categories</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid category&#39;</span><span class="p">)</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;dispatchcategory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">category</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCHLIST&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.poll"><a class="viewcode-back" href="../../reference.html#aionationstates.World.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">Poll</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Poll with a given id.&quot;&quot;&quot;</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;poll&#39;</span><span class="p">,</span> <span class="n">pollid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLL&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">elem</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No poll found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Poll</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="c1"># Happenings interface:</span>
+
+    <span class="k">def</span> <span class="nf">_get_happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                        <span class="n">beforeid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">beforetime</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;limit&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">limit</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="nb">filter</span> <span class="o">=</span> <span class="p">(</span><span class="nb">filter</span><span class="p">,)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="k">else</span> <span class="nb">filter</span>
+            <span class="k">for</span> <span class="n">filter_item</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">filter_item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">happening_filters</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No such filter &quot;</span><span class="si">{filter_item}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nation</span> <span class="ow">and</span> <span class="n">region</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You cannot specify both nation and region views&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nation</span><span class="p">:</span>
+            <span class="n">nation</span> <span class="o">=</span> <span class="p">(</span><span class="n">nation</span><span class="p">,)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">nation</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="k">else</span> <span class="n">nation</span>
+            <span class="n">nation</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">normalize</span><span class="p">,</span> <span class="n">nation</span><span class="p">))</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;nation.</span><span class="si">{nation}</span><span class="s1">&#39;</span>
+        <span class="k">elif</span> <span class="n">region</span><span class="p">:</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="p">(</span><span class="n">region</span><span class="p">,)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">region</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span> <span class="k">else</span> <span class="n">region</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">normalize</span><span class="p">,</span> <span class="n">region</span><span class="p">))</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;region.</span><span class="si">{region}</span><span class="s1">&#39;</span>
+
+        <span class="k">if</span> <span class="n">beforetime</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;beforetime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">utc_seconds</span><span class="p">(</span><span class="n">beforetime</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">beforeid</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;beforeid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">beforeid</span><span class="p">)</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Happening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="World.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+            <span class="n">nation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">region</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">beforeid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">beforetime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Iterate through happenings from newest to oldest.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            nation: Nation(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with region.</span>
+<span class="sd">            region: Region(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with nation.</span>
+<span class="sd">            filter: Category(s) to request happenings by.  Available</span>
+<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
+<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
+<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">            beforeid: Only request happenings before this id.</span>
+<span class="sd">            beforetime: Only request happenings before this moment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">happening_bunch</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_happenings</span><span class="p">(</span>
+                <span class="n">nation</span><span class="o">=</span><span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+                <span class="n">beforeid</span><span class="o">=</span><span class="n">beforeid</span><span class="p">,</span> <span class="n">beforetime</span><span class="o">=</span><span class="n">beforetime</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="n">happening_bunch</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">happening</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">happening_bunch</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">beforeid</span> <span class="o">=</span> <span class="n">happening_bunch</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span></div>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_poll_happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">,</span>
+                               <span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># We only need the happenings from this point forwards</span>
+            <span class="n">last_id</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_happenings</span><span class="p">(</span>
+                <span class="n">nation</span><span class="o">=</span><span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="c1"># Happenings before this point have all been deleted</span>
+            <span class="n">last_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># Sleep before the loop body to avoid wasting the first request</span>
+            <span class="k">await</span> <span class="n">sleep</span><span class="p">(</span><span class="n">poll_period</span><span class="p">)</span>
+
+            <span class="c1"># I don&#39;t think there&#39;s a cleaner solution, sadly.</span>
+            <span class="n">happenings</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">happenings</span><span class="p">(</span>
+                    <span class="n">nation</span><span class="o">=</span><span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">happening</span><span class="o">.</span><span class="n">id</span> <span class="o">&lt;=</span> <span class="n">last_id</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">happenings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">happening</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">IndexError</span><span class="p">):</span>
+                <span class="n">last_id</span> <span class="o">=</span> <span class="n">happenings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+
+            <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">happenings</span><span class="p">):</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">callback</span><span class="p">(</span><span class="n">happening</span><span class="p">))</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">raise_task_exception</span><span class="p">)</span>
+
+<div class="viewcode-block" id="World.on_happening"><a class="viewcode-back" href="../../reference.html#aionationstates.World.on_happening">[docs]</a>    <span class="k">def</span> <span class="nf">on_happening</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+            <span class="n">nation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">region</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Happening</span><span class="p">],</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">Any</span><span class="p">]]],</span> <span class="n">Task</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;A decorator to subscribe to a feed of new happenings.</span>
+
+<span class="sd">        The interface will be easier to illustrate::</span>
+
+<span class="sd">            @world.on_happening(region=&#39;the north pacific&#39;)</span>
+<span class="sd">            async def process_happenings(happening):</span>
+<span class="sd">                # Your processing code here</span>
+<span class="sd">                print(happening.text)  # As an example</span>
+
+<span class="sd">        Guarantees that:</span>
+
+<span class="sd">        * The decorated coroutine function will be called for each</span>
+<span class="sd">          new happening since the task is first run;</span>
+<span class="sd">        * Every happening will only be fed to the decorated coroutine</span>
+<span class="sd">          function exactly once;</span>
+<span class="sd">        * Calls to the decorated coroutine function are scheduled in</span>
+<span class="sd">          the same order as happenings arrive, from oldest to newest.</span>
+
+<span class="sd">        This decorator returns an :any:`asyncio.Task`.  Please read up</span>
+<span class="sd">        on what that implies, paying special attention to `this bit</span>
+<span class="sd">        &lt;https://docs.python.org/3/library/asyncio-dev.html#detect-\</span>
+<span class="sd">        exceptions-never-consumed&gt;`_.</span>
+
+<span class="sd">        Moreover, every call to the decorated function is its own task</span>
+<span class="sd">        too.  The main point for you to worry about here it that</span>
+<span class="sd">        exceptions raised and not caught inside of the decorated</span>
+<span class="sd">        will not stop the execution of the program, instead they will</span>
+<span class="sd">        simply be logged.  In addition to this asyncio quirk, it should</span>
+<span class="sd">        be noted that several tasks made from the decorated coroutine</span>
+<span class="sd">        function may be running alongside each other, and you must not</span>
+<span class="sd">        expect them to complete in the same order as they&#39;re scheduled.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            poll_period: How long to wait between requesting the next</span>
+<span class="sd">                bunch of happenings.  Note that this should only be</span>
+<span class="sd">                tweaked for latency reasons, as the function gives a</span>
+<span class="sd">                guarantee that all happenings will be returned.</span>
+<span class="sd">            nation: Nation(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with region.</span>
+<span class="sd">            region: Region(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with nation.</span>
+<span class="sd">            filter: Category(s) to request happenings by.  Available</span>
+<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
+<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
+<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_happenings</span><span class="p">(</span>
+                <span class="n">callback</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
+                <span class="n">poll_period</span><span class="o">=</span><span class="n">poll_period</span><span class="p">,</span>
+                <span class="n">nation</span><span class="o">=</span><span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span>
+            <span class="p">))</span>
+        <span class="k">return</span> <span class="n">decorator</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

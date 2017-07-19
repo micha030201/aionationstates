@@ -1,0 +1,269 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.session &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.session</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="k">import</span> <span class="n">warn</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Awaitable</span>
+
+<span class="kn">import</span> <span class="nn">aiohttp</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates</span> <span class="k">import</span> <span class="n">__version__</span>
+<span class="kn">from</span> <span class="nn">aionationstates</span> <span class="k">import</span> <span class="n">ratelimit</span>
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">RateLimitError</span><span class="p">,</span> <span class="n">SessionConflictError</span><span class="p">,</span> <span class="n">AuthenticationError</span><span class="p">,</span> <span class="n">NotFound</span><span class="p">)</span>
+
+
+<span class="n">NS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://www.nationstates.net/&#39;</span>
+<span class="n">API_PATH</span> <span class="o">=</span> <span class="s1">&#39;cgi-bin/api.cgi&#39;</span>
+<span class="n">API_URL</span> <span class="o">=</span> <span class="n">NS_URL</span> <span class="o">+</span> <span class="n">API_PATH</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;aionationstates&#39;</span><span class="p">)</span>
+
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ApiQuery"><a class="viewcode-back" href="../../reference.html#aionationstates.session.ApiQuery">[docs]</a><span class="k">class</span> <span class="nc">ApiQuery</span><span class="p">(</span><span class="n">Awaitable</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;A request to the NationStates API.</span>
+
+<span class="sd">    Although you, as a user, will never need to interact with this</span>
+<span class="sd">    class &quot;directly,&quot; it is quite a bit more than an implementation</span>
+<span class="sd">    detail.</span>
+
+<span class="sd">    It it here to provide a way to combine multiple API shards into a</span>
+<span class="sd">    single HTTP request.</span>
+
+<span class="sd">    To achieve that, it overloads the ``+`` operator.  By &quot;adding&quot;</span>
+<span class="sd">    ApiQueries together, you get an ApiQuery which, when awaited, will</span>
+<span class="sd">    return a tuple of what the original ApiQueries would have</span>
+<span class="sd">    returned by themselves.  Let me illustrate.</span>
+
+<span class="sd">    This code::</span>
+
+<span class="sd">        name = await nation.name()</span>
+<span class="sd">        population = await nation.population()</span>
+<span class="sd">        wa = await nation.wa()</span>
+
+<span class="sd">    is functionally equivalent to this::</span>
+
+<span class="sd">        name, population, wa = await (</span>
+<span class="sd">            nation.name() + nation.population() + nation.wa())</span>
+
+<span class="sd">    with the tiny difference that the latter sample sends but a single</span>
+<span class="sd">    HTTP request to the API, as opposed to the former, which bombards</span>
+<span class="sd">    the poor server hamsters with all three.</span>
+
+<span class="sd">    As you may have already realized at this point, combining shards</span>
+<span class="sd">    into a single request this way is preferable, and you should do</span>
+<span class="sd">    that in your code wherever possible.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        Standard NS rules for combining shards still apply.  Code such</span>
+<span class="sd">        as this is not going to work::</span>
+
+<span class="sd">            nation.name() + region.name()</span>
+<span class="sd">            # ValueError: ApiQueries do not share the same session</span>
+
+<span class="sd">            nation.census() + nation.censushistory()</span>
+<span class="sd">            # ValueError: ApiQueries contain conflicting params</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__await__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap</span><span class="p">()</span><span class="o">.</span><span class="fm">__await__</span><span class="p">()</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="k">await</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">session</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;ApiQueries do not share the same session&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;ApiQueries contain conflicting params&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">|=</span> <span class="n">other</span><span class="o">.</span><span class="n">q</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">+=</span> <span class="n">other</span><span class="o">.</span><span class="n">results</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<span class="k">def</span> <span class="nf">api_query</span><span class="p">(</span><span class="o">*</span><span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ApiQuery</span><span class="p">(</span><span class="n">session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+                            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="n">wrapper</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">ApiQuery</span><span class="p">[</span><span class="n">wrapper</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span> <span class="nf">api_command</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">_call_api_command</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">func</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="n">wrapper</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">Awaitable</span><span class="p">[</span><span class="n">wrapper</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span> <span class="nf">set_user_agent</span><span class="p">(</span><span class="n">user_agent</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">Session</span><span class="o">.</span><span class="n">_USER_AGENT</span> <span class="o">=</span> <span class="n">user_agent</span>
+
+
+<span class="c1"># Needed because aiohttp&#39;s API is weird and every my attempt at making</span>
+<span class="c1"># a proper use of it has led to sadness and despair.</span>
+<span class="n">RawResponse</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;RawResponse&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;status url text&#39;</span>
+                                         <span class="s1">&#39; cookies headers&#39;</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">Session</span><span class="p">:</span>
+    <span class="n">_USER_AGENT</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="n">standard_user_agent</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;aionationstates/</span><span class="si">{__version__}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_USER_AGENT</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Please supply a useragent by calling aionationstates.&#39;</span>
+                 <span class="s1">&#39;set_user_agent(&quot;your useragent here&quot;)&#39;</span><span class="p">)</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">standard_user_agent</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self._USER_AGENT}</span><span class="s1"> (</span><span class="si">{standard_user_agent}</span><span class="s1">)&#39;</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                                   <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RawResponse</span><span class="p">(</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">resp</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+                <span class="n">cookies</span><span class="o">=</span><span class="n">resp</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="k">await</span> <span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+            <span class="p">)</span>
+
+    <span class="nd">@ratelimit</span><span class="o">.</span><span class="n">api</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_base_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Calling API </span><span class="si">{method}</span><span class="s1"> </span><span class="si">{kwargs}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">API_URL</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">403</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AuthenticationError</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">429</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RateLimitError</span><span class="p">(</span>
+                <span class="n">f</span><span class="s1">&#39;ratelimited for </span><span class="si">{resp.headers[&quot;X-Retry-After&quot;]}</span><span class="s1"> seconds&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">409</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SessionConflictError</span><span class="p">(</span><span class="s1">&#39;previous login too recent&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFound</span>
+        <span class="k">assert</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_call_api</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@ratelimit</span><span class="o">.</span><span class="n">web</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_web</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Calling web </span><span class="si">{method}</span><span class="s1"> </span><span class="si">{path}</span><span class="s1"> </span><span class="si">{kwargs}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">NS_URL</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;&lt;html lang=&quot;en&quot; id=&quot;page_login&quot;&gt;&#39;</span> <span class="ow">in</span> <span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AuthenticationError</span>
+        <span class="k">assert</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

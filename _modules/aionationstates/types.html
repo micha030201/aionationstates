@@ -1,0 +1,845 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.types &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.types</h1><div class="highlight"><pre>
+<span></span><span class="c1"># TODO slots</span>
+<span class="c1"># TODO split into submodules?</span>
+
+<span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Flag</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span><span class="p">,</span> <span class="n">total_ordering</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">or_</span>
+<span class="c1"># Needed for type annotations</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Awaitable</span>
+<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">Banner</span><span class="p">,</span> <span class="n">ScaleInfo</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">banner_url</span><span class="p">,</span> <span class="n">unscramble_encoding</span>
+<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">banner</span><span class="p">,</span> <span class="n">census_info</span>
+
+
+<div class="viewcode-block" id="RateLimitError"><a class="viewcode-back" href="../../reference.html#aionationstates.RateLimitError">[docs]</a><span class="k">class</span> <span class="nc">RateLimitError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SessionConflictError"><a class="viewcode-back" href="../../reference.html#aionationstates.SessionConflictError">[docs]</a><span class="k">class</span> <span class="nc">SessionConflictError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="AuthenticationError"><a class="viewcode-back" href="../../reference.html#aionationstates.AuthenticationError">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="NotFound"><a class="viewcode-back" href="../../reference.html#aionationstates.NotFound">[docs]</a><span class="k">class</span> <span class="nc">NotFound</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CensusScaleCurrent"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleCurrent">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleCurrent</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;World Census scale data about a nation.</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">        With the exception of score, you must not expect the fields</span>
+<span class="sd">        to update instantly.</span>
+
+<span class="sd">        For the exact same reason of NationStates&#39; excessive</span>
+<span class="sd">        quirkiness, those fields may be missing (set to ``None``) on</span>
+<span class="sd">        newly-founded nations (perhaps also in other cases, there is</span>
+<span class="sd">        not a way to reliably test).  You will need to account for</span>
+<span class="sd">        that in your code.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        info: Static information about the scale.</span>
+<span class="sd">        score: The absolute census score.  All the other scale values</span>
+<span class="sd">            are calculated (by NationStates) from scale scores of</span>
+<span class="sd">            multiple nations.  Should always be there if you request</span>
+<span class="sd">            it.</span>
+<span class="sd">        rank: World rank by the scale.</span>
+<span class="sd">        prank: Percentage World rank by the scale.</span>
+<span class="sd">        rrank: Regional rank by the scale.</span>
+<span class="sd">        prrank: Percentage Regional rank by the scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">ScaleInfo</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">prank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">rrank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">prrank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1"># For recently-founded nations (and maybe in other cases as well, who</span>
+        <span class="c1"># knows) the ranks &amp; percentages may not show up even if requested.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rrank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prrank</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prank</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rrank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prrank</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PRRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;CensusScaleCurrent #</span><span class="si">{self.info.id}</span><span class="s1"> </span><span class="si">{self.info.title}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="CensusPoint"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusPoint">[docs]</a><span class="k">class</span> <span class="nc">CensusPoint</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;What the scale score was on a particular date.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        timestamp: When the score was recorded.</span>
+<span class="sd">        score: What it was.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+<div class="viewcode-block" id="CensusScaleHistory"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleHistory">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleHistory</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Change of a World Census scale score of a nation through time.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        info: Static information about the scale.</span>
+<span class="sd">        history: The data itself.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">ScaleInfo</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CensusPoint</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CensusPoint</span><span class="p">(</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">),</span>
+                <span class="n">score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;CensusScaleHistory #</span><span class="si">{self.info.id}</span><span class="s1"> </span><span class="si">{self.info.title}</span><span class="s1">&gt;&#39;</span></div>
+
+
+
+<div class="viewcode-block" id="Dispatch"><a class="viewcode-back" href="../../reference.html#aionationstates.Dispatch">[docs]</a><span class="k">class</span> <span class="nc">Dispatch</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A dispatch.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The dispatch id.  Use with the World dispatch shard until I</span>
+<span class="sd">            manage to think of a better interface.</span>
+<span class="sd">        title: The dispatch title.</span>
+<span class="sd">        author: Nation that posted the dispatch.</span>
+<span class="sd">        category: The dispatch category.</span>
+<span class="sd">        subcategory: The dispatch subcategory.</span>
+<span class="sd">        views: Number of times the dispatch got viewed.</span>
+<span class="sd">        score: Votes te dispatch received.</span>
+<span class="sd">        created: When the dispatch was created.</span>
+<span class="sd">        edited: When the dispatch last got edited.  Equal to</span>
+<span class="sd">            ``created`` for dispatches that were never edited.</span>
+<span class="sd">        text: The dispatch text.  ``None`` if the dispatch came from</span>
+<span class="sd">            anywhere other than the World dispatch shard.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">author</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">category</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">subcategory</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">views</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">created</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">edited</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span>
+            <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subcategory</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SUBCATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">views</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VIEWS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">created</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CREATED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1"># Otherwise it&#39;s 0 for dispatches that were never edited</span>
+        <span class="n">edited</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EDITED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="n">created</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">created</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edited</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">edited</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span>
+                <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Dispatch id=</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="PollOption"><a class="viewcode-back" href="../../reference.html#aionationstates.PollOption">[docs]</a><span class="k">class</span> <span class="nc">PollOption</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An option in a poll.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        text: Text of the option.</span>
+<span class="sd">        voters: Nations that picked this option.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">voters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;OPTIONTEXT&#39;</span><span class="p">))</span>
+        <span class="n">voters</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VOTERS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="n">voters</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">voters</span> <span class="k">else</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Poll"><a class="viewcode-back" href="../../reference.html#aionationstates.Poll">[docs]</a><span class="k">class</span> <span class="nc">Poll</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A regional poll.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The poll id.</span>
+<span class="sd">        title: The poll title.</span>
+<span class="sd">        text: The poll text.</span>
+<span class="sd">        region: Region the poll was posted in.</span>
+<span class="sd">        author: Nation that posted the poll.</span>
+<span class="sd">        options: The poll options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">author</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">stop</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PollOption</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;STOP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[</span><span class="n">PollOption</span><span class="p">(</span><span class="n">option_elem</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">option_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;OPTIONS&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Poll id=</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+
+<div class="viewcode-block" id="Freedom"><a class="viewcode-back" href="../../reference.html#aionationstates.Freedom">[docs]</a><span class="k">class</span> <span class="nc">Freedom</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
+<span class="sd">    Civil Rights, Economy, and Political Freedom, as expressive</span>
+<span class="sd">    adjectives.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        civilrights: Nation&#39;s Civil Rights.</span>
+<span class="sd">        economy: Nation&#39;s Economy.</span>
+<span class="sd">        politicalfreedom: Nation&#39;s Political Freedom.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">civilrights</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">economy</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">politicalfreedom</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">economy</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+
+<div class="viewcode-block" id="FreedomScores"><a class="viewcode-back" href="../../reference.html#aionationstates.FreedomScores">[docs]</a><span class="k">class</span> <span class="nc">FreedomScores</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
+<span class="sd">    Civil Rights, Economy, and Political Freedom, as percentages.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        civilrights: Nation&#39;s Civil Rights.</span>
+<span class="sd">        economy: Nation&#39;s Economic Prosperity.</span>
+<span class="sd">        politicalfreedom: Nation&#39;s Political Freedom.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">civilrights</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">economy</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">politicalfreedom</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">economy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Govt"><a class="viewcode-back" href="../../reference.html#aionationstates.Govt">[docs]</a><span class="k">class</span> <span class="nc">Govt</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Nation&#39;s government expenditure, as percentages.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        administration: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Administration.</span>
+<span class="sd">        defence: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Defence.</span>
+<span class="sd">        education: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Public Education.</span>
+<span class="sd">        environment: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Enviromental Protection.</span>
+<span class="sd">        healthcare: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Public Healthcare.</span>
+<span class="sd">        commerce: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Industry.</span>
+<span class="sd">        internationalaid: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            International Aid.</span>
+<span class="sd">        lawandorder: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Law &amp; Order.</span>
+<span class="sd">        publictransport: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Public Transportation.</span>
+<span class="sd">        socialequality: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Social Policy.</span>
+<span class="sd">        spirituality: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Spirituality.</span>
+<span class="sd">        welfare: The percentage of nation&#39;s budget spent on</span>
+<span class="sd">            Welfare.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">administration</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">defence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">education</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">healthcare</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">commerce</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">internationalaid</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">lawandorder</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">publictransport</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">socialequality</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">spirituality</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">welfare</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">administration</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ADMINISTRATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEFENCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">education</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EDUCATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ENVIRONMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">healthcare</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HEALTHCARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commerce</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;COMMERCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">internationalaid</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INTERNATIONALAID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lawandorder</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LAWANDORDER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publictransport</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLICTRANSPORT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socialequality</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SOCIALEQUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spirituality</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SPIRITUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">welfare</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;WELFARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Sectors"><a class="viewcode-back" href="../../reference.html#aionationstates.Sectors">[docs]</a><span class="k">class</span> <span class="nc">Sectors</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Components of a nation&#39;s economy.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        blackmarket: Part of the economy taken up by Black Market.</span>
+<span class="sd">        government: Part of the economy taken up by Government.</span>
+<span class="sd">        industry: Part of the economy taken up by Private Industry.</span>
+<span class="sd">        public: Part of the economy taken up by State-Owned Industry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">blackmarket</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">government</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">industry</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">public</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blackmarket</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BLACKMARKET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">government</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVERNMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">industry</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INDUSTRY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLIC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Reclassification"><a class="viewcode-back" href="../../reference.html#aionationstates.Reclassification">[docs]</a><span class="k">class</span> <span class="nc">Reclassification</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Change in a `Freedom` classification or the WA Category.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        before: The old category or `Freedom` adjective.</span>
+<span class="sd">        after: The new category or `Freedom` adjective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">before</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">after</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+<div class="viewcode-block" id="Reclassifications"><a class="viewcode-back" href="../../reference.html#aionationstates.Reclassifications">[docs]</a><span class="k">class</span> <span class="nc">Reclassifications</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Reclassifications of the nation&#39;s `Freedoms` and WA Category.</span>
+<span class="sd">    For convenience, this is falsey when no reclassifications occured.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        civilrights: Reclassification of nation&#39;s Civil Rights.</span>
+<span class="sd">        economy: Reclassification of nation&#39;s Economy.</span>
+<span class="sd">        politicalfreedom: Reclassification of nation&#39;s Political Freedom.</span>
+<span class="sd">        govt: Change of nation&#39;s World Assembly Category.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">civilrights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reclassification</span><span class="p">]</span>
+    <span class="n">economy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reclassification</span><span class="p">]</span>
+    <span class="n">politicalfreedom</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reclassification</span><span class="p">]</span>
+    <span class="n">govt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Reclassification</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">economy</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">govt</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">attr_names</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="s1">&#39;civilrights&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="s1">&#39;economy&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;2&#39;</span><span class="p">:</span> <span class="s1">&#39;politicalfreedom&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;govt&#39;</span><span class="p">:</span> <span class="s1">&#39;govt&#39;</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">attr_names</span><span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)],</span>
+                <span class="n">Reclassification</span><span class="p">(</span>
+                    <span class="n">before</span><span class="o">=</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FROM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                    <span class="n">after</span><span class="o">=</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TO&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">economy</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">govt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CensusScaleChange"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleChange">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleChange</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Change in one of the World Census scales of a nation</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        info: Static information about the scale.</span>
+<span class="sd">        score: The scale score, after the change.</span>
+<span class="sd">        change: Change of the score.</span>
+<span class="sd">        pchange: The semi-user-friendly percentage change NationStates</span>
+<span class="sd">            shows by default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">ScaleInfo</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">change</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">pchange</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CHANGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pchange</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PCHANGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IssueResult"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueResult">[docs]</a><span class="k">class</span> <span class="nc">IssueResult</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Result of an issue.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        happening: The issue effect line.  Not a sentence, mind you --</span>
+<span class="sd">            it&#39;s uncapitalized and does not end with a period.</span>
+<span class="sd">            ``None`` if the issue was dismissed.</span>
+<span class="sd">        census: Changes in census scores of the nation.</span>
+<span class="sd">        banners: The banners unlocked by answering the issue.</span>
+<span class="sd">        reclassifications: WA Category and Freedoms reclassifications.</span>
+<span class="sd">        headlines: Newspaper headlines.  NationStates returns this</span>
+<span class="sd">            field with unexpanded macros.  I did my best to try and</span>
+<span class="sd">            expand them all client-side, however there does not exist</span>
+<span class="sd">            a document in which they are formally defined (that is</span>
+<span class="sd">            sort of a pattern throughout NationStates, maybe you&#39;ve</span>
+<span class="sd">            noticed), so I can only do so much.  Please report any</span>
+<span class="sd">            unexpanded macros you encounter as bugs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">happening</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">census</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CensusScaleChange</span><span class="p">]</span>
+    <span class="n">banners</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Banner</span><span class="p">]</span>
+    <span class="n">reclassifications</span><span class="p">:</span> <span class="n">Reclassifications</span>
+    <span class="n">headlines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">if</span> <span class="n">error</span> <span class="o">==</span> <span class="s1">&#39;Invalid choice.&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid option&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">error</span> <span class="o">==</span> <span class="s1">&#39;Issue already processed!&#39;</span><span class="p">:</span>
+                <span class="c1"># I know it may not be obvious, but that&#39;s exactly</span>
+                <span class="c1"># what NS is trying to say here.</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid issue&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;OK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span>  <span class="c1"># honestly no idea</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">happening</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;DESC&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">census</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CensusScaleChange</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RANKINGS&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">banner</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNLOCKS&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reclassifications</span> <span class="o">=</span> <span class="n">Reclassifications</span><span class="p">(</span>
+            <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RECLASSIFICATIONS&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headlines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HEADLINES&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="IssueOption"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueOption">[docs]</a><span class="k">class</span> <span class="nc">IssueOption</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An option of an issue.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        text: The option text. May contain HTML elements and character</span>
+<span class="sd">            references.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">issue</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span> <span class="o">=</span> <span class="n">issue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">text</span>
+
+<div class="viewcode-block" id="IssueOption.accept"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueOption.accept">[docs]</a>    <span class="k">def</span> <span class="nf">accept</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">IssueResult</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Accept the option.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="o">.</span><span class="n">_nation</span><span class="o">.</span><span class="n">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span></div></div>
+
+    <span class="c1"># TODO repr</span>
+
+
+<div class="viewcode-block" id="Issue"><a class="viewcode-back" href="../../reference.html#aionationstates.Issue">[docs]</a><span class="k">class</span> <span class="nc">Issue</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An issue.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The issue id.</span>
+<span class="sd">        title: The issue title.  May contain HTML elements and</span>
+<span class="sd">            character references.</span>
+<span class="sd">        text: The issue text.  May contain HTML elements and character</span>
+<span class="sd">            references.</span>
+<span class="sd">        author: Author of the issue, usually a nation.</span>
+<span class="sd">        editor: Editor of the issue, usually a nation.</span>
+<span class="sd">        options: Issue options.</span>
+<span class="sd">        banners: URLs of issue banners.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">author</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">editor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">IssueOption</span><span class="p">]</span>
+    <span class="n">banners</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">nation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span> <span class="o">=</span> <span class="n">nation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">editor</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;EDITOR&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">IssueOption</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;OPTION&#39;</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">def</span> <span class="nf">issue_banners</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>  <span class="c1"># Should be more than enough.</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">banner_url</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;PIC</span><span class="si">{x}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">break</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">issue_banners</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Issue.dismiss"><a class="viewcode-back" href="../../reference.html#aionationstates.Issue.dismiss">[docs]</a>    <span class="k">def</span> <span class="nf">dismiss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">IssueResult</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Dismiss the issue.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span><span class="o">.</span><span class="n">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+    <span class="c1"># TODO repr</span>
+
+
+
+<div class="viewcode-block" id="Embassies"><a class="viewcode-back" href="../../reference.html#aionationstates.Embassies">[docs]</a><span class="k">class</span> <span class="nc">Embassies</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Embassies of a region.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        active: Normal, alive embassies.</span>
+<span class="sd">        closing: Embassies the demolition of which has been initiated,</span>
+<span class="sd">            but did not yet finish.</span>
+<span class="sd">        pending: Embassies the creation of which has been initiated,</span>
+<span class="sd">            but did not yet finish.</span>
+<span class="sd">        invited: Embassy invitations that have not yet been processed.</span>
+<span class="sd">        rejected: Embassy invitations that have been denied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">active</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">closing</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">invited</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">rejected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># I know I&#39;m iterating through them five times; I don&#39;t care.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                       <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closing</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;closing&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;pending&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invited</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;invited&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rejected</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                         <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;rejected&#39;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Authority"><a class="viewcode-back" href="../../reference.html#aionationstates.Authority">[docs]</a><span class="k">class</span> <span class="nc">Authority</span><span class="p">(</span><span class="n">Flag</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Authority of a Regional Officer, Delegate, or Founder.&quot;&quot;&quot;</span>
+    <span class="n">EXECUTIVE</span>      <span class="o">=</span> <span class="n">X</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">WORLD_ASSEMBLY</span> <span class="o">=</span> <span class="n">W</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">APPEARANCE</span>     <span class="o">=</span> <span class="n">A</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">BORDER_CONTROL</span> <span class="o">=</span> <span class="n">B</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">COMMUNICATIONS</span> <span class="o">=</span> <span class="n">C</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">EMBASSIES</span>      <span class="o">=</span> <span class="n">E</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">POLLS</span>          <span class="o">=</span> <span class="n">P</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_ns</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This is the only sane way I could find to make Flag enums</span>
+<span class="sd">        work with individual characters as flags.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">or_</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">string</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;OfficerAuthority.</span><span class="si">{self.name}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="Officer"><a class="viewcode-back" href="../../reference.html#aionationstates.Officer">[docs]</a><span class="k">class</span> <span class="nc">Officer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A Regional Officer.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        nation: Officer&#39;s nation.</span>
+<span class="sd">        office: The (user-specified) office held by the officer.</span>
+<span class="sd">        authority: Officer&#39;s authority.</span>
+<span class="sd">        appointed_at: When the officer got appointed.</span>
+<span class="sd">        appointed_by: The nation that appointed the officer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nation</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">office</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">authority</span><span class="p">:</span> <span class="n">Authority</span>
+    <span class="n">appointed_at</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">appointed_by</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nation</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">office</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;OFFICE&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">Authority</span><span class="o">.</span><span class="n">_from_ns</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHORITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appointed_at</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appointed_by</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+
+
+<div class="viewcode-block" id="EmbassyPostingRights"><a class="viewcode-back" href="../../reference.html#aionationstates.EmbassyPostingRights">[docs]</a><span class="nd">@total_ordering</span>
+<span class="k">class</span> <span class="nc">EmbassyPostingRights</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Who out of embassy regions&#39; residents can post on the Regional</span>
+<span class="sd">    Message Board.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NOBODY</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DELEGATES_AND_FOUNDERS</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">COMMUNICATIONS_OFFICERS</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">OFFICERS</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">EVERYBODY</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_ns</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># The reason I have to do all this nonsense.</span>
+            <span class="s1">&#39;con&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;com&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s1">&#39;off&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s1">&#39;all&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">string</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span></div>
+
+
+<div class="viewcode-block" id="PostStatus"><a class="viewcode-back" href="../../reference.html#aionationstates.PostStatus">[docs]</a><span class="k">class</span> <span class="nc">PostStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Status of a post on a Regional Message Board.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        NORMAL: A regular post.</span>
+<span class="sd">        SUPPRESSED: The post got suppressed by a regional official.</span>
+<span class="sd">        DELETED: The post got deleted by its author.</span>
+<span class="sd">        MODERATED: The post got suppressed by a game moderator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SUPPRESSED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DELETED</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">MODERATED</span> <span class="o">=</span> <span class="mi">9</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">viewable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Whether the post content can still be accessed.  Shortcut</span>
+<span class="sd">        for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Post"><a class="viewcode-back" href="../../reference.html#aionationstates.Post">[docs]</a><span class="k">class</span> <span class="nc">Post</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A post on a Regional Message Board.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The unique (or so it would seem) id of the post.</span>
+<span class="sd">        timestamp: When the post was, well, posted.</span>
+<span class="sd">        author: The author nation.</span>
+<span class="sd">        status: Status of the post.</span>
+<span class="sd">        text: The post text.</span>
+<span class="sd">        likers: Nations that liked the post.</span>
+<span class="sd">        suppressor: Nation that suppressed the post.  ``None`` if the</span>
+<span class="sd">            post has not been suppressed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">author</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">PostStatus</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">likers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">suppressor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">PostStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;STATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MESSAGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>  <span class="c1"># TODO unescape?</span>
+
+        <span class="n">likers_elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LIKERS&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="n">likers_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">likers_elem</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;SUPPRESSOR&#39;</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO repr</span>
+
+
+
+<div class="viewcode-block" id="Zombie"><a class="viewcode-back" href="../../reference.html#aionationstates.Zombie">[docs]</a><span class="k">class</span> <span class="nc">Zombie</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The situation in a nation/region during the annual Z-Day event.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        survivors: The number of citizens surviving, in millions.</span>
+<span class="sd">        zombies: The number of undead citizens, in millions.</span>
+<span class="sd">        dead: The number of dead citizens, in millions.</span>
+<span class="sd">        action: The nation&#39;s strategy for dealing with the disaster.</span>
+<span class="sd">            Either &quot;research&quot;, &quot;exterminate&quot;, or &quot;export&quot;.  ``None``</span>
+<span class="sd">            if the instance represents regional situation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">survivors</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">zombies</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">dead</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">survivors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SURVIVORS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zombies</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEAD&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;ZACTION&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ArchivedHappening"><a class="viewcode-back" href="../../reference.html#aionationstates.ArchivedHappening">[docs]</a><span class="k">class</span> <span class="nc">ArchivedHappening</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An archived happening.  NationStates doesn&#39;t store ids of those,</span>
+<span class="sd">    for whatever reason.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        timestamp: Time of the happening.</span>
+<span class="sd">        text: The happening text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Happening"><a class="viewcode-back" href="../../reference.html#aionationstates.Happening">[docs]</a><span class="k">class</span> <span class="nc">Happening</span><span class="p">(</span><span class="n">ArchivedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A happening.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The happening id.</span>
+<span class="sd">        timestamp: Time of the happening.</span>
+<span class="sd">        text: The happening text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Happening #</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<span class="c1"># TODO gavote, scvote</span>
+
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

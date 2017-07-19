@@ -1,0 +1,239 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.region_ &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.region_</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">html</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">timestamp</span>
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">EmbassyPostingRights</span><span class="p">,</span> <span class="n">Officer</span><span class="p">,</span> <span class="n">Authority</span><span class="p">,</span> <span class="n">Embassies</span><span class="p">,</span> <span class="n">Zombie</span><span class="p">,</span> <span class="n">Poll</span><span class="p">,</span>
+    <span class="n">ArchivedHappening</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
+
+<span class="c1"># Needed for type annotations</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+
+
+<div class="viewcode-block" id="Region"><a class="viewcode-back" href="../../reference.html#aionationstates.Region">[docs]</a><span class="k">class</span> <span class="nc">Region</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A class to interact with the NationStates Region API.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        id: The defining characteristic of a region, its normalized</span>
+<span class="sd">            name.  No two regions share the same id, and no one id</span>
+<span class="sd">            is shared by multiple regions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_call_api</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Region.name"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.name">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Name of the region.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="Region.flag"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.flag">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;flag&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">flag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;URL of the region&#39;s flag.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FLAG&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="Region.factbook"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.factbook">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;factbook&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">factbook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Region&#39;s World Factbook Entry.&quot;&quot;&quot;</span>
+        <span class="c1"># This lib might have been a mistake, but the line below</span>
+        <span class="c1"># definitely isn&#39;t.</span>
+        <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FACTBOOK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Region.power"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.power">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;power&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;An adjective describing region&#39;s power on the interregional</span>
+<span class="sd">        scene.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POWER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="Region.delegatevotes"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.delegatevotes">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;delegatevotes&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">delegatevotes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Number of the World Assembly votes the region&#39;s Delegate</span>
+<span class="sd">        has.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DELEGATEVOTES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Region.numnations"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.numnations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numnations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">numnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The number of nations in the region.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Region.founded"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.founded">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;foundedtime&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">founded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;When the region was founded.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FOUNDEDTIME&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Region.nations"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.nations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;nations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">nations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;All the nations in the region.&quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="Region.embassies"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.embassies">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;embassies&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">embassies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Embassies</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Embassies the region has.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Embassies</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EMBASSIES&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Region.embassyrmb"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.embassyrmb">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;embassyrmb&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">embassyrmb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbassyPostingRights</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Posting rights for members the of embassy regions.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EmbassyPostingRights</span><span class="o">.</span><span class="n">_from_ns</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EMBASSYRMB&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Region.delegate"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.delegate">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;delegate&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">delegate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Regional World Assembly Delegate.  ``None`` if the region</span>
+<span class="sd">        has no delegate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nation</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DELEGATE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">if</span> <span class="n">nation</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">nation</span></div>
+
+<div class="viewcode-block" id="Region.delegateauth"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.delegateauth">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;delegateauth&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">delegateauth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Authority</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Regional World Assembly Delegate&#39;s authority.  Always set,</span>
+<span class="sd">        no matter if the region has a delegate or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Authority</span><span class="o">.</span><span class="n">_from_ns</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DELEGATEAUTH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Region.founder"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.founder">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;founder&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">founder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Regional Founder.  Returned even if the nation has ceased to</span>
+<span class="sd">        exist.  ``None`` if the region is Game-Created and doesn&#39;t have</span>
+<span class="sd">        a founder.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nation</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FOUNDER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">if</span> <span class="n">nation</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">nation</span></div>
+
+<div class="viewcode-block" id="Region.founderauth"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.founderauth">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;founderauth&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">founderauth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Authority</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Regional Founder&#39;s authority.  Always set,</span>
+<span class="sd">        no matter if the region has a founder or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Authority</span><span class="o">.</span><span class="n">_from_ns</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FOUNDERAUTH&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Region.officers"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.officers">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;officers&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">officers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Officer</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Regional Officers.  Does not include the Founder or</span>
+<span class="sd">        the Delegate, unless they have additional litles as Officers.</span>
+<span class="sd">        In the correct order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">officers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;OFFICERS&#39;</span><span class="p">),</span>
+            <span class="c1"># I struggle to say what else this tag would be useful for.</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">elem</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ORDER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Officer</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">officers</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Region.tags"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.tags">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Tags the region has.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TAGS&#39;</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="Region.zombie"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.zombie">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;zombie&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">zombie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Zombie</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Region&#39;s state during the annual Z-Day event.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Zombie</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIE&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Region.poll"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.poll">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;poll&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Poll</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Current regional poll.&quot;&quot;&quot;</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLL&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Poll</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Region.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.Region.happenings">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ArchivedHappening</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Get the happenings of the region, the ones archived on its</span>
+<span class="sd">        in-game page.  Newest to oldest.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ArchivedHappening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span></div></div>
+
+    <span class="c1"># TODO: history, messages</span>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,164 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.nation_control &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.nation_control</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Issue</span><span class="p">,</span> <span class="n">IssueResult</span>
+<span class="kn">from</span> <span class="nn">aionationstates.nation_</span> <span class="k">import</span> <span class="n">Nation</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span><span class="p">,</span> <span class="n">api_command</span>
+
+<span class="c1"># Needed for type annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;aionationstates&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="NationControl"><a class="viewcode-back" href="../../reference.html#aionationstates.NationControl">[docs]</a><span class="k">class</span> <span class="nc">NationControl</span><span class="p">(</span><span class="n">Nation</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interface to the NationStates private Nation API.  Subclasses</span>
+<span class="sd">    :any:`aionationstates.Nation`.</span>
+
+<span class="sd">    Credentials are not checked upon initialization, you will only know</span>
+<span class="sd">    if you&#39;ve made a mistake after you try to make the first request.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">autologin</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                 <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">autologin</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No password or autologin supplied&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span> <span class="o">=</span> <span class="n">autologin</span>
+        <span class="c1"># Weird things happen if the supplied pin doesn&#39;t follow the format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="s1">&#39;0000000000&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_base_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;X-Password&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+            <span class="s1">&#39;X-Autologin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">,</span>
+            <span class="s1">&#39;X-Pin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin</span>
+        <span class="p">}</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_base_call_api</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-Pin&#39;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Updating pin for </span><span class="si">{self.id}</span><span class="s1"> from API header&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-Autologin&#39;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Setting autologin for </span><span class="si">{self.id}</span><span class="s1"> from API header&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_web</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">:</span>
+            <span class="c1"># Obtain autologin in case only password was provided</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_api</span><span class="p">({</span><span class="s1">&#39;nation&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="s1">&#39;nextissue&#39;</span><span class="p">})</span>
+        <span class="n">cookies</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># Will not work with unescaped equals sign</span>
+            <span class="s1">&#39;autologin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">+</span> <span class="s1">&#39;%3D&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">,</span>
+            <span class="s1">&#39;pin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin</span>
+        <span class="p">}</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_call_web</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                      <span class="n">cookies</span><span class="o">=</span><span class="n">cookies</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Updating pin for </span><span class="si">{self.id}</span><span class="s1"> from web cookie&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_api_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;nation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_call_api</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># End of authenticated session handling</span>
+
+<div class="viewcode-block" id="NationControl.issues"><a class="viewcode-back" href="../../reference.html#aionationstates.NationControl.issues">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;issues&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">issues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Issue</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Issues the nation currently faces.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Issue</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ISSUES&#39;</span><span class="p">)]</span></div>
+
+    <span class="k">def</span> <span class="nf">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">issue_id</span><span class="p">,</span> <span class="n">option_id</span><span class="p">):</span>
+        <span class="nd">@api_command</span><span class="p">(</span><span class="s1">&#39;issue&#39;</span><span class="p">,</span> <span class="n">issue</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">issue_id</span><span class="p">),</span> <span class="n">option</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">option_id</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="n">issue_result</span> <span class="o">=</span> <span class="n">IssueResult</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ISSUE&#39;</span><span class="p">))</span>
+            <span class="n">expand_macros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_macros_expander</span><span class="p">()</span>
+            <span class="n">issue_result</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="k">await</span> <span class="n">banner</span><span class="o">.</span><span class="n">_expand_macros</span><span class="p">(</span><span class="n">expand_macros</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">banner</span> <span class="ow">in</span> <span class="n">issue_result</span><span class="o">.</span><span class="n">banners</span>
+            <span class="p">]</span>
+            <span class="n">issue_result</span><span class="o">.</span><span class="n">headlines</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="k">await</span> <span class="n">expand_macros</span><span class="p">(</span><span class="n">headline</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">headline</span> <span class="ow">in</span> <span class="n">issue_result</span><span class="o">.</span><span class="n">headlines</span>
+            <span class="p">]</span>
+            <span class="k">return</span> <span class="n">issue_result</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

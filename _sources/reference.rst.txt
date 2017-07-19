@@ -1,0 +1,364 @@
+Reference
+=========
+
+Ratelimiting
+------------
+
+Ratelimiting is handled automatically, with no (clean) way to override the ratelimiter's behavior. The latter part will change in later versions.
+
+Combining Shards
+----------------
+
+As you are probably aware, NationStates provides a way to request multiple shards for the (ratelimit) cost of one. That is quite a useful feature, and this class has been designed specifically to take full advantage of it.
+
+.. automodule:: aionationstates.session
+
+.. autoclass:: ApiQuery
+    :show-inheritance:
+
+.. automodule:: aionationstates
+
+
+NationStates Interaction Objects
+--------------------------------
+
+Objects to interact with NationStates web interface and API.
+
+You should not build these objects yourself. Instead, use the following:
+
+.. data:: world
+
+    For the :any:`aionationstates.World` object;
+
+.. function:: nation(name[, *, autologin, password])
+
+    To construct either an :any:`aionationstates.Nation` object, or :any:`aionationstates.NationControl` if `password` or `autologin` is provided; and
+
+.. function:: region(name)
+
+    To construct an :any:`aionationstates.Region` object.
+
+------
+
+.. autoclass:: Nation
+
+    .. automethod:: name
+
+    .. automethod:: type
+
+    .. automethod:: fullname
+
+    .. automethod:: motto
+
+    .. automethod:: category
+
+    .. automethod:: region
+
+    .. automethod:: animal
+
+    .. automethod:: currency
+
+    .. automethod:: demonym
+
+    .. automethod:: demonym2
+
+    .. automethod:: demonym2plural
+
+    .. automethod:: flag
+
+    .. automethod:: majorindustry
+
+    .. automethod:: influence
+
+    .. automethod:: leader
+
+    .. automethod:: capital
+
+    .. automethod:: religion
+
+    .. automethod:: admirable
+
+    .. automethod:: animaltrait
+
+    .. automethod:: crime
+
+    .. automethod:: govtdesc
+
+    .. automethod:: industrydesc
+
+    .. automethod:: notable
+
+    .. automethod:: sensibilities
+
+    .. automethod:: population
+
+    .. automethod:: gdp
+
+    .. automethod:: founded
+
+    .. automethod:: firstlogin
+
+    .. automethod:: lastlogin
+
+    .. automethod:: wa
+
+    .. automethod:: freedom
+
+    .. automethod:: freedomscores
+
+    .. automethod:: govt
+
+    .. automethod:: deaths
+
+    .. automethod:: endorsements
+
+    .. automethod:: legislation
+
+    .. automethod:: sectors
+
+    .. automethod:: dispatchlist
+
+    .. automethod:: zombie
+
+    .. automethod:: banners
+
+    .. automethod:: census
+
+    .. automethod:: censushistory
+
+    .. automethod:: happenings
+
+    .. automethod:: description
+
+    .. automethod:: verification_url
+
+    .. automethod:: verify
+
+.. autoclass:: NationControl
+
+    .. automethod:: issues
+
+.. autoclass:: Region
+
+    .. automethod:: name
+
+    .. automethod:: flag
+
+    .. automethod:: factbook
+
+    .. automethod:: power
+
+    .. automethod:: delegatevotes
+
+    .. automethod:: numnations
+
+    .. automethod:: founded
+
+    .. automethod:: nations
+
+    .. automethod:: embassies
+
+    .. automethod:: embassyrmb
+
+    .. automethod:: delegate
+
+    .. automethod:: delegateauth
+
+    .. automethod:: founder
+
+    .. automethod:: founderauth
+
+    .. automethod:: officers
+
+    .. automethod:: tags
+
+    .. automethod:: zombie
+
+    .. automethod:: poll
+
+    .. automethod:: census
+
+    .. automethod:: censushistory
+
+    .. automethod:: happenings
+
+.. autoclass:: World
+
+    .. automethod:: featuredregion
+
+    .. automethod:: newnations
+
+    .. automethod:: nations
+
+    .. automethod:: numnations
+
+    .. automethod:: regions
+
+    .. automethod:: numregions
+
+    .. automethod:: regionsbytag
+
+    .. automethod:: dispatch
+
+    .. automethod:: dispatchlist
+
+    .. automethod:: poll
+
+    .. automethod:: census
+
+    .. automethod:: censushistory
+
+    .. automethod:: happenings
+
+    .. automethod:: on_happening
+
+
+Data Classes
+------------
+
+.. autoclass:: CensusScaleCurrent
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: CensusScaleHistory
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: CensusPoint
+    :members:
+    :undoc-members:
+
+.. autoclass:: ScaleInfo
+    :members:
+    :undoc-members:
+
+.. autoclass:: Dispatch
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Poll
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: PollOption
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Freedom
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: FreedomScores
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Govt
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Sectors
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Banner
+    :members:
+    :undoc-members:
+
+.. autoclass:: Issue
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: IssueOption
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: IssueResult
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: CensusScaleChange
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Reclassifications
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Reclassification
+    :members:
+    :undoc-members:
+
+.. autoclass:: Embassies
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Officer
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Authority
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: EmbassyPostingRights
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Post
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: PostStatus
+    :show-inheritance:
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Zombie
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: Happening
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+.. autoclass:: ArchivedHappening
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+
+Exceptions
+----------
+
+.. autoexception:: RateLimitError
+
+.. autoexception:: SessionConflictError
+
+.. autoexception:: AuthenticationError
+
+.. autoexception:: NotFound
+
+
+

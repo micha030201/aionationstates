@@ -1,0 +1,143 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.shards &#8212; aionationstates 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.shards</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Interfaces to shards shared between APIs. Designed to be mixed in</span>
+<span class="sd">with Session, otherwise useless.&quot;&quot;&quot;</span>
+
+<span class="c1"># TODO: happenings (region history as well?), censusranks, wabadges</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">CensusScaleCurrent</span><span class="p">,</span> <span class="n">CensusScaleHistory</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">api_query</span>
+
+<span class="c1"># Needed for type annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
+
+
+<span class="k">class</span> <span class="nc">Census</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">census</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">CensusScaleCurrent</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Current World Census data.</span>
+
+<span class="sd">        By default returns data on today&#39;s featured World Census</span>
+<span class="sd">        scale, use arguments to get results on specific scales.  In</span>
+<span class="sd">        order to request data on all scales at once you can do</span>
+<span class="sd">        ``x.census(*range(81))``.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            scales: World Census scales, integers between 0 and 80.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;score+rank+rrank+prank+prrank&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">)</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;census&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">CensusScaleCurrent</span><span class="p">(</span><span class="n">scale_elem</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">scale_elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CENSUS&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">censushistory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">int</span>
+                      <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">CensusScaleHistory</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Historical World Census data.</span>
+
+<span class="sd">        Was split into its own method for the sake of simplicity and</span>
+<span class="sd">        intuitiveness when combinind shards.</span>
+
+<span class="sd">        By default returns data on today&#39;s featured World Census</span>
+<span class="sd">        scale, use arguments to get results on specific scales.  In</span>
+<span class="sd">        order to request data on all scales at once you can do</span>
+<span class="sd">        ``x.censushistory(*range(81))``.</span>
+
+<span class="sd">        Returns data for the entire length of history NationStates</span>
+<span class="sd">        stores.  There is no way to override that.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            scales: World Census scales, integers between 0 and 80.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;history&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">)</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;census&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">CensusScaleHistory</span><span class="p">(</span><span class="n">scale_elem</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">scale_elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CENSUS&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
+
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Micha.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
