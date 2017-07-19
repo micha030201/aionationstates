@@ -6,7 +6,7 @@ The goal of the project is to provide all the necessary tools for automated nati
 
 ## Developement stage
 
-This project is in a usable usable state, however many interfaces and shards are still missing. Please refer to the documentation.
+This project is in a usable state, however many interfaces and shards are still missing. Please refer to the documentation.
 
 ## Documentation
 
@@ -21,7 +21,4 @@ It's [here](https://micha030201.github.io/aionationstates/).
 
 This project is licensed under the GNU GPLv3 (see the [LICENSE](LICENSE) file for details) and is copyright of me, Micha.
 
-## Acknowledgments
-
-Previously developed as a part of [NKVD-discordbot](https://github.com/balag12/NKVD-discordbot) project.
 
