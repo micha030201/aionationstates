@@ -2,7 +2,8 @@ import html
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll)
+    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll,
+    ArchivedHappening)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 
@@ -149,6 +150,13 @@ class Region(Census, Session):
         """Current regional poll."""
         elem = root.find('POLL')
         return Poll(elem) if elem else None
+
+    @api_query('happenings')
+    async def happenings(self, root) -> List[ArchivedHappening]:
+        """Get the happenings of the region, the ones archived on its
+        in-game page.  Newest to oldest.
+        """
+        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     # TODO: history, messages
 

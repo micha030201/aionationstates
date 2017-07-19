@@ -3,7 +3,8 @@ import html
 
 from aionationstates.utils import normalize, timestamp, unscramble_encoding
 from aionationstates.types import (
-    Freedom, FreedomScores, Govt, Sectors, Zombie, Dispatch)
+    Freedom, FreedomScores, Govt, Sectors, Zombie, Dispatch,
+    ArchivedHappening)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import banner
@@ -410,6 +411,13 @@ class Nation(Census, Session):
             return line
 
         return expand_macros
+
+    @api_query('happenings')
+    async def happenings(self, root) -> List[ArchivedHappening]:
+        """Get the happenings of the nation, the ones archived on its
+        in-game page.  Newest to oldest.
+        """
+        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     async def description(self) -> str:
         """Nation's full description, as seen on its in-game page."""

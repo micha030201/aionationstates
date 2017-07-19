@@ -706,7 +706,7 @@ class Post:
 
 
 class Zombie:
-    """The situation in a nation/region during the anual Z-Day event.
+    """The situation in a nation/region during the annual Z-Day event.
 
     Attributes:
         survivors: The number of citizens surviving, in millions.
@@ -729,7 +729,23 @@ class Zombie:
 
 
 
-class Happening:
+class ArchivedHappening:
+    """An archived happening.  NationStates doesn't store ids of those,
+    for whatever reason.
+
+    Attributes:
+        timestamp: Time of the happening.
+        text: The happening text.
+    """
+    timestamp: datetime.datetime
+    text: str
+
+    def __init__(self, elem):
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
+        self.text = elem.findtext('TEXT')
+
+
+class Happening(ArchivedHappening):
     """A happening.
 
     Attributes:
@@ -738,13 +754,13 @@ class Happening:
         text: The happening text.
     """
     id: int
-    timestamp: datetime.datetime
-    text: str
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
-        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.text = elem.findtext('TEXT')
+        super().__init__(elem)
+
+    def __repr__(self):
+        return f'<Happening #{self.id}>'
 
 
 # TODO gavote, scvote
