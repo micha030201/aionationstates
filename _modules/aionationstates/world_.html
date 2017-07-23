@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.world_ &#8212; aionationstates 0.1.0 documentation</title>
+    <title>aionationstates.world_ &#8212; aionationstates 0.1.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0',
+        VERSION:     '0.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -49,12 +49,11 @@
 <span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span><span class="p">,</span> <span class="n">Happening</span>
 <span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
 <span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">dispatch_categories</span><span class="p">,</span> <span class="n">happening_filters</span>
-<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">raise_task_exception</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span>
 
 <span class="c1"># Needed for type annotations</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">AsyncIterable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">Task</span>
 <span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
 
@@ -208,7 +207,7 @@
             <span class="nb">filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">beforeid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">beforetime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterable</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Iterate through happenings from newest to oldest.</span>
 
 <span class="sd">        Parameters:</span>
@@ -234,8 +233,48 @@
                 <span class="k">break</span>
             <span class="n">beforeid</span> <span class="o">=</span> <span class="n">happening_bunch</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span></div>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_poll_happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">,</span>
-                               <span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="p">):</span>
+<div class="viewcode-block" id="World.new_happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.new_happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">new_happenings</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+            <span class="n">nation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">region</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;An asynchronous generator that yields new happenings as they</span>
+<span class="sd">        arrive::</span>
+
+<span class="sd">            async for happening in \</span>
+<span class="sd">                    world.new_happenings(region=&#39;the north pacific&#39;):</span>
+<span class="sd">                # Your processing code here</span>
+<span class="sd">                print(happening.text)  # As an example</span>
+
+<span class="sd">        Guarantees that:</span>
+
+<span class="sd">        * Every happening is generated from the moment the generator</span>
+<span class="sd">          is started;</span>
+<span class="sd">        * No happening is generated more than once;</span>
+<span class="sd">        * Happenings are denerated in order from oldest to newest.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            poll_period: How long to wait between requesting the next</span>
+<span class="sd">                bunch of happenings.  Note that this should only be</span>
+<span class="sd">                tweaked for latency reasons, as the function gives a</span>
+<span class="sd">                guarantee that all happenings will be generated.</span>
+<span class="sd">                Also note that, regardless of the ``poll_period`` you</span>
+<span class="sd">                set, all of the code in your loop body still has to</span>
+<span class="sd">                execute (possibly several times) before a new bunch of</span>
+<span class="sd">                happenings can be requested.  Consider wrapping your</span>
+<span class="sd">                happening-processing code in a coroutine and launching</span>
+<span class="sd">                it as a task from the loop body if you suspect this</span>
+<span class="sd">                might be an issue.</span>
+<span class="sd">            nation: Nation(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with region.</span>
+<span class="sd">            region: Region(s) happenings of which will be requested.</span>
+<span class="sd">                Cannot be specified at the same time with nation.</span>
+<span class="sd">            filter: Category(s) to request happenings by.  Available</span>
+<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
+<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
+<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># We only need the happenings from this point forwards</span>
             <span class="n">last_id</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_happenings</span><span class="p">(</span>
@@ -260,68 +299,8 @@
                 <span class="n">last_id</span> <span class="o">=</span> <span class="n">happenings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
 
             <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">happenings</span><span class="p">):</span>
-                <span class="n">task</span> <span class="o">=</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">callback</span><span class="p">(</span><span class="n">happening</span><span class="p">))</span>
-                <span class="n">task</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">raise_task_exception</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">happening</span></div></div>
 
-<div class="viewcode-block" id="World.on_happening"><a class="viewcode-back" href="../../reference.html#aionationstates.World.on_happening">[docs]</a>    <span class="k">def</span> <span class="nf">on_happening</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-            <span class="n">nation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">region</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="nb">filter</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Happening</span><span class="p">],</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">Any</span><span class="p">]]],</span> <span class="n">Task</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;A decorator to subscribe to a feed of new happenings.</span>
-
-<span class="sd">        The interface will be easier to illustrate::</span>
-
-<span class="sd">            @world.on_happening(region=&#39;the north pacific&#39;)</span>
-<span class="sd">            async def process_happenings(happening):</span>
-<span class="sd">                # Your processing code here</span>
-<span class="sd">                print(happening.text)  # As an example</span>
-
-<span class="sd">        Guarantees that:</span>
-
-<span class="sd">        * The decorated coroutine function will be called for each</span>
-<span class="sd">          new happening since the task is first run;</span>
-<span class="sd">        * Every happening will only be fed to the decorated coroutine</span>
-<span class="sd">          function exactly once;</span>
-<span class="sd">        * Calls to the decorated coroutine function are scheduled in</span>
-<span class="sd">          the same order as happenings arrive, from oldest to newest.</span>
-
-<span class="sd">        This decorator returns an :any:`asyncio.Task`.  Please read up</span>
-<span class="sd">        on what that implies, paying special attention to `this bit</span>
-<span class="sd">        &lt;https://docs.python.org/3/library/asyncio-dev.html#detect-\</span>
-<span class="sd">        exceptions-never-consumed&gt;`_.</span>
-
-<span class="sd">        Moreover, every call to the decorated function is its own task</span>
-<span class="sd">        too.  The main point for you to worry about here it that</span>
-<span class="sd">        exceptions raised and not caught inside of the decorated</span>
-<span class="sd">        will not stop the execution of the program, instead they will</span>
-<span class="sd">        simply be logged.  In addition to this asyncio quirk, it should</span>
-<span class="sd">        be noted that several tasks made from the decorated coroutine</span>
-<span class="sd">        function may be running alongside each other, and you must not</span>
-<span class="sd">        expect them to complete in the same order as they&#39;re scheduled.</span>
-
-<span class="sd">        Parameters:</span>
-<span class="sd">            poll_period: How long to wait between requesting the next</span>
-<span class="sd">                bunch of happenings.  Note that this should only be</span>
-<span class="sd">                tweaked for latency reasons, as the function gives a</span>
-<span class="sd">                guarantee that all happenings will be returned.</span>
-<span class="sd">            nation: Nation(s) happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with region.</span>
-<span class="sd">            region: Region(s) happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with nation.</span>
-<span class="sd">            filter: Category(s) to request happenings by.  Available</span>
-<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
-<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
-<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_happenings</span><span class="p">(</span>
-                <span class="n">callback</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
-                <span class="n">poll_period</span><span class="o">=</span><span class="n">poll_period</span><span class="p">,</span>
-                <span class="n">nation</span><span class="o">=</span><span class="n">nation</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span>
-            <span class="p">))</span>
-        <span class="k">return</span> <span class="n">decorator</span></div></div>
 
 </pre></div>
 

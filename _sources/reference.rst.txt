@@ -210,7 +210,7 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: happenings
 
-    .. automethod:: on_happening
+    .. automethod:: new_happenings
 
 
 Data Classes

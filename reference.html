@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Reference &#8212; aionationstates 0.1.0 documentation</title>
+    <title>Reference &#8212; aionationstates 0.1.1 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.0',
+        VERSION:     '0.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -1451,7 +1451,7 @@ filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">AsyncIterable</span></code></a>[<a class="reference internal" href="#aionationstates.Happening" title="aionationstates.Happening"><code class="xref py py-class docutils literal"><span class="pre">Happening</span></code></a>]</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">AsyncIterator</span></code></a>[<a class="reference internal" href="#aionationstates.Happening" title="aionationstates.Happening"><code class="xref py py-class docutils literal"><span class="pre">Happening</span></code></a>]</p>
 </td>
 </tr>
 </tbody>
@@ -1459,35 +1459,22 @@ filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 </dd></dl>
 
 <dl class="method">
-<dt id="aionationstates.World.on_happening">
-<code class="descname">on_happening</code><span class="sig-paren">(</span><em>poll_period=30</em>, <em>*</em>, <em>nation=None</em>, <em>region=None</em>, <em>filter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.on_happening"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.on_happening" title="Permalink to this definition">¶</a></dt>
-<dd><p>A decorator to subscribe to a feed of new happenings.</p>
-<p>The interface will be easier to illustrate:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nd">@world</span><span class="o">.</span><span class="n">on_happening</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">)</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">process_happenings</span><span class="p">(</span><span class="n">happening</span><span class="p">):</span>
+<dt id="aionationstates.World.new_happenings">
+<code class="descname">new_happenings</code><span class="sig-paren">(</span><em>poll_period=30</em>, <em>*</em>, <em>nation=None</em>, <em>region=None</em>, <em>filter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.new_happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.new_happenings" title="Permalink to this definition">¶</a></dt>
+<dd><p>An asynchronous generator that yields new happenings as they
+arrive:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span>                     <span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">):</span>
     <span class="c1"># Your processing code here</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">happening</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># As an example</span>
 </pre></div>
 </div>
 <p>Guarantees that:</p>
 <ul class="simple">
-<li>The decorated coroutine function will be called for each
-new happening since the task is first run;</li>
-<li>Every happening will only be fed to the decorated coroutine
-function exactly once;</li>
-<li>Calls to the decorated coroutine function are scheduled in
-the same order as happenings arrive, from oldest to newest.</li>
+<li>Every happening is generated from the moment the generator
+is started;</li>
+<li>No happening is generated more than once;</li>
+<li>Happenings are denerated in order from oldest to newest.</li>
 </ul>
-<p>This decorator returns an <a class="reference external" href="https://docs.python.org/3/library/asyncio-task.html#asyncio.Task" title="(in Python v3.6)"><code class="xref any docutils literal"><span class="pre">asyncio.Task</span></code></a>.  Please read up
-on what that implies, paying special attention to <a class="reference external" href="https://docs.python.org/3/library/asyncio-dev.html#detect-exceptions-never-consumed">this bit</a>.</p>
-<p>Moreover, every call to the decorated function is its own task
-too.  The main point for you to worry about here it that
-exceptions raised and not caught inside of the decorated
-will not stop the execution of the program, instead they will
-simply be logged.  In addition to this asyncio quirk, it should
-be noted that several tasks made from the decorated coroutine
-function may be running alongside each other, and you must not
-expect them to complete in the same order as they’re scheduled.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1496,7 +1483,14 @@ expect them to complete in the same order as they’re scheduled.</p>
 <li><strong>poll_period</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a>) – How long to wait between requesting the next
 bunch of happenings.  Note that this should only be
 tweaked for latency reasons, as the function gives a
-guarantee that all happenings will be returned.</li>
+guarantee that all happenings will be generated.
+Also note that, regardless of the <code class="docutils literal"><span class="pre">poll_period</span></code> you
+set, all of the code in your loop body still has to
+execute (possibly several times) before a new bunch of
+happenings can be requested.  Consider wrapping your
+happening-processing code in a coroutine and launching
+it as a task from the loop body if you suspect this
+might be an issue.</li>
 <li><strong>nation</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Nation(s) happenings of which will be requested.
 Cannot be specified at the same time with region.</li>
 <li><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Region(s) happenings of which will be requested.
@@ -1508,7 +1502,7 @@ filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="#aionationstates.Happening" title="aionationstates.Happening"><code class="xref py py-class docutils literal"><span class="pre">Happening</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Awaitable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Awaitable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Any</span></code></a>]]], <code class="xref py py-class docutils literal"><span class="pre">Task</span></code>]</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">AsyncIterator</span></code></a>[<a class="reference internal" href="#aionationstates.Happening" title="aionationstates.Happening"><code class="xref py py-class docutils literal"><span class="pre">Happening</span></code></a>]</p>
 </td>
 </tr>
 </tbody>
