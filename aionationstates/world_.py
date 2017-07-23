@@ -198,7 +198,7 @@ class World(Census, Session):
         """An asynchronous generator that yields new happenings as they
         arrive::
 
-            async for happening in \
+            async for happening in \\
                     world.new_happenings(region='the north pacific'):
                 # Your processing code here
                 print(happening.text)  # As an example
