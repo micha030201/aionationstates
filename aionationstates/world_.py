@@ -5,12 +5,11 @@ from aionationstates.session import Session, api_query
 from aionationstates.types import Dispatch, Poll, Happening
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
-from aionationstates.utils import utc_seconds, normalize, raise_task_exception
+from aionationstates.utils import utc_seconds, normalize
 
 # Needed for type annotations
 import datetime
-from typing import (
-    List, Callable, Awaitable, AsyncIterable, Iterable, Union, Any)
+from typing import List, AsyncIterator, Iterable, Union
 from asyncio import Task
 from aionationstates.session import ApiQuery
 
@@ -164,7 +163,7 @@ class World(Census, Session):
             filter: Union[str, Iterable[str]] = None,
             beforeid: int = None,
             beforetime: datetime.datetime = None
-            ) -> AsyncIterable[Happening]:
+            ) -> AsyncIterator[Happening]:
         """Iterate through happenings from newest to oldest.
 
         Parameters:
@@ -190,8 +189,48 @@ class World(Census, Session):
                 break
             beforeid = happening_bunch[-1].id
 
-    async def _poll_happenings(self, *, callback, poll_period,
-                               nation, region, filter):
+    async def new_happenings(
+            self, poll_period: int = 30, *,
+            nation: Union[str, Iterable[str]] = None,
+            region: Union[str, Iterable[str]] = None,
+            filter: Union[str, Iterable[str]] = None
+            ) -> AsyncIterator[Happening]:
+        """An asynchronous generator that yields new happenings as they
+        arrive::
+
+            async for happening in \
+                    world.new_happenings(region='the north pacific'):
+                # Your processing code here
+                print(happening.text)  # As an example
+
+        Guarantees that:
+
+        * Every happening is generated from the moment the generator
+          is started;
+        * No happening is generated more than once;
+        * Happenings are denerated in order from oldest to newest.
+
+        Parameters:
+            poll_period: How long to wait between requesting the next
+                bunch of happenings.  Note that this should only be
+                tweaked for latency reasons, as the function gives a
+                guarantee that all happenings will be generated.
+                Also note that, regardless of the ``poll_period`` you
+                set, all of the code in your loop body still has to
+                execute (possibly several times) before a new bunch of
+                happenings can be requested.  Consider wrapping your
+                happening-processing code in a coroutine and launching
+                it as a task from the loop body if you suspect this
+                might be an issue.
+            nation: Nation(s) happenings of which will be requested.
+                Cannot be specified at the same time with region.
+            region: Region(s) happenings of which will be requested.
+                Cannot be specified at the same time with nation.
+            filter: Category(s) to request happenings by.  Available
+                filters are: 'law', 'change', 'dispatch', 'rmb',
+                'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
+                'vote', 'resolution', 'member', and 'endo'.
+        """
         try:
             # We only need the happenings from this point forwards
             last_id = (await self._get_happenings(
@@ -216,66 +255,6 @@ class World(Census, Session):
                 last_id = happenings[0].id
 
             for happening in reversed(happenings):
-                task = get_event_loop().create_task(callback(happening))
-                task.add_done_callback(raise_task_exception)
+                yield happening
 
-    def on_happening(
-            self, poll_period: int = 30, *,
-            nation: Union[str, Iterable[str]] = None,
-            region: Union[str, Iterable[str]] = None,
-            filter: Union[str, Iterable[str]] = None
-            ) -> Callable[[Callable[[Happening], Awaitable[Any]]], Task]:
-        """A decorator to subscribe to a feed of new happenings.
-
-        The interface will be easier to illustrate::
-
-            @world.on_happening(region='the north pacific')
-            async def process_happenings(happening):
-                # Your processing code here
-                print(happening.text)  # As an example
-
-        Guarantees that:
-
-        * The decorated coroutine function will be called for each
-          new happening since the task is first run;
-        * Every happening will only be fed to the decorated coroutine
-          function exactly once;
-        * Calls to the decorated coroutine function are scheduled in
-          the same order as happenings arrive, from oldest to newest.
-
-        This decorator returns an :any:`asyncio.Task`.  Please read up
-        on what that implies, paying special attention to `this bit
-        <https://docs.python.org/3/library/asyncio-dev.html#detect-\
-        exceptions-never-consumed>`_.
-
-        Moreover, every call to the decorated function is its own task
-        too.  The main point for you to worry about here it that
-        exceptions raised and not caught inside of the decorated
-        will not stop the execution of the program, instead they will
-        simply be logged.  In addition to this asyncio quirk, it should
-        be noted that several tasks made from the decorated coroutine
-        function may be running alongside each other, and you must not
-        expect them to complete in the same order as they're scheduled.
-
-        Parameters:
-            poll_period: How long to wait between requesting the next
-                bunch of happenings.  Note that this should only be
-                tweaked for latency reasons, as the function gives a
-                guarantee that all happenings will be returned.
-            nation: Nation(s) happenings of which will be requested.
-                Cannot be specified at the same time with region.
-            region: Region(s) happenings of which will be requested.
-                Cannot be specified at the same time with nation.
-            filter: Category(s) to request happenings by.  Available
-                filters are: 'law', 'change', 'dispatch', 'rmb',
-                'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
-                'vote', 'resolution', 'member', and 'endo'.
-        """
-        def decorator(func):
-            return get_event_loop().create_task(self._poll_happenings(
-                callback=func,
-                poll_period=poll_period,
-                nation=nation, region=region, filter=filter
-            ))
-        return decorator
 
