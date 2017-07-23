@@ -1463,7 +1463,8 @@ filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 <code class="descname">new_happenings</code><span class="sig-paren">(</span><em>poll_period=30</em>, <em>*</em>, <em>nation=None</em>, <em>region=None</em>, <em>filter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.new_happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.new_happenings" title="Permalink to this definition">¶</a></dt>
 <dd><p>An asynchronous generator that yields new happenings as they
 arrive:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span>                     <span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">):</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> \
+        <span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">):</span>
     <span class="c1"># Your processing code here</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">happening</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># As an example</span>
 </pre></div>
