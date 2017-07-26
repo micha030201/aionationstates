@@ -139,11 +139,11 @@ class World(Census, Session):
             raise ValueError('You cannot specify both nation and region views')
         if nation:
             nation = (nation,) if type(nation) is str else nation
-            nation = '+'.join(map(normalize, nation))
+            nation = ','.join(map(normalize, nation))
             params['view'] = f'nation.{nation}'
         elif region:
             region = (region,) if type(region) is str else region
-            region = '+'.join(map(normalize, region))
+            region = ','.join(map(normalize, region))
             params['view'] = f'region.{region}'
 
         if beforetime:
