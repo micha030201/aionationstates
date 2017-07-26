@@ -1,5 +1,5 @@
 from contextlib import suppress
-from asyncio import get_event_loop, sleep, CancelledError
+from asyncio import sleep
 
 from aionationstates.session import Session, api_query
 from aionationstates.types import Dispatch, Poll, Happening
@@ -9,8 +9,7 @@ from aionationstates.utils import utc_seconds, normalize
 
 # Needed for type annotations
 import datetime
-from typing import List, AsyncIterator, Iterable, Union
-from asyncio import Task
+from typing import List, AsyncIterator, Iterable
 from aionationstates.session import ApiQuery
 
 
@@ -125,26 +124,23 @@ class World(Census, Session):
 
     # Happenings interface:
 
-    def _get_happenings(self, *, nation, region, filter, limit=100,
+    def _get_happenings(self, *, nations, regions, filters, limit=100,
                         beforeid=None, beforetime=None):
         params = {'limit': str(limit)}
-        if filter:
-            filter = (filter,) if type(filter) is str else filter
-            for filter_item in filter:
+        if filters:
+            for filter_item in filters:
                 if filter_item not in happening_filters:
                     raise ValueError(f'No such filter "{filter_item}"')
-            params['filter'] = '+'.join(filter)
+            params['filter'] = '+'.join(filters)
 
-        if nation and region:
+        if nations and regions:
             raise ValueError('You cannot specify both nation and region views')
-        if nation:
-            nation = (nation,) if type(nation) is str else nation
-            nation = ','.join(map(normalize, nation))
-            params['view'] = f'nation.{nation}'
-        elif region:
-            region = (region,) if type(region) is str else region
-            region = ','.join(map(normalize, region))
-            params['view'] = f'region.{region}'
+        if nations:
+            nations = ','.join(map(normalize, nations))
+            params['view'] = f'nation.{nations}'
+        elif regions:
+            regions = ','.join(map(normalize, regions))
+            params['view'] = f'region.{regions}'
 
         if beforetime:
             params['beforetime'] = str(utc_seconds(beforetime))
@@ -158,9 +154,9 @@ class World(Census, Session):
 
     async def happenings(
             self, *,
-            nation: Union[str, Iterable[str]] = None,
-            region: Union[str, Iterable[str]] = None,
-            filter: Union[str, Iterable[str]] = None,
+            nations: Iterable[str] = None,
+            regions: Iterable[str] = None,
+            filters: Iterable[str] = None,
             beforeid: int = None,
             beforetime: datetime.datetime = None
             ) -> AsyncIterator[Happening]:
@@ -180,7 +176,7 @@ class World(Census, Session):
         """
         while True:
             happening_bunch = await self._get_happenings(
-                nation=nation, region=region, filter=filter,
+                nations=nations, regions=regions, filters=filters,
                 beforeid=beforeid, beforetime=beforetime
             )
             for happening in happening_bunch:
@@ -191,9 +187,9 @@ class World(Census, Session):
 
     async def new_happenings(
             self, poll_period: int = 30, *,
-            nation: Union[str, Iterable[str]] = None,
-            region: Union[str, Iterable[str]] = None,
-            filter: Union[str, Iterable[str]] = None
+            nations: Iterable[str] = None,
+            regions: Iterable[str] = None,
+            filters: Iterable[str] = None
             ) -> AsyncIterator[Happening]:
         """An asynchronous generator that yields new happenings as they
         arrive::
@@ -234,7 +230,8 @@ class World(Census, Session):
         try:
             # We only need the happenings from this point forwards
             last_id = (await self._get_happenings(
-                nation=nation, region=region, filter=filter, limit=1))[0].id
+                nations=nations, regions=regions, filters=filters,
+                limit=1))[0].id
         except IndexError:
             # Happenings before this point have all been deleted
             last_id = 0
@@ -246,7 +243,7 @@ class World(Census, Session):
             # I don't think there's a cleaner solution, sadly.
             happenings = []
             async for happening in self.happenings(
-                    nation=nation, region=region, filter=filter):
+                    nations=nations, regions=regions, filters=filters):
                 if happening.id <= last_id:
                     break
                 happenings.append(happening)
