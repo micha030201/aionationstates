@@ -152,15 +152,16 @@ class Session:
             headers['User-Agent'] = \
                 f'{self._USER_AGENT} ({standard_user_agent})'
 
-        async with aiohttp.request(method, url, headers=headers,
-                                   allow_redirects=False, **kwargs) as resp:
-            return RawResponse(
-                status=resp.status,
-                url=resp.url,
-                cookies=resp.cookies,
-                headers=resp.headers,
-                text=await resp.text()
-            )
+        async with aiohttp.ClientSession() as session:
+            async with session.request(method, url, allow_redirects=False,
+                                       headers=headers, **kwargs) as resp:
+                return RawResponse(
+                    status=resp.status,
+                    url=resp.url,
+                    cookies=resp.cookies,
+                    headers=resp.headers,
+                    text=await resp.text()
+                )
 
     @ratelimit.api
     async def _base_call_api(self, method, **kwargs):
