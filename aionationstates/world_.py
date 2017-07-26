@@ -163,11 +163,11 @@ class World(Census, Session):
         """Iterate through happenings from newest to oldest.
 
         Parameters:
-            nation: Nation(s) happenings of which will be requested.
+            nations: Nations happenings of which will be requested.
                 Cannot be specified at the same time with region.
-            region: Region(s) happenings of which will be requested.
+            regions: Regions happenings of which will be requested.
                 Cannot be specified at the same time with nation.
-            filter: Category(s) to request happenings by.  Available
+            filters: Categories to request happenings by.  Available
                 filters are: 'law', 'change', 'dispatch', 'rmb',
                 'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
                 'vote', 'resolution', 'member', and 'endo'.
@@ -218,11 +218,11 @@ class World(Census, Session):
                 happening-processing code in a coroutine and launching
                 it as a task from the loop body if you suspect this
                 might be an issue.
-            nation: Nation(s) happenings of which will be requested.
+            nations: Nations happenings of which will be requested.
                 Cannot be specified at the same time with region.
-            region: Region(s) happenings of which will be requested.
+            regions: Regions happenings of which will be requested.
                 Cannot be specified at the same time with nation.
-            filter: Category(s) to request happenings by.  Available
+            filters: Categories to request happenings by.  Available
                 filters are: 'law', 'change', 'dispatch', 'rmb',
                 'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
                 'vote', 'resolution', 'member', and 'endo'.
