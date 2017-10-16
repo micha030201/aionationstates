@@ -140,7 +140,7 @@ RawResponse = namedtuple('RawResponse', ('status url text'
 class Session:
     _USER_AGENT = None
 
-    async def _request(self, method, url, headers=None, **kwargs):
+    async def _request(self, method, url, headers=None, cookies=None, **kwargs):
         headers = headers or {}
 
         standard_user_agent = f'aionationstates/{__version__}'
@@ -152,7 +152,7 @@ class Session:
             headers['User-Agent'] = \
                 f'{self._USER_AGENT} ({standard_user_agent})'
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(cookies=cookies) as session:
             async with session.request(method, url, allow_redirects=False,
                                        headers=headers, **kwargs) as resp:
                 return RawResponse(
