@@ -482,7 +482,7 @@ class IssueOption:
     def __init__(self, elem, issue):
         self._issue = issue
         self._id = int(elem.get('id'))
-        self.text = elem.text
+        self.text = unscramble_encoding(elem.text)
 
     def accept(self) -> Awaitable[IssueResult]:
         """Accept the option."""
@@ -517,7 +517,7 @@ class Issue:
         self._nation = nation
         self.id = int(elem.get('id'))
         self.title = elem.find('TITLE').text
-        self.text = elem.find('TEXT').text
+        self.text = unscramble_encoding(elem.find('TEXT').text)
         self.author = elem.findtext('AUTHOR')
         self.editor = elem.findtext('EDITOR')
         self.options = [
