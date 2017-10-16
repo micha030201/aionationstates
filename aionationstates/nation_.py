@@ -369,7 +369,7 @@ class Nation(Census, Session):
         query = (
             self.demonym() + self.demonym2() + self.demonym2plural()
             + self.name() + self.religion() + self.animal() + self.capital()
-            + self.leader()
+            + self.leader() + self.currency()
         )
         query_result = None
 
@@ -407,6 +407,7 @@ class Nation(Census, Session):
                     # I just hope there aren't enough headlines with
                     # macros to force me into using regex.
                     .replace('@@LEADER@@', query_result[7])
+                    .replace('@@CURRENCY@@', query_result[8])
                 )
             return line
 
