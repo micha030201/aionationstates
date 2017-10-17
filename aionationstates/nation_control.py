@@ -85,4 +85,3 @@ class NationControl(Nation, Session):
             ]
             return issue_result
         return result(self)
-

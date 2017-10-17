@@ -190,5 +190,3 @@ class Session:
             raise AuthenticationError
         assert resp.status == 200
         return resp
-
-

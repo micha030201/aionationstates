@@ -45,6 +45,11 @@ class Nation(Census, Session):
         return super()._call_api(params, **kwargs)
 
 
+    @property
+    def url(self):
+        """URL for the nation."""
+        return f'https://www.nationstates.net/nation={self.id}'
+
     @api_query('name')
     async def name(self, root) -> str:
         """Name of the nation, for example 'Testlandia'."""
@@ -435,4 +440,3 @@ class Nation(Census, Session):
             .replace('<p>', '\n\n')
             .strip()
         )
-

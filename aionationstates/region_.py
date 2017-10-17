@@ -30,6 +30,11 @@ class Region(Census, Session):
         return super()._call_api(*args, params=params, **kwargs)
 
 
+    @property
+    def url(self):
+        """URL for the region."""
+        return f'https://www.nationstates.net/region={self.id}'
+
     @api_query('name')
     async def name(self, root) -> str:
         """Name of the region."""
@@ -159,5 +164,3 @@ class Region(Census, Session):
         return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     # TODO: history, messages
-
-
