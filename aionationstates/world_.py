@@ -204,7 +204,7 @@ class World(Census, Session):
         * Every happening is generated from the moment the generator
           is started;
         * No happening is generated more than once;
-        * Happenings are denerated in order from oldest to newest.
+        * Happenings are generated in order from oldest to newest.
 
         Parameters:
             poll_period: How long to wait between requesting the next
@@ -253,5 +253,3 @@ class World(Census, Session):
 
             for happening in reversed(happenings):
                 yield happening
-
-
