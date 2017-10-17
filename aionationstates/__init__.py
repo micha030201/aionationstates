@@ -1,4 +1,4 @@
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 from aionationstates.world_ import World
@@ -27,4 +27,4 @@ from aionationstates.types import (
     PostStatus, Post, Zombie, ArchivedHappening, Happening)
 from aionationstates.ns_to_human import ScaleInfo, Banner
 
-from aionationstates.utils import datetime_to_ns
+from aionationstates.utils import datetime_to_ns, normalize
