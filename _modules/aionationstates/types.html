@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.types &#8212; aionationstates 0.1.1 documentation</title>
+    <title>aionationstates.types &#8212; aionationstates 0.1.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.1',
+        VERSION:     '0.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -526,7 +526,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">issue</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span> <span class="o">=</span> <span class="n">issue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
 <div class="viewcode-block" id="IssueOption.accept"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueOption.accept">[docs]</a>    <span class="k">def</span> <span class="nf">accept</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">IssueResult</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Accept the option.&quot;&quot;&quot;</span>
@@ -561,7 +561,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span> <span class="o">=</span> <span class="n">nation</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">editor</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;EDITOR&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[</span>
@@ -830,7 +830,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Micha.
+      &copy;2017, Михаил Лебедев.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>

@@ -42,6 +42,8 @@ You should not build these objects yourself. Instead, use the following:
 
 .. autoclass:: Nation
 
+    .. autoattribute:: url
+
     .. automethod:: name
 
     .. automethod:: type
@@ -139,6 +141,8 @@ You should not build these objects yourself. Instead, use the following:
     .. automethod:: issues
 
 .. autoclass:: Region
+
+    .. autoattribute:: url
 
     .. automethod:: name
 

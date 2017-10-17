@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Reference &#8212; aionationstates 0.1.1 documentation</title>
+    <title>Reference &#8212; aionationstates 0.1.2 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.1',
+        VERSION:     '0.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -141,6 +141,20 @@ to be slightly different from scale 76.</li>
 <dd><p>The defining characteristic of a nation, its
 normalized name.  No two nations share the same id, and no
 one id is shared by multiple nations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.Nation.url">
+<code class="descname">url</code><a class="headerlink" href="#aionationstates.Nation.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>URL for the nation.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -907,6 +921,20 @@ is shared by multiple regions.</p>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="aionationstates.Region.url">
+<code class="descname">url</code><a class="headerlink" href="#aionationstates.Region.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>URL for the region.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="method">
 <dt id="aionationstates.Region.name">
 <code class="descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/region_.html#Region.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.Region.name" title="Permalink to this definition">¶</a></dt>
@@ -1431,18 +1459,18 @@ stores.  There is no way to override that.</p>
 
 <dl class="method">
 <dt id="aionationstates.World.happenings">
-<code class="descname">happenings</code><span class="sig-paren">(</span><em>*</em>, <em>nation=None</em>, <em>region=None</em>, <em>filter=None</em>, <em>beforeid=None</em>, <em>beforetime=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.happenings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">happenings</code><span class="sig-paren">(</span><em>*</em>, <em>nations=None</em>, <em>regions=None</em>, <em>filters=None</em>, <em>beforeid=None</em>, <em>beforetime=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.happenings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterate through happenings from newest to oldest.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>nation</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Nation(s) happenings of which will be requested.
+<li><strong>nations</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Nations happenings of which will be requested.
 Cannot be specified at the same time with region.</li>
-<li><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Region(s) happenings of which will be requested.
+<li><strong>regions</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Regions happenings of which will be requested.
 Cannot be specified at the same time with nation.</li>
-<li><strong>filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Category(s) to request happenings by.  Available
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Categories to request happenings by.  Available
 filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 ‘embassy’, ‘eject’, ‘admin’, ‘move’, ‘founding’, ‘cte’,
 ‘vote’, ‘resolution’, ‘member’, and ‘endo’.</li>
@@ -1460,7 +1488,7 @@ filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 
 <dl class="method">
 <dt id="aionationstates.World.new_happenings">
-<code class="descname">new_happenings</code><span class="sig-paren">(</span><em>poll_period=30</em>, <em>*</em>, <em>nation=None</em>, <em>region=None</em>, <em>filter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.new_happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.new_happenings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">new_happenings</code><span class="sig-paren">(</span><em>poll_period=30</em>, <em>*</em>, <em>nations=None</em>, <em>regions=None</em>, <em>filters=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aionationstates/world_.html#World.new_happenings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.World.new_happenings" title="Permalink to this definition">¶</a></dt>
 <dd><p>An asynchronous generator that yields new happenings as they
 arrive:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> \
@@ -1474,7 +1502,7 @@ arrive:</p>
 <li>Every happening is generated from the moment the generator
 is started;</li>
 <li>No happening is generated more than once;</li>
-<li>Happenings are denerated in order from oldest to newest.</li>
+<li>Happenings are generated in order from oldest to newest.</li>
 </ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1492,11 +1520,11 @@ happenings can be requested.  Consider wrapping your
 happening-processing code in a coroutine and launching
 it as a task from the loop body if you suspect this
 might be an issue.</li>
-<li><strong>nation</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Nation(s) happenings of which will be requested.
+<li><strong>nations</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Nations happenings of which will be requested.
 Cannot be specified at the same time with region.</li>
-<li><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Region(s) happenings of which will be requested.
+<li><strong>regions</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Regions happenings of which will be requested.
 Cannot be specified at the same time with nation.</li>
-<li><strong>filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) – Category(s) to request happenings by.  Available
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.6)"><code class="xref py py-data docutils literal"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>]]) – Categories to request happenings by.  Available
 filters are: ‘law’, ‘change’, ‘dispatch’, ‘rmb’,
 ‘embassy’, ‘eject’, ‘admin’, ‘move’, ‘founding’, ‘cte’,
 ‘vote’, ‘resolution’, ‘member’, and ‘endo’.</li>
@@ -3581,7 +3609,7 @@ for whatever reason.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Micha.
+      &copy;2017, Михаил Лебедев.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
