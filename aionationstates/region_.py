@@ -31,7 +31,7 @@ class Region(Census, Session):
 
 
     @property
-    def url(self):
+    def url(self) -> str:
         """URL for the region."""
         return f'https://www.nationstates.net/region={self.id}'
 

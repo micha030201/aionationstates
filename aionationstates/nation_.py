@@ -46,7 +46,7 @@ class Nation(Census, Session):
 
 
     @property
-    def url(self):
+    def url(self) -> str:
         """URL for the nation."""
         return f'https://www.nationstates.net/nation={self.id}'
 
