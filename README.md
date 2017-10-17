@@ -19,6 +19,6 @@ It's [here](https://micha030201.github.io/aionationstates/).
 
 ## License
 
-This project is licensed under the GNU GPLv3 (see the [LICENSE](LICENSE) file for details) and is copyright of me, Micha.
+This project is licensed under the GNU GPLv3 (see the [LICENSE](LICENSE) file for details) and is copyright of Михаил Лебедев.
 
 
