@@ -11,6 +11,7 @@ from aionationstates.utils import utc_seconds, normalize
 import datetime
 from typing import List, AsyncIterator, Iterable
 from aionationstates.session import ApiQuery
+import aionationstates
 
 
 class World(Census, Session):
@@ -22,14 +23,16 @@ class World(Census, Session):
         return root.find('FEATUREDREGION').text
 
     @api_query('newnations')
-    async def newnations(self, root) -> List[str]:
+    async def newnations(self, root) -> List[aionationstates.Nation]:
         """Most recently founded nations, from newest."""
-        return root.find('NEWNATIONS').text.split(',')
+        return [aionationstates.Nation(n)
+                for n in root.find('NEWNATIONS').text.split(',')]
 
     @api_query('nations')
-    async def nations(self, root) -> List[str]:
+    async def nations(self, root) -> List[aionationstates.Nation]:
         """List of all the nations, seemingly in order of creation."""
-        return root.find('NATIONS').text.split(',')
+        return [aionationstates.Nation(n)
+                for n in root.find('NEWNATIONS').text.split(',')]
 
     @api_query('numnations')
     async def numnations(self, root) -> int:
@@ -37,18 +40,19 @@ class World(Census, Session):
         return int(root.find('NUMNATIONS').text)
 
     @api_query('regions')
-    async def regions(self, root) -> List[str]:
+    async def regions(self, root) -> List[aionationstates.Region]:
         """List of all the regions, seemingly in order of creation.
         Not normalized.
         """
-        return root.find('REGIONS').text.split(',')  # TODO normalize?
+        return [aionationstates.Region(r)
+                for r in root.find('REGIONS').text.split(',')]
 
     @api_query('numregions')
     async def numregions(self, root) -> int:
         """Total number of regions."""
         return int(root.find('NUMREGIONS').text)
 
-    def regionsbytag(self, *tags: str) -> ApiQuery[List[str]]:
+    def regionsbytag(self, *tags: str) -> ApiQuery[List[aionationstates.Region]]:
         """All regions belonging to any of the named tags.  Tags can be
         preceded by a ``-`` to select regions without that tag.
         """
@@ -61,8 +65,9 @@ class World(Census, Session):
         # regions, excluding it returns all of them.
         @api_query('regionsbytag', tags=','.join(tags))
         async def result(_, root):
-            text = root.find('REGIONS').text  # TODO normalize?
-            return text.split(',') if text else []
+            text = root.find('REGIONS').text
+            return ([aionationstates.Region(r) for r in text.split(',')]
+                    if text else [])
         return result(self)
 
     def dispatch(self, id: int) -> ApiQuery[Dispatch]:

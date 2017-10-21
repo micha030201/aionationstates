@@ -12,6 +12,7 @@ from aionationstates.ns_to_human import banner
 # Needed for type annotations
 import datetime
 from typing import Dict, List
+import aionationstates
 from aionationstates.ns_to_human import Banner
 from aionationstates.session import ApiQuery
 
@@ -78,9 +79,9 @@ class Nation(Census, Session):
         return root.find('CATEGORY').text
 
     @api_query('region')
-    async def region(self, root) -> str:
+    async def region(self, root) -> aionationstates.Region:
         """Region in which the nation resides."""
-        return root.find('REGION').text
+        return aionationstates.Region(root.find('REGION').text)
 
     @api_query('animal')
     async def animal(self, root) -> str:
@@ -288,10 +289,10 @@ class Nation(Census, Session):
         }
 
     @api_query('endorsements')
-    async def endorsements(self, root) -> List[str]:
+    async def endorsements(self, root) -> List['Nation']:
         """Endorsements the nation has received."""
         text = root.find('ENDORSEMENTS').text
-        return text.split(',') if text else []
+        return [Nation(name) for name in text.split(',')] if text else []
 
     @api_query('legislation')
     async def legislation(self, root) -> List[str]:

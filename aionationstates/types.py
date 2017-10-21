@@ -11,6 +11,7 @@ from operator import or_
 import datetime
 from typing import List, Optional, Awaitable
 from aionationstates.ns_to_human import Banner, ScaleInfo
+import aionationstates
 
 from aionationstates.utils import timestamp, banner_url, unscramble_encoding
 from aionationstates.ns_to_human import banner, census_info
@@ -137,7 +138,7 @@ class Dispatch:
     """
     id: int
     title: str
-    author: str
+    author: aionationstates.Nation
     category: str
     subcategory: str
     views: int
@@ -150,7 +151,7 @@ class Dispatch:
         self.id = int(elem.get('id'))
         self.title = unscramble_encoding(
             html.unescape(elem.find('TITLE').text))
-        self.author = elem.find('AUTHOR').text
+        self.author = aionationstates.Nation(elem.find('AUTHOR').text)
         self.category = elem.find('CATEGORY').text
         self.subcategory = elem.find('SUBCATEGORY').text
         self.views = int(elem.find('VIEWS').text)
@@ -201,8 +202,8 @@ class Poll:
     id: int
     title: str
     text: Optional[str]
-    region: str
-    author: str
+    region: aionationstates.Region
+    author: aionationstates.Nation
     start: datetime.datetime
     stop: datetime.datetime
     options: List[PollOption]
@@ -214,8 +215,8 @@ class Poll:
             self.text = html.unescape(elem.findtext('TEXT'))
         except AttributeError:
             self.text = None
-        self.region = elem.find('REGION').text
-        self.author = elem.find('AUTHOR').text
+        self.region = aionationstates.Region(elem.find('REGION').text)
+        self.author = aionationstates.Nation(elem.find('AUTHOR').text)
         self.start = timestamp(elem.find('START').text)
         self.stop = timestamp(elem.find('STOP').text)
         self.options = [PollOption(option_elem)
@@ -604,14 +605,14 @@ class Officer:
         appointed_at: When the officer got appointed.
         appointed_by: The nation that appointed the officer.
     """
-    nation: str
+    nation: aionationstates.Nation
     office: str
     authority: Authority
     appointed_at: datetime.datetime
     appointed_by: str
 
     def __init__(self, elem):
-        self.nation = elem.find('NATION').text
+        self.nation = aionationstates.Nation(elem.find('NATION').text)
         self.office = elem.findtext('OFFICE')
         self.authority = Authority._from_ns(elem.find('AUTHORITY').text)
         self.appointed_at = timestamp(elem.find('TIME').text)
@@ -684,7 +685,7 @@ class Post:
     """
     id: int
     timestamp: datetime.datetime
-    author: str
+    author: aionationstates.Nation
     status: PostStatus
     text: str
     likers: List[str]

@@ -10,6 +10,7 @@ from aionationstates.shards import Census
 # Needed for type annotations
 import datetime
 from typing import Optional, List
+import aionationstates
 
 
 class Region(Census, Session):
@@ -77,10 +78,11 @@ class Region(Census, Session):
         return timestamp(root.find('FOUNDEDTIME'))
 
     @api_query('nations')
-    async def nations(self, root) -> List[str]:
+    async def nations(self, root) -> List[aionationstates.Nation]:
         """All the nations in the region."""
         text = root.find('NATIONS').text
-        return text.split(':') if text else []
+        return ([aionationstates.Nation(n) for n in text.split(':')]
+                if text else [])
 
     @api_query('embassies')
     async def embassies(self, root) -> Embassies:
@@ -93,14 +95,14 @@ class Region(Census, Session):
         return EmbassyPostingRights._from_ns(root.find('EMBASSYRMB').text)
 
     @api_query('delegate')
-    async def delegate(self, root) -> Optional[str]:
+    async def delegate(self, root) -> Optional[aionationstates.Nation]:
         """Regional World Assembly Delegate.  ``None`` if the region
         has no delegate.
         """
         nation = root.find('DELEGATE').text
         if nation == '0':
             return None
-        return nation
+        return aionationstates.Nation(nation)
 
     @api_query('delegateauth')
     async def delegateauth(self, root) -> Authority:
@@ -110,7 +112,7 @@ class Region(Census, Session):
         return Authority._from_ns(root.find('DELEGATEAUTH').text)
 
     @api_query('founder')
-    async def founder(self, root) -> Optional[str]:
+    async def founder(self, root) -> Optional[aionationstates.Nation]:
         """Regional Founder.  Returned even if the nation has ceased to
         exist.  ``None`` if the region is Game-Created and doesn't have
         a founder.
@@ -118,7 +120,7 @@ class Region(Census, Session):
         nation = root.find('FOUNDER').text
         if nation == '0':
             return None
-        return nation
+        return aionationstates.Nation(nation)
 
     @api_query('founderauth')
     async def founderauth(self, root) -> Authority:

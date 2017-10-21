@@ -108,6 +108,7 @@ def api_query(*q, **params):
         with suppress(KeyError):
             wrapper.__annotations__['return'] = \
                 ApiQuery[wrapper.__annotations__['return']]
+            wrapper.__globals__.update(func.__globals__)  # string type hints
         return wrapper
     return decorator
 
