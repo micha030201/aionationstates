@@ -25,7 +25,7 @@ setup(
 
     url='https://github.com/micha030201/aionationstates',
 
-    author='Micha',
+    author='Михаил Лебедев',
     author_email='micha030201@gmail.com',
 
     license='GPLv3',
