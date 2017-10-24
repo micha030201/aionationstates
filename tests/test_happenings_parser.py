@@ -20,7 +20,7 @@ def happening_elem(request):
 def test_move(happening_elem):
     t = '@@testlandia@@ relocated from %%the_east_pacific%% to %%the_north_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.MoveHappening
+    assert type(h) == happenings.Move
     assert h.nation.id == 'testlandia'
     assert h.region_from.id == 'the_east_pacific'
     assert h.region_to.id == 'the_north_pacific'
@@ -29,7 +29,7 @@ def test_move(happening_elem):
 def test_founding(happening_elem):
     t = '@@testlandia@@ was founded in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.FoundingHappening
+    assert type(h) == happenings.Founding
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -37,7 +37,7 @@ def test_founding(happening_elem):
 def test_cte(happening_elem):
     t = '@@testlandia@@ ceased to exist in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.CTEHappening
+    assert type(h) == happenings.CTE
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -45,7 +45,7 @@ def test_cte(happening_elem):
 def test_legislation(happening_elem):
     t = 'Following new legislation in @@testlandia@@, euthanasia is legal.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.LegislationHappening
+    assert type(h) == happenings.Legislation
     assert h.nation.id == 'testlandia'
     assert h.effect_line == 'euthanasia is legal'
 
@@ -53,22 +53,23 @@ def test_legislation(happening_elem):
 def test_flag(happening_elem):
     t = '@@testlandia@@ altered its national flag.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.FlagChangeHappening
+    assert type(h) == happenings.FlagChange
     assert h.nation.id == 'testlandia'
 
 
-def test_legislation(happening_elem):
+def test_wa_category(happening_elem):
     t = '@@testlandia@@ was reclassified from "Left-Leaning College State" to "Inoffensive Centrist Democracy".'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.Wa
+    assert type(h) == happenings.CategoryChange
     assert h.nation.id == 'testlandia'
-    assert h.effect_line == 'euthanasia is legal'
+    assert h.category_before == 'Left-Leaning College State'
+    assert h.category_after == 'Inoffensive Centrist Democracy'
 
 
 def test_settings(happening_elem):
     t = '@@testlandia@@ changed its national motto to "Test arhgHsefv".'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.SettingsChangeHappening
+    assert type(h) == happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': 'Test arhgHsefv'}
 
@@ -78,7 +79,7 @@ def test_settings_multiple(happening_elem):
          ' its demonym adjective to "qwdqsIO ni",'
          ' and its demonym plural to "ubuUuu ju".')
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.SettingsChangeHappening
+    assert type(h) == happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {
         'currency': 'wef erkjf',
@@ -90,6 +91,6 @@ def test_settings_multiple(happening_elem):
 def test_settings_encoding_issues(happening_elem):
     t = '@@testlandia@@ changed its national motto to "&#135;&#135;&#135;&#135;&#135;&#135;".'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.SettingsChangeHappening
+    assert type(h) == happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': '‡‡‡‡‡‡‡‡‡'}
