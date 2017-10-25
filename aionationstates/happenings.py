@@ -45,7 +45,7 @@ class UnrecognizedHappening:
 
 
 class Move(UnrecognizedHappening):
-    """A happening of a nation moving regions."""
+    """A nation moving regions."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -59,7 +59,7 @@ class Move(UnrecognizedHappening):
 
 
 class Founding(UnrecognizedHappening):
-    """A happening of a nation being founded."""
+    """A nation being founded."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -71,7 +71,7 @@ class Founding(UnrecognizedHappening):
 
 
 class CTE(UnrecognizedHappening):
-    """A happening of a nation ceasing to exist."""
+    """A nation ceasing to exist."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -83,7 +83,7 @@ class CTE(UnrecognizedHappening):
 
 
 class Legislation(UnrecognizedHappening):
-    """A happening of a nation answering an issue."""
+    """A nation answering an issue."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -96,7 +96,7 @@ class Legislation(UnrecognizedHappening):
 
 
 class FlagChange(UnrecognizedHappening):
-    """A happening of a nation altering its flag."""
+    """A nation altering its flag."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -107,7 +107,7 @@ class FlagChange(UnrecognizedHappening):
 
 
 class SettingsChange(UnrecognizedHappening):
-    """A happening of a nation modifying its customizeable fields."""
+    """A nation modifying its customizeable fields."""
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -130,7 +130,10 @@ class SettingsChange(UnrecognizedHappening):
 
 
 class DispatchPublish(UnrecognizedHappening):
-    """A dispatch being published."""
+    """A dispatch being published.
+
+    In case you're wondering, deleting a dispatch doesn't produce a happening.
+    """
 
     def __init__(self, elem):
         super().__init__(elem)
@@ -147,6 +150,7 @@ class DispatchPublish(UnrecognizedHappening):
         self.subcategory = match.group(5)
 
     def dispatch(self):
+        """Request the full dispatch."""
         return aionationstates.world.dispatch(self.dispatch_id)
 
 
@@ -168,4 +172,3 @@ def process(elem):
         return DispatchPublish(elem)
     # TODO logging
     return UnrecognizedHappening(elem)
-
