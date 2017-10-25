@@ -129,6 +129,28 @@ class SettingsChange(UnrecognizedHappening):
             self.changes[match.group(1)] = value
 
 
+class DispatchPublish(UnrecognizedHappening):
+    """A dispatch being published."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            r'@@(.+?)@@ published "<a href="page=dispatch/id=(.+?)">(.+?)</a>" \((.+?): (.+?)\).',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.dispatch_id = int(match.group(2))
+        self.title = unscramble_encoding(html.unescape(match.group(3)))
+        self.category = match.group(4)
+        self.subcategory = match.group(5)
+
+    def dispatch(self):
+        return aionationstates.world.dispatch(self.dispatch_id)
+
+
+
 def process(elem):
     with suppress(ValueError):
         return Move(elem)
@@ -142,6 +164,8 @@ def process(elem):
         return FlagChange(elem)
     with suppress(ValueError):
         return SettingsChange(elem)
+    with suppress(ValueError):
+        return DispatchPublish(elem)
     # TODO logging
     return UnrecognizedHappening(elem)
 
