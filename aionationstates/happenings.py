@@ -132,7 +132,7 @@ class SettingsChange(UnrecognizedHappening):
             self.changes[match.group(1)] = value
 
 
-class DispatchPublish(UnrecognizedHappening):
+class DispatchPublication(UnrecognizedHappening):
     """A dispatch being published.
 
     In case you're wondering, deleting a dispatch doesn't produce a happening.
@@ -263,7 +263,7 @@ def process(elem):
     with suppress(ValueError):
         return SettingsChange(elem)
     with suppress(ValueError):
-        return DispatchPublish(elem)
+        return DispatchPublication(elem)
     with suppress(ValueError):
         return WorldAssemblyApplication(elem)
     with suppress(ValueError):

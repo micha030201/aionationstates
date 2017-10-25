@@ -106,7 +106,7 @@ def test_banner_create(happening_elem):
 def test_dispatch_publish(happening_elem):
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">Testington</a>" (Factbook: Military).'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.DispatchPublish
+    assert type(h) == happenings.DispatchPublication
     assert h.nation.id == 'testlandia'
     assert h.title == 'Testington'
     assert h.category == 'Factbook'
