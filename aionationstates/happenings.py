@@ -247,6 +247,22 @@ class DelegateChange(UnrecognizedHappening):
         raise ValueError
 
 
+class CategoryChange(UnrecognizedHappening):
+    """A nation being reclassified to a different WA Category."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            '@@(.+?)@@ was reclassified from "(.+?)" to "(.+?)".',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.category_before = match.group(2)
+        self.category_after = match.group(3)
+
+
 
 def process(elem):
     possible_classes = (
@@ -261,6 +277,7 @@ def process(elem):
         WorldAssemblyAdmission,
         WorldAssemblyResignation,
         DelegateChange,
+        CategoryChange,
     )
     for cls in possible_classes:
         with suppress(ValueError):
