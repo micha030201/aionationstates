@@ -118,7 +118,7 @@ def test_dispatch_publish(happening_elem):
 def test_dispatch_publish_unicode(happening_elem):
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">&#135;&#135;&#135;&#135;&#135;&#135; &lt;&gt;& &#93;&#93;&gt;"&quot;</a>" (Factbook: Military).'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.DispatchPublish
+    assert type(h) == happenings.DispatchPublication
     assert h.nation.id == 'testlandia'
     assert h.title == '‡‡‡‡‡‡‡‡‡ <>& ]]>""'
     assert h.category == 'Factbook'
