@@ -113,3 +113,60 @@ def test_dispatch_publish(happening_elem):
     assert h.subcategory == 'Military'
     assert h.dispatch_id == 100000
     #assert h.dispatch == TODO should be an ApiQuery
+
+
+def test_dispatch_publish_unicode(happening_elem):
+    t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">&#135;&#135;&#135;&#135;&#135;&#135; &lt;&gt;& &#93;&#93;&gt;"&quot;</a>" (Factbook: Military).'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.DispatchPublish
+    assert h.nation.id == 'testlandia'
+    assert h.title == '‡‡‡‡‡‡‡‡‡ <>& ]]>""'
+    assert h.category == 'Factbook'
+    assert h.subcategory == 'Military'
+    assert h.dispatch_id == 100000
+
+
+def test_wa_apply(happening_elem):
+    t = '@@testlandia@@ applied to join the World Assembly.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.WorldAssemblyApplication
+    assert h.nation.id == 'testlandia'
+
+
+def test_wa_admit(happening_elem):
+    t = '@@testlandia@@ was admitted to the World Assembly.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.WorldAssemblyAdmission
+    assert h.nation.id == 'testlandia'
+
+
+def test_wa_resign(happening_elem):
+    t = '@@testlandia@@ resigned from the World Assembly.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.WorldAssemblyResignation
+    assert h.nation.id == 'testlandia'
+
+
+def test_delegate_remove(happening_elem):
+    t = '@@testlandia@@ lost WA Delegate status in %%the_east_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.DelegateRemoval
+    assert h.old_delegate.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+
+
+def test_delegate_install(happening_elem):
+    t = '@@testlandia@@ became WA Delegate of %%the_east_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.DelegateInstallation
+    assert h.new_delegate.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+
+
+def test_delegate_change(happening_elem):
+    t = '@@testlandia@@ seized the position of %%the_east_pacific%% WA Delegate from @@aidnaltset@@.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.DelegateChange
+    assert h.new_delegate.id == 'testlandia'
+    assert h.old_delegate.id == 'aidnaltset'
+    assert h.region.id == 'the_east_pacific'
