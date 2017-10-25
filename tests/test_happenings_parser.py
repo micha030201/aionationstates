@@ -94,3 +94,22 @@ def test_settings_encoding_issues(happening_elem):
     assert type(h) == happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': '‡‡‡‡‡‡‡‡‡'}
+
+
+def test_banner_create(happening_elem):
+    t = '@@testlandia@@ created a custom banner.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.BannerCreate
+    assert h.nation.id == 'testlandia'
+
+
+def test_dispatch_publish(happening_elem):
+    t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">Testington</a>" (Factbook: Military).'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.DispatchPublish
+    assert h.nation.id == 'testlandia'
+    assert h.title == 'Testington'
+    assert h.category == 'Factbook'
+    assert h.subcategory == 'Military'
+    assert h.dispatch_id == 100000
+    #assert h.dispatch == TODO should be an ApiQuery
