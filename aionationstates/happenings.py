@@ -249,28 +249,21 @@ class DelegateChange(UnrecognizedHappening):
 
 
 def process(elem):
-    # TODO put that in a loop somehow jeez
-    with suppress(ValueError):
-        return Move(elem)
-    with suppress(ValueError):
-        return Founding(elem)
-    with suppress(ValueError):
-        return CTE(elem)
-    with suppress(ValueError):
-        return Legislation(elem)
-    with suppress(ValueError):
-        return FlagChange(elem)
-    with suppress(ValueError):
-        return SettingsChange(elem)
-    with suppress(ValueError):
-        return DispatchPublication(elem)
-    with suppress(ValueError):
-        return WorldAssemblyApplication(elem)
-    with suppress(ValueError):
-        return WorldAssemblyAdmission(elem)
-    with suppress(ValueError):
-        return WorldAssemblyResignation(elem)
-    with suppress(ValueError):
-        return DelegateChange(elem)
+    possible_classes = (
+        Move,
+        Founding,
+        CTE,
+        Legislation,
+        FlagChange,
+        SettingsChange,
+        DispatchPublication,
+        WorldAssemblyApplication,
+        WorldAssemblyAdmission,
+        WorldAssemblyResignation,
+        DelegateChange,
+    )
+    for cls in possible_classes:
+        with suppress(ValueError):
+            return cls(elem)
     # TODO logging
     return UnrecognizedHappening(elem)
