@@ -32,6 +32,9 @@ class UnrecognizedHappening:
         text: The happening text.
     """
 
+    # XXX Having this code run every time we *try* to parse a happening, not
+    # just once per a *successful* parsing operation, MAY be a performance
+    # concern.  Some benchmarking is required.
     def __init__(self, elem):
         try:
             self.id = int(elem.get('id'))
@@ -154,8 +157,99 @@ class DispatchPublish(UnrecognizedHappening):
         return aionationstates.world.dispatch(self.dispatch_id)
 
 
+class WorldAssemblyApplication(UnrecognizedHappening):
+    """A nation applying to join the World Assembly."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            '@@(.+?)@@ applied to join the World Assembly.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+
+
+class WorldAssemblyAdmission(UnrecognizedHappening):
+    """A nation being admitted to the World Assembly."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            '@@(.+?)@@ was admitted to the World Assembly.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+
+
+class WorldAssemblyResignation(UnrecognizedHappening):
+    """A nation resigning from World Assembly."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            '@@(.+?)@@ resigned from the World Assembly.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+
+
+class DelegateChange(UnrecognizedHappening):
+    """A region changing World Assembly Delegates.
+
+    Note that NationStates spreads this out to three distinct happenings:
+        - delegates changing;
+        - a nation taking the free delegate position; and
+        - a delegate being removed, leaving the position empty.
+
+    As I believe this to be superfluous, this class represents all three.
+    In case either the old of new delegate is missing, the corresponding
+    attribute will ne `None`.
+    """
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match(
+            '@@(.+?)@@ seized the position of %%(.+?)%% WA Delegate from @@(.+?)@@.',
+            self.text
+        )
+        if match:
+            self.new_delegate = aionationstates.Nation(match.group(1))
+            self.region = aionationstates.Region(match.group(2))
+            self.old_delegate = aionationstates.Nation(match.group(3))
+            return
+
+        match = re.match(
+            '@@(.+?)@@ became WA Delegate of %%(.+?)%%.',
+            self.text
+        )
+        if match:
+            self.new_delegate = aionationstates.Nation(match.group(1))
+            self.region = aionationstates.Region(match.group(2))
+            self.old_delegate = None
+            return
+
+        match = re.match(
+            '@@(.+?)@@ lost WA Delegate status in %%(.+?)%%.',
+            self.text
+        )
+        if match:
+            self.old_delegate = aionationstates.Nation(match.group(1))
+            self.region = aionationstates.Region(match.group(2))
+            self.new_delegate = None
+            return
+
+        raise ValueError
+
+
 
 def process(elem):
+    # TODO put that in a loop somehow jeez
     with suppress(ValueError):
         return Move(elem)
     with suppress(ValueError):
@@ -170,5 +264,13 @@ def process(elem):
         return SettingsChange(elem)
     with suppress(ValueError):
         return DispatchPublish(elem)
+    with suppress(ValueError):
+        return WorldAssemblyApplication(elem)
+    with suppress(ValueError):
+        return WorldAssemblyAdmission(elem)
+    with suppress(ValueError):
+        return WorldAssemblyResignation(elem)
+    with suppress(ValueError):
+        return DelegateChange(elem)
     # TODO logging
     return UnrecognizedHappening(elem)
