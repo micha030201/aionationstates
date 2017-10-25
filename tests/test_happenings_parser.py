@@ -150,7 +150,8 @@ def test_wa_resign(happening_elem):
 def test_delegate_remove(happening_elem):
     t = '@@testlandia@@ lost WA Delegate status in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.DelegateRemoval
+    assert type(h) == happenings.DelegateChange
+    assert h.new_delegate is None
     assert h.old_delegate.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -158,8 +159,9 @@ def test_delegate_remove(happening_elem):
 def test_delegate_install(happening_elem):
     t = '@@testlandia@@ became WA Delegate of %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.DelegateInstallation
+    assert type(h) == happenings.DelegateChange
     assert h.new_delegate.id == 'testlandia'
+    assert h.old_delegate is None
     assert h.region.id == 'the_east_pacific'
 
 
