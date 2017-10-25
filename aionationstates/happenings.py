@@ -263,6 +263,17 @@ class CategoryChange(UnrecognizedHappening):
         self.category_after = match.group(3)
 
 
+class BannerCreation(UnrecognizedHappening):
+    """A nation creating a custom banner."""
+
+    def __init__(self, elem):
+        super().__init__(elem)
+        match = re.match('@@(.+?)@@ created a custom banner.', self.text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+
+
 
 def process(elem):
     possible_classes = (
@@ -278,6 +289,7 @@ def process(elem):
         WorldAssemblyResignation,
         DelegateChange,
         CategoryChange,
+        BannerCreation,
     )
     for cls in possible_classes:
         with suppress(ValueError):

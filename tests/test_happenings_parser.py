@@ -99,7 +99,7 @@ def test_settings_encoding_issues(happening_elem):
 def test_banner_create(happening_elem):
     t = '@@testlandia@@ created a custom banner.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.BannerCreate
+    assert type(h) == happenings.BannerCreation
     assert h.nation.id == 'testlandia'
 
 
