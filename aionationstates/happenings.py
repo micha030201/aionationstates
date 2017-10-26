@@ -32,16 +32,8 @@ class UnrecognizedHappening:
         text: The happening text.
     """
 
-    # XXX Having this code run every time we *try* to parse a happening, not
-    # just once per a *successful* parsing operation, MAY be a performance
-    # concern.  Some benchmarking is required.
-    def __init__(self, elem):
-        try:
-            self.id = int(elem.get('id'))
-        except TypeError:
-            self.id = None
-        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.text = elem.findtext('TEXT')
+    def __init__(self, params):
+        self.id, self.timestamp, self.text = params
 
     def __repr__(self):
         return f'<Happening #{self.id}>'
@@ -50,8 +42,8 @@ class UnrecognizedHappening:
 class Move(UnrecognizedHappening):
     """A nation moving regions."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             r'@@(.+?)@@ relocated from %%(.+?)%% to %%(.+?)%%', self.text)
         if not match:
@@ -64,8 +56,8 @@ class Move(UnrecognizedHappening):
 class Founding(UnrecognizedHappening):
     """A nation being founded."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match('@@(.+?)@@ was founded in %%(.+?)%%', self.text)
         if not match:
             raise ValueError
@@ -76,8 +68,8 @@ class Founding(UnrecognizedHappening):
 class CTE(UnrecognizedHappening):
     """A nation ceasing to exist."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match('@@(.+?)@@ ceased to exist in %%(.+?)%%', self.text)
         if not match:
             raise ValueError
@@ -88,8 +80,8 @@ class CTE(UnrecognizedHappening):
 class Legislation(UnrecognizedHappening):
     """A nation answering an issue."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             r'Following new legislation in @@(.+?)@@, (.+)\.', self.text)
         if not match:
@@ -101,8 +93,8 @@ class Legislation(UnrecognizedHappening):
 class FlagChange(UnrecognizedHappening):
     """A nation altering its flag."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match('@@(.+?)@@ altered its national flag', self.text)
         if not match:
             raise ValueError
@@ -112,8 +104,8 @@ class FlagChange(UnrecognizedHappening):
 class SettingsChange(UnrecognizedHappening):
     """A nation modifying its customizeable fields."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ changed its national', self.text)
         if not match:
@@ -138,8 +130,8 @@ class DispatchPublication(UnrecognizedHappening):
     In case you're wondering, deleting a dispatch doesn't produce a happening.
     """
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             r'@@(.+?)@@ published "<a href="page=dispatch/id=(.+?)">(.+?)</a>" \((.+?): (.+?)\).',
             self.text
@@ -160,8 +152,8 @@ class DispatchPublication(UnrecognizedHappening):
 class WorldAssemblyApplication(UnrecognizedHappening):
     """A nation applying to join the World Assembly."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ applied to join the World Assembly.',
             self.text
@@ -174,8 +166,8 @@ class WorldAssemblyApplication(UnrecognizedHappening):
 class WorldAssemblyAdmission(UnrecognizedHappening):
     """A nation being admitted to the World Assembly."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ was admitted to the World Assembly.',
             self.text
@@ -188,8 +180,8 @@ class WorldAssemblyAdmission(UnrecognizedHappening):
 class WorldAssemblyResignation(UnrecognizedHappening):
     """A nation resigning from World Assembly."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ resigned from the World Assembly.',
             self.text
@@ -212,8 +204,8 @@ class DelegateChange(UnrecognizedHappening):
     attribute will ne `None`.
     """
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ seized the position of %%(.+?)%% WA Delegate from @@(.+?)@@.',
             self.text
@@ -250,8 +242,8 @@ class DelegateChange(UnrecognizedHappening):
 class CategoryChange(UnrecognizedHappening):
     """A nation being reclassified to a different WA Category."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match(
             '@@(.+?)@@ was reclassified from "(.+?)" to "(.+?)".',
             self.text
@@ -266,8 +258,8 @@ class CategoryChange(UnrecognizedHappening):
 class BannerCreation(UnrecognizedHappening):
     """A nation creating a custom banner."""
 
-    def __init__(self, elem):
-        super().__init__(elem)
+    def __init__(self, params):
+        super().__init__(params)
         match = re.match('@@(.+?)@@ created a custom banner.', self.text)
         if not match:
             raise ValueError
@@ -275,7 +267,16 @@ class BannerCreation(UnrecognizedHappening):
 
 
 
-def process(elem):
+def process(params):
+    # Call ElementTree methods only once, to get a bit of extra performance.
+    try:
+        params_id = int(params.get('id'))
+    except TypeError:
+        params_id = None
+    params_timestamp = timestamp(params.find('TIMESTAMP').text)
+    params_text = params.findtext('TEXT')
+    params = (params_id, params_timestamp, params_text)
+
     possible_classes = (
         Move,
         Founding,
@@ -293,6 +294,6 @@ def process(elem):
     )
     for cls in possible_classes:
         with suppress(ValueError):
-            return cls(elem)
+            return cls(params)
     # TODO logging
-    return UnrecognizedHappening(elem)
+    return UnrecognizedHappening(params)
