@@ -1,23 +1,18 @@
 import xml.etree.ElementTree as ET
 
-import pytest
-
 from aionationstates import happenings
 
 
-@pytest.fixture
-def happening_elem(request):
-    def create_elem(text):
-        return ET.fromstring(f"""
-            <EVENT id="172176017">
-                <TIMESTAMP>1508613622</TIMESTAMP>
-                <TEXT><![CDATA[{text}]]></TEXT>
-            </EVENT>
-        """)
-    return create_elem
+def happening_elem(text):
+    return ET.fromstring(f"""
+        <EVENT id="172176017">
+            <TIMESTAMP>1508613622</TIMESTAMP>
+            <TEXT><![CDATA[{text}]]></TEXT>
+        </EVENT>
+    """)
 
 
-def test_move(happening_elem):
+def test_move():
     t = '@@testlandia@@ relocated from %%the_east_pacific%% to %%the_north_pacific%%.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.Move
@@ -26,7 +21,7 @@ def test_move(happening_elem):
     assert h.region_to.id == 'the_north_pacific'
 
 
-def test_founding(happening_elem):
+def test_founding():
     t = '@@testlandia@@ was founded in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.Founding
@@ -34,7 +29,7 @@ def test_founding(happening_elem):
     assert h.region.id == 'the_east_pacific'
 
 
-def test_cte(happening_elem):
+def test_cte():
     t = '@@testlandia@@ ceased to exist in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.CTE
@@ -42,7 +37,7 @@ def test_cte(happening_elem):
     assert h.region.id == 'the_east_pacific'
 
 
-def test_legislation(happening_elem):
+def test_legislation():
     t = 'Following new legislation in @@testlandia@@, euthanasia is legal.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.Legislation
@@ -50,14 +45,14 @@ def test_legislation(happening_elem):
     assert h.effect_line == 'euthanasia is legal'
 
 
-def test_flag(happening_elem):
+def test_flag():
     t = '@@testlandia@@ altered its national flag.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.FlagChange
     assert h.nation.id == 'testlandia'
 
 
-def test_wa_category(happening_elem):
+def test_wa_category():
     t = '@@testlandia@@ was reclassified from "Left-Leaning College State" to "Inoffensive Centrist Democracy".'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.CategoryChange
@@ -66,7 +61,7 @@ def test_wa_category(happening_elem):
     assert h.category_after == 'Inoffensive Centrist Democracy'
 
 
-def test_settings(happening_elem):
+def test_settings():
     t = '@@testlandia@@ changed its national motto to "Test arhgHsefv".'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.SettingsChange
@@ -74,7 +69,7 @@ def test_settings(happening_elem):
     assert h.changes == {'motto': 'Test arhgHsefv'}
 
 
-def test_settings_multiple(happening_elem):
+def test_settings_multiple():
     t = ('@@testlandia@@ changed its national currency to "wef erkjf",'
          ' its demonym adjective to "qwdqsIO ni",'
          ' and its demonym plural to "ubuUuu ju".')
@@ -88,7 +83,7 @@ def test_settings_multiple(happening_elem):
     }
 
 
-def test_settings_encoding_issues(happening_elem):
+def test_settings_encoding_issues():
     t = '@@testlandia@@ changed its national motto to "&#135;&#135;&#135;&#135;&#135;&#135;".'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.SettingsChange
@@ -96,14 +91,14 @@ def test_settings_encoding_issues(happening_elem):
     assert h.changes == {'motto': '‡‡‡‡‡‡‡‡‡'}
 
 
-def test_banner_create(happening_elem):
+def test_banner_create():
     t = '@@testlandia@@ created a custom banner.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.BannerCreation
     assert h.nation.id == 'testlandia'
 
 
-def test_dispatch_publish(happening_elem):
+def test_dispatch_publish():
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">Testington</a>" (Factbook: Military).'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.DispatchPublication
@@ -115,7 +110,7 @@ def test_dispatch_publish(happening_elem):
     #assert h.dispatch == TODO should be an ApiQuery
 
 
-def test_dispatch_publish_unicode(happening_elem):
+def test_dispatch_publish_unicode():
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">&#135;&#135;&#135;&#135;&#135;&#135; &lt;&gt;& &#93;&#93;&gt;"&quot;</a>" (Factbook: Military).'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.DispatchPublication
@@ -126,28 +121,28 @@ def test_dispatch_publish_unicode(happening_elem):
     assert h.dispatch_id == 100000
 
 
-def test_wa_apply(happening_elem):
+def test_wa_apply():
     t = '@@testlandia@@ applied to join the World Assembly.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.WorldAssemblyApplication
     assert h.nation.id == 'testlandia'
 
 
-def test_wa_admit(happening_elem):
+def test_wa_admit():
     t = '@@testlandia@@ was admitted to the World Assembly.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.WorldAssemblyAdmission
     assert h.nation.id == 'testlandia'
 
 
-def test_wa_resign(happening_elem):
+def test_wa_resign():
     t = '@@testlandia@@ resigned from the World Assembly.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.WorldAssemblyResignation
     assert h.nation.id == 'testlandia'
 
 
-def test_delegate_remove(happening_elem):
+def test_delegate_remove():
     t = '@@testlandia@@ lost WA Delegate status in %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.DelegateChange
@@ -156,7 +151,7 @@ def test_delegate_remove(happening_elem):
     assert h.region.id == 'the_east_pacific'
 
 
-def test_delegate_install(happening_elem):
+def test_delegate_install():
     t = '@@testlandia@@ became WA Delegate of %%the_east_pacific%%.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.DelegateChange
@@ -165,7 +160,7 @@ def test_delegate_install(happening_elem):
     assert h.region.id == 'the_east_pacific'
 
 
-def test_delegate_change(happening_elem):
+def test_delegate_change():
     t = '@@testlandia@@ seized the position of %%the_east_pacific%% WA Delegate from @@aidnaltset@@.'
     h = happenings.process(happening_elem(t))
     assert type(h) == happenings.DelegateChange
