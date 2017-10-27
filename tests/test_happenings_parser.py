@@ -181,7 +181,7 @@ def test_embassy_propose():
 def test_embassy_agree():
     t = '@@testlandia@@ agreed to construct embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process(happening_elem(t))
-    assert type(h) == happenings.EmbassyConstructionAgreement
+    assert type(h) == happenings.EmbassyConstructionConfirmation
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'

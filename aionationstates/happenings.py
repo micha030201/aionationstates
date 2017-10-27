@@ -266,6 +266,191 @@ class BannerCreation(UnrecognizedHappening):
         self.nation = aionationstates.Nation(match.group(1))
 
 
+class EmbassyConstructionRequest(UnrecognizedHappening):
+    """A nation proposing construction of embassies between two regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation performing the action.
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening, but the
+        first one appears to be one the request was sent from.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ proposed constructing embassies between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.regions = (
+            aionationstates.Region(match.group(2)),
+            aionationstates.Region(match.group(3))
+        )
+
+
+class EmbassyConstructionConfirmation(UnrecognizedHappening):
+    """A nation accepting a request to construct embassies between two regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation performing the action.
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening, but the
+        first one appears to be one the request was accepted from.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ agreed to construct embassies between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.regions = (
+            aionationstates.Region(match.group(2)),
+            aionationstates.Region(match.group(3))
+        )
+
+
+class EmbassyConstructionRequestWithdrawal(UnrecognizedHappening):
+    """A nation withdrawing a request to construct embassies between two regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation performing the action.
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ withdrew a request for embassies between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.regions = (
+            aionationstates.Region(match.group(2)),
+            aionationstates.Region(match.group(3))
+        )
+
+
+class EmbassyConstructionAbortion(UnrecognizedHappening):
+    """A nation aborting construction of embassies between two regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation performing the action.
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ aborted construction of embassies between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.regions = (
+            aionationstates.Region(match.group(2)),
+            aionationstates.Region(match.group(3))
+        )
+
+
+class EmbassyClosureOrder(UnrecognizedHappening):
+    """A nation ordering closure of embassies between two regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation performing the action.
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ ordered the closure of embassies between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.regions = (
+            aionationstates.Region(match.group(2)),
+            aionationstates.Region(match.group(3))
+        )
+
+
+class EmbassyEstablishment(UnrecognizedHappening):
+    """Embassy being established between two regions.
+
+    Attributes
+    ----------
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            'Embassy established between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.regions = (
+            aionationstates.Region(match.group(1)),
+            aionationstates.Region(match.group(2))
+        )
+
+
+class EmbassyCancellation(UnrecognizedHappening):
+    """Embassy being cancelled between two regions.
+
+    Attributes
+    ----------
+    regions : tuple of two :class:`Region` objects
+        Regions involved in the embassy request.  The order is not
+        guaranteed, as it mimics the one from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            'Embassy cancelled between %%(.+?)%% and %%(.+?)%%.',
+            self.text
+        )
+        if not match:
+            raise ValueError
+        self.regions = (
+            aionationstates.Region(match.group(1)),
+            aionationstates.Region(match.group(2))
+        )
+
+
 
 def process(params):
     # Call ElementTree methods only once, to get a bit of extra performance.
@@ -291,6 +476,13 @@ def process(params):
         DelegateChange,
         CategoryChange,
         BannerCreation,
+        EmbassyConstructionRequest,
+        EmbassyConstructionConfirmation,
+        EmbassyConstructionRequestWithdrawal,
+        EmbassyConstructionAbortion,
+        EmbassyClosureOrder,
+        EmbassyEstablishment,
+        EmbassyCancellation,
     )
     for cls in possible_classes:
         with suppress(ValueError):
