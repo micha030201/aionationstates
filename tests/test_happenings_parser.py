@@ -167,3 +167,64 @@ def test_delegate_change():
     assert h.new_delegate.id == 'testlandia'
     assert h.old_delegate.id == 'aidnaltset'
     assert h.region.id == 'the_east_pacific'
+
+
+def test_embassy_propose():
+    t = '@@testlandia@@ proposed constructing embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyConstructionRequest
+    assert h.nation.id == 'testlandia'
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_agree():
+    t = '@@testlandia@@ agreed to construct embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyConstructionAgreement
+    assert h.nation.id == 'testlandia'
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_order_closure():
+    t = '@@testlandia@@ ordered the closure of embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyClosureOrder
+    assert h.nation.id == 'testlandia'
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_request_withdraw():
+    t = '@@testlandia@@ withdrew a request for embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyConstructionRequestWithdrawal
+    assert h.nation.id == 'testlandia'
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_abort_construction():
+    t = '@@testlandia@@ aborted construction of embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyConstructionAbortion
+    assert h.nation.id == 'testlandia'
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_established():
+    t = 'Embassy established between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyEstablishment
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_embassy_cancelled():
+    t = 'Embassy cancelled between %%the_east_pacific%% and %%the_north_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EmbassyCancellation
+    assert h.regions[0].id == 'the_east_pacific'
+    assert h.regions[1].id == 'the_north_pacific'
