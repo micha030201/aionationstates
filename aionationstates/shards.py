@@ -4,15 +4,12 @@ with Session, otherwise useless."""
 # TODO: happenings (region history as well?), censusranks, wabadges
 
 from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
+from aionationstates.happenings import UnrecognizedHappening
 from aionationstates.session import api_query
-
-# Needed for type annotations
-from typing import List
-from aionationstates.session import ApiQuery
 
 
 class Census:
-    def census(self, *scales: int) -> ApiQuery[List[CensusScaleCurrent]]:
+    def census(self, *scales):
         """Current World Census data.
 
         By default returns data on today's featured World Census
@@ -20,8 +17,14 @@ class Census:
         order to request data on all scales at once you can do
         ``x.census(*range(81))``.
 
-        Parameters:
-            scales: World Census scales, integers between 0 and 80.
+        Parameters
+        ----------
+        scales : int
+            World Census scales, integers between 0 and 80.
+
+        Returns
+        -------
+        :class:`ApiQuery` of a list of :class:`CensusScaleCurrent` objects
         """
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scales:
@@ -35,8 +38,7 @@ class Census:
         return result(self)
 
 
-    def censushistory(self, *scales: int
-                      ) -> ApiQuery[List[CensusScaleHistory]]:
+    def censushistory(self, *scales):
         """Historical World Census data.
 
         Was split into its own method for the sake of simplicity and
@@ -50,8 +52,14 @@ class Census:
         Returns data for the entire length of history NationStates
         stores.  There is no way to override that.
 
-        Parameters:
-            scales: World Census scales, integers between 0 and 80.
+        Parameters
+        ----------
+        scales : int
+            World Census scales, integers between 0 and 80.
+
+        Returns
+        -------
+        :class:`ApiQuery` of a list of :class:`CensusScaleHistory` objects
         """
         params = {'mode': 'history'}
         if scales:
@@ -64,4 +72,19 @@ class Census:
             ]
 
 
+class Happenings:
+    @api_query('happenings')
+    async def happenings(self, root):
+        """Get the happenings of the nation or region, archived on its
+        page.  Newest to oldest.
 
+        Happenings are not parsed because they are different from
+        the ones in the normal feed and I see no practical use-cases
+        for having these parsed as well.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of \
+        :class:`happenings.UnrecognizedHappening` objects
+        """
+        return [UnrecognizedHappening(elem) for elem in root.find('HAPPENINGS')]
