@@ -451,6 +451,43 @@ class EmbassyCancellation(UnrecognizedHappening):
         )
 
 
+class Endorsement(UnrecognizedHappening):
+    """A nation endorsing another nation.
+
+    Attributes
+    ----------
+    endorser : :class:`Nation`
+    endorsee : :class:`Nation`
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match('@@(.+?)@@ endorsed @@(.+?)@@', self.text)
+        if not match:
+            raise ValueError
+        self.endorser = aionationstates.Nation(match.group(1))
+        self.endorsee = aionationstates.Nation(match.group(2))
+
+
+class EndorsementWithdrawal(UnrecognizedHappening):
+    """A nation withdrawing its endorsement of another nation.
+
+    Attributes
+    ----------
+    endorser : :class:`Nation`
+    endorsee : :class:`Nation`
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ withdrew its endorsement from @@(.+?)@@', self.text)
+        if not match:
+            raise ValueError
+        self.endorser = aionationstates.Nation(match.group(1))
+        self.endorsee = aionationstates.Nation(match.group(2))
+
+
 
 def process(params):
     # Call ElementTree methods only once, to get a bit of extra performance.
@@ -483,6 +520,8 @@ def process(params):
         EmbassyClosureOrder,
         EmbassyEstablishment,
         EmbassyCancellation,
+        Endorsement,
+        EndorsementWithdrawal,
     )
     for cls in possible_classes:
         with suppress(ValueError):
