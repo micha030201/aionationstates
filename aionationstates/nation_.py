@@ -3,21 +3,14 @@ import html
 
 from aionationstates.utils import normalize, timestamp, unscramble_encoding
 from aionationstates.types import (
-    Freedom, FreedomScores, Govt, Sectors, Zombie, Dispatch,
-    ArchivedHappening)
+    Freedom, FreedomScores, Govt, Sectors, Dispatch)
 from aionationstates.session import Session, api_query
-from aionationstates.shards import Census
+from aionationstates.shards import NationRegion
 from aionationstates.ns_to_human import banner
-
-# Needed for type annotations
-import datetime
-from typing import Dict, List
 import aionationstates
-from aionationstates.ns_to_human import Banner
-from aionationstates.session import ApiQuery
 
 
-class Nation(Census, Session):
+class Nation(NationRegion, Session):
     """A class to interact with the NationStates Nation public API.
 
     Shards absent (incomplete):
@@ -31,14 +24,15 @@ class Nation(Census, Session):
       and 74 respectively.  The gdp shard has been kept, as it appears
       to be slightly different from scale 76.
 
-    Attributes:
-        id: The defining characteristic of a nation, its
-            normalized name.  No two nations share the same id, and no
-            one id is shared by multiple nations.
+    Attributes
+    ----------
+    id : str
+        The defining characteristic of a nation, its normalized name.
+        No two nations share the same id, and no one id is shared by
+        multiple nations.
     """
-    id: str
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str):
         self.id = normalize(name)
 
     def _call_api(self, params, **kwargs):
@@ -47,139 +41,230 @@ class Nation(Census, Session):
 
 
     @property
-    def url(self) -> str:
-        """URL for the nation."""
+    def url(self):
+        """str: URL of the nation."""
         return f'https://www.nationstates.net/nation={self.id}'
 
     @api_query('name')
-    async def name(self, root) -> str:
-        """Name of the nation, for example 'Testlandia'."""
+    async def name(self, root):
+        """Name of the nation, for example 'Testlandia'.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('NAME').text
 
     @api_query('type')
-    async def type(self, root) -> str:
-        """Type of the nation, for example 'Hive Mind'."""
+    async def type(self, root):
+        """Type of the nation, for example 'Hive Mind'.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('TYPE').text
 
     @api_query('fullname')
-    async def fullname(self, root) -> str:
+    async def fullname(self, root):
         """Full name of the nation, for example 'The Hive Mind of
         Testlandia'.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('FULLNAME').text
 
     @api_query('motto')
-    async def motto(self, root) -> str:
-        """Motto of the nation."""
+    async def motto(self, root):
+        """Motto of the nation.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return unscramble_encoding(html.unescape(root.find('MOTTO').text))
 
     @api_query('category')
-    async def category(self, root) -> str:
-        """Nation's World Assembly Category."""
+    async def category(self, root):
+        """Nation's World Assembly Category.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('CATEGORY').text
 
     @api_query('region')
-    async def region(self, root) -> aionationstates.Region:
-        """Region in which the nation resides."""
+    async def region(self, root):
+        """Region in which the nation resides.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Region`
+        """
         return aionationstates.Region(root.find('REGION').text)
 
     @api_query('animal')
-    async def animal(self, root) -> str:
-        """Nation's national animal."""
+    async def animal(self, root):
+        """Nation's national animal.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('ANIMAL').text
 
     @api_query('currency')
-    async def currency(self, root) -> str:
-        """Nation's national currency."""
+    async def currency(self, root):
+        """Nation's national currency.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('CURRENCY').text
 
     @api_query('demonym')
-    async def demonym(self, root) -> str:
+    async def demonym(self, root):
         """Nation's demonym, as an adjective.
 
         Example: Testlandish, as in 'I'm proud to be Testlandish.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('DEMONYM').text
 
     @api_query('demonym2')
-    async def demonym2(self, root) -> str:
+    async def demonym2(self, root):
         """Nation's demonym, as a noun.
 
         Example: Testlandian, as in 'I'm a proud Testlandian.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('DEMONYM2').text
 
     @api_query('demonym2plural')
-    async def demonym2plural(self, root) -> str:
+    async def demonym2plural(self, root):
         """Plural of the nation's noun demonym.
 
         Example: Testlandians, as in 'Here come the Testlandians!'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('DEMONYM2PLURAL').text
 
     @api_query('flag')
-    async def flag(self, root) -> str:
-        """URL of the nation's flag."""
+    async def flag(self, root):
+        """URL of the nation's flag.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('FLAG').text
 
     @api_query('majorindustry')
-    async def majorindustry(self, root) -> str:
-        """The industry prioritized by the nation."""
+    async def majorindustry(self, root):
+        """The industry prioritized by the nation.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('MAJORINDUSTRY').text
 
     @api_query('influence')
-    async def influence(self, root) -> str:
+    async def influence(self, root):
+        """An adjective describing nation's regional influence.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('INFLUENCE').text
 
     @api_query('leader')
-    async def leader(self, root) -> str:
+    async def leader(self, root):
         """Nation's leader.  Either set by the user or the default
         'Leader'.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('LEADER').text
 
     @api_query('capital')
-    async def capital(self, root) -> str:
+    async def capital(self, root):
         """Nation's capital. Either set by the user or the default
         '`name` City.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('CAPITAL').text
 
     @api_query('religion')
-    async def religion(self, root) -> str:
+    async def religion(self, root):
         """Nation's main religion.  Either set by the user or the
         default 'a major religion.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('RELIGION').text
 
     @api_query('admirable')
-    async def admirable(self, root) -> str:
+    async def admirable(self, root):
         """One of the nation's qualities, at random.
 
         Example: 'environmentally stunning'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('ADMIRABLE').text
 
     @api_query('animaltrait')
-    async def animaltrait(self, root) -> str:
+    async def animaltrait(self, root):
         """Short characteristic of the nation's national animal.
 
         Example: 'frolics freely in the nation's sparkling oceans'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('ANIMALTRAIT').text
 
     @api_query('crime')
-    async def crime(self, root) -> str:
+    async def crime(self, root):
         """A sentence describing the nation's crime levels.
 
         Example: 'Crime is totally unknown, thanks to a very
         well-funded police force and progressive social policies in
         education and welfare.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('CRIME').text
 
     @api_query('govtdesc')
-    async def govtdesc(self, root) -> str:
+    async def govtdesc(self, root):
         """A couple of sentences describing the nation's government.
 
         Example: 'It is difficult to tell where the omnipresent
@@ -187,11 +272,15 @@ class Nation(Census, Session):
         juggles the competing demands of Defense, Environment, and
         Healthcare. It meets to discuss matters of state in the
         capital city of Test City.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('GOVTDESC').text
 
     @api_query('industrydesc')
-    async def industrydesc(self, root) -> str:
+    async def industrydesc(self, root):
         """A couple of sentences describing the nation's economy,
         industry, and average income.
 
@@ -202,135 +291,209 @@ class Nation(Census, Session):
         industry, with major contributions from Book Publishing.
         Average income is 73,510 denarii, with the richest citizens
         earning 6.0 times as much as the poorest.'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('INDUSTRYDESC').text
 
     @api_query('notable')
-    async def notable(self, root) -> str:
+    async def notable(self, root):
         """A few of nation's peculiarities, at random.
 
         Example: 'museums and concert halls, multi-spousal wedding
         ceremonies, and devotion to social welfare'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('NOTABLE').text
 
     @api_query('sensibilities')
-    async def sensibilities(self, root) -> str:
+    async def sensibilities(self, root):
         """A couple of adjectives describing the nation's citizens.
 
         Example: 'compassionate, devout'
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('SENSIBILITIES').text
 
 
     @api_query('population')
-    async def population(self, root) -> int:
-        """Nation's population, in millions."""
+    async def population(self, root):
+        """Nation's population, in millions.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
+        """
         return int(root.find('POPULATION').text)
 
     @api_query('gdp')
-    async def gdp(self, root) -> int:
-        """Nation's gross domestic product."""
+    async def gdp(self, root):
+        """Nation's gross domestic product.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
+        """
         return int(root.find('GDP').text)
 
     @api_query('foundedtime')
-    async def founded(self, root) -> datetime.datetime:
+    async def founded(self, root):
         """When the nation was founded.
 
         ``1970-01-01 00:00`` for nations founded in Antiquity.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`
         """
         return timestamp(root.find('FOUNDEDTIME').text)
 
     @api_query('firstlogin')
-    async def firstlogin(self, root) -> datetime.datetime:
+    async def firstlogin(self, root):
         """When the nation was first logged into.
 
         ``1970-01-01 00:00`` for nations first logged into during
         Antiquity.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`
         """
         return timestamp(root.find('FIRSTLOGIN').text)
 
     @api_query('lastlogin')
-    async def lastlogin(self, root) -> datetime.datetime:
-        """When the nation was last logged into."""
+    async def lastlogin(self, root):
+        """When the nation was last logged into.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`
+        """
         return timestamp(root.find('LASTLOGIN').text)
 
     @api_query('wa')
-    async def wa(self, root) -> bool:
-        """Whether the nation is a member of the World Assembly or not."""
+    async def wa(self, root):
+        """Whether the nation is a member of the World Assembly or not.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of bool
+        """
         return root.find('UNSTATUS').text == 'WA Member'
 
     @api_query('freedom')
-    async def freedom(self, root) -> Freedom:
+    async def freedom(self, root):
         """Nation's `Freedoms`: three basic indicators of the nation's
         Civil Rights, Economy, and Political Freedom, as expressive
         adjectives.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Freedom`
         """
         return Freedom(root.find('FREEDOM'))
 
     @api_query('freedomscores')
-    async def freedomscores(self, root) -> FreedomScores:
+    async def freedomscores(self, root):
         """Nation's `Freedoms`: three basic indicators of the nation's
         Civil Rights, Economy, and Political Freedom, as percentages.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`FreedomScores`
         """
         return FreedomScores(root.find('FREEDOMSCORES'))
 
     @api_query('govt')
-    async def govt(self, root) -> Govt:
-        """Nation's government expenditure, as percentages."""
+    async def govt(self, root):
+        """Nation's government expenditure, as percentages.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Govt`
+        """
         return Govt(root.find('GOVT'))
 
     @api_query('deaths')
-    async def deaths(self, root) -> Dict[str, float]:
-        """Causes of death in the nation, as percentages."""
+    async def deaths(self, root):
+        """Causes of death in the nation, as percentages.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of dict with keys of str and values of float
+        """
         return {
             elem.get('type'): float(elem.text)
             for elem in root.find('DEATHS')
         }
 
     @api_query('endorsements')
-    async def endorsements(self, root) -> List['Nation']:
-        """Endorsements the nation has received."""
+    async def endorsements(self, root):
+        """Endorsements the nation has received.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Nation`
+        """
         text = root.find('ENDORSEMENTS').text
         return [Nation(name) for name in text.split(',')] if text else []
 
     @api_query('legislation')
-    async def legislation(self, root) -> List[str]:
+    async def legislation(self, root):
         """Effects of the most recently passed legislation.
 
         May contain HTML elements and character references.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of str
         """
         return [elem.text for elem in root.find('LEGISLATION')]
 
     @api_query('sectors')
-    async def sectors(self, root) -> Sectors:
-        """Components of the nation's economy, as percentages."""
+    async def sectors(self, root):
+        """Components of the nation's economy, as percentages.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Sectors`
+        """
         return Sectors(root.find('SECTORS'))
 
     @api_query('dispatchlist')
-    async def dispatchlist(self, root) -> List[Dispatch]:
-        """Nation's published dispatches."""
+    async def dispatchlist(self, root):
+        """Nation's published dispatches.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Dispatch`
+        """
         return [
             Dispatch(elem)
             for elem in root.find('DISPATCHLIST')
         ]
 
-    @api_query('zombie')
-    async def zombie(self, root) -> Zombie:
-        """Nation's condition during the annual Z-Day event."""
-        return Zombie(root.find('ZOMBIE'))
-
-    def verify(self, checksum: str, *, token: str = None) -> ApiQuery[bool]:
+    def verify(self, checksum, *, token=None):
         """Interface to the `NationStates Verification API
         <https://www.nationstates.net/pages/api.html#verification>`_.
 
-        Parameters:
-            checksum: The user-supplied verification code.  Expires if
-                the nation logs out, if it performs a significant
-                in-game action such as moving regions or endorsing
-                another nation, and after it is successfully verified.
-            token: A token specific to your service and the nation
-                being verified.
+        Parameters
+        ----------
+        checksum : str
+            The user-supplied verification code.  Expires if the nation
+            logs out, if it performs a significant in-game action such
+            as moving regions or endorsing another nation, and after it
+            is successfully verified.
+        token : str
+            A token specific to your service and the nation being verified.
         """
         params = {'a': 'verify', 'checksum': checksum}
         if token:
@@ -343,13 +506,14 @@ class Nation(Census, Session):
             return bool(int(root.find('VERIFY').text))
         return result(self)
 
-    def verification_url(self, *, token: str = None) -> str:
+    def verification_url(self, *, token=None):
         """URL the user needs to follow in order to get the
         verification code for the nation.
 
-        Parameters:
-            token: A token specific to your service and the nation
-                being verified.
+        Parameters
+        ----------
+        token : str
+            A token specific to your service and the nation being verified.
         """
         if token:
             return ('https://www.nationstates.net/'
@@ -357,9 +521,13 @@ class Nation(Census, Session):
         return f'https://www.nationstates.net/page=verify_login'
 
     @api_query('banners')
-    async def banners(self, root) -> List[Banner]:
+    async def banners(self, root):
         """Nation's visible banners.  If the user has set a primary
         banner, it will be the first element in the list.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Banner`
         """
         expand_macros = self._get_macros_expander()
         return [
@@ -419,15 +587,13 @@ class Nation(Census, Session):
 
         return expand_macros
 
-    @api_query('happenings')
-    async def happenings(self, root) -> List[ArchivedHappening]:
-        """Get the happenings of the nation, the ones archived on its
-        in-game page.  Newest to oldest.
-        """
-        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
+    async def description(self):
+        """Nation's full description, as seen on its in-game page.
 
-    async def description(self) -> str:
-        """Nation's full description, as seen on its in-game page."""
+        Returns
+        -------
+        an awaitable of str
+        """
         resp = await self._call_web(f'nation={self.id}')
         return html.unescape(
             re.search(

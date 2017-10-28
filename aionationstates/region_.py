@@ -2,7 +2,7 @@ import html
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll)
+    EmbassyPostingRights, Officer, Authority, Embassies, Poll)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import NationRegion
 import aionationstates

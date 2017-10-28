@@ -5,9 +5,6 @@ from aionationstates.types import Issue, IssueResult
 from aionationstates.nation_ import Nation
 from aionationstates.session import Session, api_query, api_command
 
-# Needed for type annotations
-from typing import List
-
 
 logger = logging.getLogger('aionationstates')
 
@@ -19,8 +16,7 @@ class NationControl(Nation, Session):
     Credentials are not checked upon initialization, you will only know
     if you've made a mistake after you try to make the first request.
     """
-    def __init__(self, name: str, autologin: str = '',
-                 password: str = '') -> None:
+    def __init__(self, name, autologin='', password=''):
         if not password and not autologin:
             raise ValueError('No password or autologin supplied')
         self.password = password
@@ -53,7 +49,7 @@ class NationControl(Nation, Session):
             'pin': self.pin
         }
         resp = await super()._call_web(path, method=method,
-                                      cookies=cookies, **kwargs)
+                                       cookies=cookies, **kwargs)
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
             logger.info(f'Updating pin for {self.id} from web cookie')
@@ -66,8 +62,13 @@ class NationControl(Nation, Session):
     # End of authenticated session handling
 
     @api_query('issues')
-    async def issues(self, root) -> List[Issue]:
-        """Issues the nation currently faces."""
+    async def issues(self, root):
+        """Issues the nation currently faces.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Issue`
+        """
         return [Issue(elem, self) for elem in root.find('ISSUES')]
 
     def _accept_issue(self, issue_id, option_id):
