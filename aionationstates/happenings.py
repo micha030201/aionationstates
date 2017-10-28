@@ -488,6 +488,53 @@ class EndorsementWithdrawal(UnrecognizedHappening):
         self.endorsee = aionationstates.Nation(match.group(2))
 
 
+class PollCreation(UnrecognizedHappening):
+    """A nation creating a new regional poll.
+
+    Note that the poll id is inaccessible from the happening, so the
+    created poll can't be linked directly.  The best you can do is
+    request the current poll of the region from the happening.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+    title : str
+        Poll title.  Don't rely on this being accurate, some characters
+        (such as brackets) are for whatever horror inducing reason
+        stripped from the happening.
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ created a new poll in %%(.+?)%%: "(.+?)".', self.text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.region = aionationstates.Region(match.group(2))
+        self.title = html.unescape(match.group(3))
+
+
+class PollDeletion(UnrecognizedHappening):
+    """A nation deleting a regional poll.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+    """
+
+    def __init__(self, params):
+        super().__init__(params)
+        match = re.match(
+            '@@(.+?)@@ deleted a regional poll in %%(.+?)%%.', self.text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.region = aionationstates.Region(match.group(2))
+
+
 
 def process(params):
     # Call ElementTree methods only once, to get a bit of extra performance.
@@ -522,6 +569,8 @@ def process(params):
         EmbassyCancellation,
         Endorsement,
         EndorsementWithdrawal,
+        PollCreation,
+        PollDeletion,
     )
     for cls in possible_classes:
         with suppress(ValueError):
