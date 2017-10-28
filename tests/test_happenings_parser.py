@@ -252,3 +252,29 @@ def test_unendorse():
     assert type(h) == happenings.EndorsementWithdrawal
     assert h.endorser.id == 'testlandia'
     assert h.endorsee.id == 'aidnaltset'
+
+
+def test_poll_create():
+    t = '@@testlandia@@ created a new poll in %%the_east_pacific%%: "qwerty".'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.PollCreation
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+    assert h.title == 'qwerty'
+
+
+def test_poll_create_html():
+    t = '@@testlandia@@ created a new poll in %%the_east_pacific%%: "&lt;&gt;&amp; &gt; &quot;. &quot;. &amp;quot;.".'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.PollCreation
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+    assert h.title == '<>& ]]> ". ". &quot;.'
+
+
+def test_poll_delete():
+    t = '@@testlandia@@ deleted a regional poll in %%the_east_pacific%%.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.PollDeletion
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
