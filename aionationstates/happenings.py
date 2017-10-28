@@ -87,7 +87,7 @@ class Legislation(UnrecognizedHappening):
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
-        self.effect_line = match.group(2)
+        self.effect_line = html.unescape(match.group(2))
 
 
 class FlagChange(UnrecognizedHappening):

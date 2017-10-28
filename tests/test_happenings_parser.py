@@ -45,6 +45,14 @@ def test_legislation():
     assert h.effect_line == 'euthanasia is legal'
 
 
+def test_legislation_html():
+    t = 'Following new legislation in @@testlandia@@, all new &quot;spies&quot; are fifteen-year-old acne-ridden kids on computers.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.Legislation
+    assert h.nation.id == 'testlandia'
+    assert h.effect_line == 'all new "spies" are fifteen-year-old acne-ridden kids on computers'
+
+
 def test_flag():
     t = '@@testlandia@@ altered its national flag.'
     h = happenings.process(happening_elem(t))
