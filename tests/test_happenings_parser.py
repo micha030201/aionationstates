@@ -228,3 +228,19 @@ def test_embassy_cancelled():
     assert type(h) == happenings.EmbassyCancellation
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
+
+
+def test_endorse():
+    t = '@@testlandia@@ endorsed @@aidnaltset@@.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.Endorsement
+    assert h.endorser.id == 'testlandia'
+    assert h.endorsee.id == 'aidnaltset'
+
+
+def test_unendorse():
+    t = '@@testlandia@@ withdrew its endorsement from @@aidnaltset@@.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.EndorsementWithdrawal
+    assert h.endorser.id == 'testlandia'
+    assert h.endorsee.id == 'aidnaltset'
