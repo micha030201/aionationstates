@@ -1,10 +1,7 @@
 import logging
 from warnings import warn
 from collections import namedtuple
-from functools import wraps
 import xml.etree.ElementTree as ET
-from contextlib import suppress
-from typing import TypeVar, Awaitable
 
 import aiohttp
 
@@ -21,9 +18,7 @@ API_URL = NS_URL + API_PATH
 logger = logging.getLogger('aionationstates')
 
 
-T = TypeVar('T')
-
-class ApiQuery(Awaitable[T]):
+class ApiQuery:
     """A request to the NationStates API.
 
     Although you, as a user, will never need to interact with this
@@ -101,29 +96,26 @@ class ApiQuery(Awaitable[T]):
 
 def api_query(*q, **params):
     def decorator(func):
-        @wraps(func)
-        def wrapper(session):
-            return ApiQuery(session=session, q=q,
+        def wrapper(self):
+            return ApiQuery(session=self, q=q,
                             params=params, result=func)
-        with suppress(KeyError):
-            wrapper.__annotations__['return'] = \
-                ApiQuery[wrapper.__annotations__['return']]
-            wrapper.__globals__.update(func.__globals__)  # string type hints
+        # Can't use @functools.wraps because it would preserve the signature,
+        # meaning we would get nonsense arguments intended for the decorator.
+        wrapper.__doc__ = func.__doc__
+        wrapper.__name__ = func.__name__
         return wrapper
     return decorator
 
 
 def api_command(c, **data):
     def decorator(func):
-        @wraps(func)
         async def wrapper(session):
             data['c'] = c
             resp = await session._call_api_command(data)
             root = ET.fromstring(resp.text)
             return await func(session, root)
-        with suppress(KeyError):
-            wrapper.__annotations__['return'] = \
-                Awaitable[wrapper.__annotations__['return']]
+        wrapper.__doc__ = func.__doc__
+        wrapper.__name__ = func.__name__
         return wrapper
     return decorator
 
