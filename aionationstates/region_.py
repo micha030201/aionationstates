@@ -2,28 +2,24 @@ import html
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll,
-    ArchivedHappening)
+    EmbassyPostingRights, Officer, Authority, Embassies, Zombie, Poll)
 from aionationstates.session import Session, api_query
-from aionationstates.shards import Census
-
-# Needed for type annotations
-import datetime
-from typing import Optional, List
+from aionationstates.shards import NationRegion
 import aionationstates
 
 
-class Region(Census, Session):
+class Region(NationRegion, Session):
     """A class to interact with the NationStates Region API.
 
-    Attributes:
-        id: The defining characteristic of a region, its normalized
-            name.  No two regions share the same id, and no one id
-            is shared by multiple regions.
+    Attributes
+    ----------
+    id : str
+        The defining characteristic of a region, its normalized name.
+        No two regions share the same id, and no one id is shared by
+        multiple regions.
     """
-    id: str
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str):
         self.id = normalize(name)
 
     def _call_api(self, params, *args, **kwargs):
@@ -32,72 +28,125 @@ class Region(Census, Session):
 
 
     @property
-    def url(self) -> str:
-        """URL for the region."""
+    def url(self):
+        """str: URL of the region."""
         return f'https://www.nationstates.net/region={self.id}'
 
     @api_query('name')
-    async def name(self, root) -> str:
-        """Name of the region."""
+    async def name(self, root):
+        """Name of the region, with proper capitalization.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('NAME').text
 
     @api_query('flag')
-    async def flag(self, root) -> str:
-        """URL of the region's flag."""
+    async def flag(self, root):
+        """URL of the region's flag.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         return root.find('FLAG').text
 
     @api_query('factbook')
-    async def factbook(self, root) -> str:
-        """Region's World Factbook Entry."""
+    async def factbook(self, root):
+        """Region's World Factbook Entry.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
+        """
         # This lib might have been a mistake, but the line below
         # definitely isn't.
         return html.unescape(html.unescape(root.find('FACTBOOK').text))
 
     @api_query('power')
-    async def power(self, root) -> str:
+    async def power(self, root):
         """An adjective describing region's power on the interregional
         scene.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of str
         """
         return root.find('POWER').text
 
     @api_query('delegatevotes')
-    async def delegatevotes(self, root) -> int:
+    async def delegatevotes(self, root):
         """Number of the World Assembly votes the region's Delegate
         has.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
         """
         return int(root.find('DELEGATEVOTES').text)
 
     @api_query('numnations')
-    async def numnations(self, root) -> int:
-        """The number of nations in the region."""
+    async def numnations(self, root):
+        """The number of nations in the region.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
+        """
         return int(root.find('NUMNATIONS').text)
 
     @api_query('foundedtime')
-    async def founded(self, root) -> datetime.datetime:
-        """When the region was founded."""
+    async def founded(self, root):
+        """When the region was founded.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`
+        """
         return timestamp(root.find('FOUNDEDTIME'))
 
     @api_query('nations')
-    async def nations(self, root) -> List[aionationstates.Nation]:
-        """All the nations in the region."""
+    async def nations(self, root):
+        """All the nations in the region.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Nation` objects
+        """
         text = root.find('NATIONS').text
         return ([aionationstates.Nation(n) for n in text.split(':')]
                 if text else [])
 
     @api_query('embassies')
-    async def embassies(self, root) -> Embassies:
-        """Embassies the region has."""
+    async def embassies(self, root):
+        """Embassies the region has.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Embassies`
+        """
         return Embassies(root.find('EMBASSIES'))
 
     @api_query('embassyrmb')
-    async def embassyrmb(self, root) -> EmbassyPostingRights:
-        """Posting rights for members the of embassy regions."""
+    async def embassyrmb(self, root):
+        """Posting rights for members the of embassy regions.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`EmbassyPostingRights`
+        """
         return EmbassyPostingRights._from_ns(root.find('EMBASSYRMB').text)
 
     @api_query('delegate')
-    async def delegate(self, root) -> Optional[aionationstates.Nation]:
-        """Regional World Assembly Delegate.  ``None`` if the region
-        has no delegate.
+    async def delegate(self, root):
+        """Regional World Assembly Delegate.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Nation`
+        an :class:`ApiQuery` of None
+            If the region has no delegate.
         """
         nation = root.find('DELEGATE').text
         if nation == '0':
@@ -105,17 +154,26 @@ class Region(Census, Session):
         return aionationstates.Nation(nation)
 
     @api_query('delegateauth')
-    async def delegateauth(self, root) -> Authority:
+    async def delegateauth(self, root):
         """Regional World Assembly Delegate's authority.  Always set,
         no matter if the region has a delegate or not.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Authority`
         """
         return Authority._from_ns(root.find('DELEGATEAUTH').text)
 
     @api_query('founder')
-    async def founder(self, root) -> Optional[aionationstates.Nation]:
+    async def founder(self, root):
         """Regional Founder.  Returned even if the nation has ceased to
-        exist.  ``None`` if the region is Game-Created and doesn't have
-        a founder.
+        exist.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Nation`
+        an :class:`ApiQuery` of None
+          If the region is Game-Created and doesn't have a founder.
         """
         nation = root.find('FOUNDER').text
         if nation == '0':
@@ -123,17 +181,25 @@ class Region(Census, Session):
         return aionationstates.Nation(nation)
 
     @api_query('founderauth')
-    async def founderauth(self, root) -> Authority:
+    async def founderauth(self, root):
         """Regional Founder's authority.  Always set,
         no matter if the region has a founder or not.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Authority`
         """
         return Authority._from_ns(root.find('FOUNDERAUTH').text)
 
     @api_query('officers')
-    async def officers(self, root) -> List[Officer]:
+    async def officers(self, root):
         """Regional Officers.  Does not include the Founder or
         the Delegate, unless they have additional litles as Officers.
         In the correct order.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Officer`
         """
         officers = sorted(
             root.find('OFFICERS'),
@@ -143,26 +209,24 @@ class Region(Census, Session):
         return [Officer(elem) for elem in officers]
 
     @api_query('tags')
-    async def tags(self, root) -> List[str]:
-        """Tags the region has."""
+    async def tags(self, root):
+        """Tags the region has.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of str
+        """
         return [elem.text for elem in root.find('TAGS')]
 
-    @api_query('zombie')
-    async def zombie(self, root) -> Zombie:
-        """Region's state during the annual Z-Day event."""
-        return Zombie(root.find('ZOMBIE'))
-
     @api_query('poll')
-    async def poll(self, root) -> Optional[Poll]:
-        """Current regional poll."""
+    async def poll(self, root):
+        """Current regional poll.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Poll`
+        """
         elem = root.find('POLL')
         return Poll(elem) if elem else None
-
-    @api_query('happenings')
-    async def happenings(self, root) -> List[ArchivedHappening]:
-        """Get the happenings of the region, the ones archived on its
-        in-game page.  Newest to oldest.
-        """
-        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     # TODO: history, messages

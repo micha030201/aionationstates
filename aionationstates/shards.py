@@ -1,9 +1,10 @@
 """Interfaces to shards shared between APIs. Designed to be mixed in
 with Session, otherwise useless."""
 
-# TODO: happenings (region history as well?), censusranks, wabadges
+# TODO: censusranks, wabadges
 
-from aionationstates.types import CensusScaleCurrent, CensusScaleHistory
+from aionationstates.types import (
+    CensusScaleCurrent, CensusScaleHistory, Zombie)
 from aionationstates.happenings import UnrecognizedHappening
 from aionationstates.session import api_query
 
@@ -36,7 +37,6 @@ class Census:
                 for scale_elem in root.find('CENSUS')
             ]
         return result(self)
-
 
     def censushistory(self, *scales):
         """Historical World Census data.
@@ -72,11 +72,11 @@ class Census:
             ]
 
 
-class Happenings:
+class NationRegion(Census):
+    """Shards shared by Nation & Region APIs."""
     @api_query('happenings')
     async def happenings(self, root):
-        """Get the happenings of the nation or region, archived on its
-        page.  Newest to oldest.
+        """Happenings archived on the in-game page.  Newest to oldest.
 
         Happenings are not parsed because they are different from
         the ones in the normal feed and I see no practical use-cases
@@ -85,6 +85,16 @@ class Happenings:
         Returns
         -------
         an :class:`ApiQuery` of a list of \
-        :class:`happenings.UnrecognizedHappening` objects
+        :class:`happenings.UnrecognizedHappening`
         """
         return [UnrecognizedHappening(elem) for elem in root.find('HAPPENINGS')]
+
+    @api_query('zombie')
+    async def zombie(self, root):
+        """State during the annual Z-Day event.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Zombie`
+        """
+        return Zombie(root.find('ZOMBIE'))
