@@ -5,7 +5,6 @@ A great undertaking to be sure.
 
 import re
 import html
-import datetime
 from contextlib import suppress
 
 from aionationstates.utils import timestamp, unscramble_encoding
@@ -40,7 +39,14 @@ class UnrecognizedHappening:
 
 
 class Move(UnrecognizedHappening):
-    """A nation moving regions."""
+    """A nation moving regions.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region_from : :class:`Region`
+    region_to : :class:`Region`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -54,7 +60,14 @@ class Move(UnrecognizedHappening):
 
 
 class Founding(UnrecognizedHappening):
-    """A nation being founded."""
+    """A nation being founded.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+        The feeder region nation spawned in.
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -66,7 +79,14 @@ class Founding(UnrecognizedHappening):
 
 
 class CTE(UnrecognizedHappening):
-    """A nation ceasing to exist."""
+    """A nation ceasing to exist.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+        Region the nation CTEd in.
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -78,7 +98,14 @@ class CTE(UnrecognizedHappening):
 
 
 class Legislation(UnrecognizedHappening):
-    """A nation answering an issue."""
+    """A nation answering an issue.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    effect_line : str
+        May contain HTML elements and character references.
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -87,11 +114,16 @@ class Legislation(UnrecognizedHappening):
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
-        self.effect_line = html.unescape(match.group(2))
+        self.effect_line = match.group(2)
 
 
 class FlagChange(UnrecognizedHappening):
-    """A nation altering its flag."""
+    """A nation altering its flag.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -102,7 +134,15 @@ class FlagChange(UnrecognizedHappening):
 
 
 class SettingsChange(UnrecognizedHappening):
-    """A nation modifying its customizeable fields."""
+    """A nation modifying its customizeable fields.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    changes : dict with keys and values of str
+        A mapping of field names (such as "currency", "motto", etc.) to
+        their new values.
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -128,6 +168,14 @@ class DispatchPublication(UnrecognizedHappening):
     """A dispatch being published.
 
     In case you're wondering, deleting a dispatch doesn't produce a happening.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    dispatch_id : int
+    title : str
+    category : str
+    subcategory : str
     """
 
     def __init__(self, params):
@@ -145,12 +193,23 @@ class DispatchPublication(UnrecognizedHappening):
         self.subcategory = match.group(5)
 
     def dispatch(self):
-        """Request the full dispatch."""
+        """Request the full dispatch.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Dispatch`
+            Full dispatch (with text).
+        """
         return aionationstates.world.dispatch(self.dispatch_id)
 
 
 class WorldAssemblyApplication(UnrecognizedHappening):
-    """A nation applying to join the World Assembly."""
+    """A nation applying to join the World Assembly.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -164,7 +223,12 @@ class WorldAssemblyApplication(UnrecognizedHappening):
 
 
 class WorldAssemblyAdmission(UnrecognizedHappening):
-    """A nation being admitted to the World Assembly."""
+    """A nation being admitted to the World Assembly.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -178,7 +242,12 @@ class WorldAssemblyAdmission(UnrecognizedHappening):
 
 
 class WorldAssemblyResignation(UnrecognizedHappening):
-    """A nation resigning from World Assembly."""
+    """A nation resigning from World Assembly.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -202,6 +271,12 @@ class DelegateChange(UnrecognizedHappening):
     As I believe this to be superfluous, this class represents all three.
     In case either the old of new delegate is missing, the corresponding
     attribute will ne `None`.
+
+    Attributes
+    ----------
+    new_delegate : :class:`Nation`
+    old_delegate : :class:`Nation`
+    region : :class:`Region`
     """
 
     def __init__(self, params):
@@ -240,7 +315,14 @@ class DelegateChange(UnrecognizedHappening):
 
 
 class CategoryChange(UnrecognizedHappening):
-    """A nation being reclassified to a different WA Category."""
+    """A nation being reclassified to a different WA Category.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    catogory_before : str
+    category_after : str
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -256,7 +338,12 @@ class CategoryChange(UnrecognizedHappening):
 
 
 class BannerCreation(UnrecognizedHappening):
-    """A nation creating a custom banner."""
+    """A nation creating a custom banner.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
 
     def __init__(self, params):
         super().__init__(params)
@@ -536,7 +623,38 @@ class PollDeletion(UnrecognizedHappening):
 
 
 
-def process(params):
+happening_classes = (
+    Move,
+    Founding,
+    CTE,
+    Legislation,
+    FlagChange,
+    SettingsChange,
+    DispatchPublication,
+    WorldAssemblyApplication,
+    WorldAssemblyAdmission,
+    WorldAssemblyResignation,
+    DelegateChange,
+    CategoryChange,
+    BannerCreation,
+    EmbassyConstructionRequest,
+    EmbassyConstructionConfirmation,
+    EmbassyConstructionRequestWithdrawal,
+    EmbassyConstructionAbortion,
+    EmbassyClosureOrder,
+    EmbassyEstablishment,
+    EmbassyCancellation,
+    Endorsement,
+    EndorsementWithdrawal,
+    PollCreation,
+    PollDeletion,
+)
+
+__all__ = [cls.__name__ for cls in happening_classes + (UnrecognizedHappening,)]
+
+
+
+def process_happening(params):
     # Call ElementTree methods only once, to get a bit of extra performance.
     try:
         params_id = int(params.get('id'))
@@ -546,33 +664,7 @@ def process(params):
     params_text = params.findtext('TEXT')
     params = (params_id, params_timestamp, params_text)
 
-    possible_classes = (
-        Move,
-        Founding,
-        CTE,
-        Legislation,
-        FlagChange,
-        SettingsChange,
-        DispatchPublication,
-        WorldAssemblyApplication,
-        WorldAssemblyAdmission,
-        WorldAssemblyResignation,
-        DelegateChange,
-        CategoryChange,
-        BannerCreation,
-        EmbassyConstructionRequest,
-        EmbassyConstructionConfirmation,
-        EmbassyConstructionRequestWithdrawal,
-        EmbassyConstructionAbortion,
-        EmbassyClosureOrder,
-        EmbassyEstablishment,
-        EmbassyCancellation,
-        Endorsement,
-        EndorsementWithdrawal,
-        PollCreation,
-        PollDeletion,
-    )
-    for cls in possible_classes:
+    for cls in happening_classes:
         with suppress(ValueError):
             return cls(params)
     # TODO logging
