@@ -1,18 +1,12 @@
 # TODO slots
-# TODO split into submodules?
 
 import html
 from contextlib import suppress
-from typing import NamedTuple
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
-# Needed for type annotations
-import datetime
-from typing import List, Optional, Awaitable
-from aionationstates.ns_to_human import Banner, ScaleInfo
-import aionationstates
 
+import aionationstates
 from aionationstates.utils import timestamp, banner_url, unscramble_encoding
 from aionationstates.ns_to_human import banner, census_info
 
@@ -33,6 +27,7 @@ class NotFound(Exception):
     pass
 
 
+
 class CensusScaleCurrent:
     """World Census scale data about a nation.
 
@@ -47,23 +42,23 @@ class CensusScaleCurrent:
         not a way to reliably test).  You will need to account for
         that in your code.
 
-    Attributes:
-        info: Static information about the scale.
-        score: The absolute census score.  All the other scale values
-            are calculated (by NationStates) from scale scores of
-            multiple nations.  Should always be there if you request
-            it.
-        rank: World rank by the scale.
-        prank: Percentage World rank by the scale.
-        rrank: Regional rank by the scale.
-        prrank: Percentage Regional rank by the scale.
+    Attributes
+    ----------
+    info : :class:`CensusInfo`
+        Static information about the scale.
+    score : float
+        The absolute census score.  All the other scale values are
+        calculated (by NationStates) from scale scores of multiple
+        nations.  Should always be there.
+    rank : int
+        World rank by the scale.
+    prank : float
+        Percentage World rank by the scale.
+    rrank : int
+        Regional rank by the scale.
+    prrank : float
+        Percentage Regional rank by the scale.
     """
-    info: ScaleInfo
-    score: float
-    rank: Optional[int]
-    prank: Optional[float]
-    rrank: Optional[int]
-    prrank: Optional[float]
 
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
@@ -84,34 +79,36 @@ class CensusScaleCurrent:
         return f'<CensusScaleCurrent #{self.info.id} {self.info.title}>'
 
 
-class CensusPoint(NamedTuple):
+class CensusPoint:
     """What the scale score was on a particular date.
 
-    Attributes:
-        timestamp: When the score was recorded.
-        score: What it was.
+    Attributes
+    ----------
+    timestamp : naive UTC :class:`datetime.datetime`
+        When the score was recorded.
+    score : float
+        What it was.
     """
-    timestamp: datetime.datetime
-    score: float
+
+    def __init__(self, elem):
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
+        self.score = float(elem.find('SCORE').text)
 
 
 class CensusScaleHistory:
     """Change of a World Census scale score of a nation through time.
 
-    Attributes:
-        info: Static information about the scale.
-        history: The data itself.
+    Attributes
+    ----------
+    info : :class:`ScaleInfo`
+        Static information about the scale.
+    history : list of :class:`CensusPoint`
+        The data itself.
     """
-    info: ScaleInfo
-    history: List[CensusPoint]
 
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
-        self.history = [
-            CensusPoint(
-                timestamp=timestamp(sub_elem.find('TIMESTAMP').text),
-                score=float(sub_elem.find('SCORE').text)
-            ) for sub_elem in elem]
+        self.history = [CensusPoint(sub_elem) for sub_elem in elem]
 
     def __repr__(self):
         return f'<CensusScaleHistory #{self.info.id} {self.info.title}>'
@@ -121,31 +118,31 @@ class CensusScaleHistory:
 class Dispatch:
     """A dispatch.
 
-    Attributes:
-        id: The dispatch id.  Use with the World dispatch shard until I
-            manage to think of a better interface.
-        title: The dispatch title.
-        author: Nation that posted the dispatch.
-        category: The dispatch category.
-        subcategory: The dispatch subcategory.
-        views: Number of times the dispatch got viewed.
-        score: Votes te dispatch received.
-        created: When the dispatch was created.
-        edited: When the dispatch last got edited.  Equal to
-            ``created`` for dispatches that were never edited.
-        text: The dispatch text.  ``None`` if the dispatch came from
-            anywhere other than the World dispatch shard.
+    Attributes
+    ----------
+    id : int
+        The dispatch id.
+    title : str
+        The dispatch title.
+    author : :class:`Nation`
+        Nation that posted the dispatch.
+    category : str
+        The dispatch category.
+    subcategory : str
+        The dispatch subcategory.
+    views : int
+        Number of times the dispatch got viewed.
+    score : int
+        Number of votes the dispatch received.
+    created : naive UTC :class:`datetime.datetime`
+        When the dispatch was created.
+    edited : naive UTC :class:`datetime.datetime`
+        When the dispatch last got edited.  Equal to ``created`` for
+        dispatches that were never edited.
+    text : str or None
+        The dispatch text.  ``None`` if the dispatch came from anywhere
+        other than the World dispatch shard.
     """
-    id: int
-    title: str
-    author: aionationstates.Nation
-    category: str
-    subcategory: str
-    views: int
-    score: int
-    created: datetime.datetime
-    edited: datetime.datetime
-    text: Optional[str]
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
@@ -168,6 +165,15 @@ class Dispatch:
             self.text = unscramble_encoding(
                 html.unescape(elem.find('TEXT').text))
 
+    def full(self):
+        """Request the full dispatch (with text).
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Dispatch`
+        """
+        return aionationstates.world.dispatch(self.id)
+
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
 
@@ -175,12 +181,13 @@ class Dispatch:
 class PollOption:
     """An option in a poll.
 
-    Attributes:
-        text: Text of the option.
-        voters: Nations that picked this option.
+    Attributes
+    ----------
+    text : str
+        Text of the option.
+    voters : list of :class:`Nation`
+        Nations that picked this option.
     """
-    text: str
-    voters: List[str]
 
     def __init__(self, elem):
         self.text = html.unescape(elem.findtext('OPTIONTEXT'))
@@ -191,22 +198,21 @@ class PollOption:
 class Poll:
     """A regional poll.
 
-    Attributes:
-        id: The poll id.
-        title: The poll title.
-        text: The poll text.
-        region: Region the poll was posted in.
-        author: Nation that posted the poll.
-        options: The poll options.
+    Attributes
+    ----------
+    id : int
+        The poll id.
+    title : str
+        The poll title.
+    text : str
+        The poll text.
+    region : :class:`Region`
+        Region the poll was posted in.
+    author : :class:`Nation`
+        Nation that posted the poll.
+    options : list of :class:`PollOption`
+        The poll options.
     """
-    id: int
-    title: str
-    text: Optional[str]
-    region: aionationstates.Region
-    author: aionationstates.Nation
-    start: datetime.datetime
-    stop: datetime.datetime
-    options: List[PollOption]
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
@@ -232,14 +238,15 @@ class Freedom:
     Civil Rights, Economy, and Political Freedom, as expressive
     adjectives.
 
-    Attributes:
-        civilrights: Nation's Civil Rights.
-        economy: Nation's Economy.
-        politicalfreedom: Nation's Political Freedom.
+    Attributes
+    ----------
+    civilrights : str
+        Nation's Civil Rights.
+    economy : str
+        Nation's Economic Prosperity.
+    politicalfreedom : str
+        Nation's Political Freedom.
     """
-    civilrights: str
-    economy: str
-    politicalfreedom: str
 
     def __init__(self, elem):
         self.civilrights = elem.find('CIVILRIGHTS').text
@@ -251,14 +258,15 @@ class FreedomScores:
     """Nation's `Freedoms`: three basic indicators of the nation's
     Civil Rights, Economy, and Political Freedom, as percentages.
 
-    Attributes:
-        civilrights: Nation's Civil Rights.
-        economy: Nation's Economic Prosperity.
-        politicalfreedom: Nation's Political Freedom.
+    Attributes
+    ----------
+    civilrights : str
+        Nation's Civil Rights.
+    economy : str
+        Nation's Economic Prosperity.
+    politicalfreedom : str
+        Nation's Political Freedom.
     """
-    civilrights: int
-    economy: int
-    politicalfreedom: int
 
     def __init__(self, elem):
         self.civilrights = int(elem.find('CIVILRIGHTS').text)
@@ -269,44 +277,33 @@ class FreedomScores:
 class Govt:
     """Nation's government expenditure, as percentages.
 
-    Attributes:
-        administration: The percentage of nation's budget spent on
-            Administration.
-        defence: The percentage of nation's budget spent on
-            Defence.
-        education: The percentage of nation's budget spent on
-            Public Education.
-        environment: The percentage of nation's budget spent on
-            Enviromental Protection.
-        healthcare: The percentage of nation's budget spent on
-            Public Healthcare.
-        commerce: The percentage of nation's budget spent on
-            Industry.
-        internationalaid: The percentage of nation's budget spent on
-            International Aid.
-        lawandorder: The percentage of nation's budget spent on
-            Law & Order.
-        publictransport: The percentage of nation's budget spent on
-            Public Transportation.
-        socialequality: The percentage of nation's budget spent on
-            Social Policy.
-        spirituality: The percentage of nation's budget spent on
-            Spirituality.
-        welfare: The percentage of nation's budget spent on
-            Welfare.
+    Attributes
+    ----------
+    administration : float
+        The percentage of nation's budget spent on Administration.
+    defence : float
+        The percentage of nation's budget spent on Defence.
+    education : float
+        The percentage of nation's budget spent on Public Education.
+    environment : float
+        The percentage of nation's budget spent on Enviromental Protection.
+    healthcare : float
+        The percentage of nation's budget spent on Public Healthcare.
+    commerce : float
+        The percentage of nation's budget spent on Industry.
+    internationalaid : float
+        The percentage of nation's budget spent on International Aid.
+    lawandorder : float
+        The percentage of nation's budget spent on Law & Order.
+    publictransport : float
+        The percentage of nation's budget spent on Public Transportation.
+    socialequality : float
+        The percentage of nation's budget spent on Social Policy.
+    spirituality : float
+        The percentage of nation's budget spent on Spirituality.
+    welfare : float
+        The percentage of nation's budget spent on Welfare.
     """
-    administration: float
-    defence: float
-    education: float
-    environment: float
-    healthcare: float
-    commerce: float
-    internationalaid: float
-    lawandorder: float
-    publictransport: float
-    socialequality: float
-    spirituality: float
-    welfare: float
 
     def __init__(self, elem):
         self.administration = float(elem.find('ADMINISTRATION').text)
@@ -326,16 +323,17 @@ class Govt:
 class Sectors:
     """Components of a nation's economy.
 
-    Attributes:
-        blackmarket: Part of the economy taken up by Black Market.
-        government: Part of the economy taken up by Government.
-        industry: Part of the economy taken up by Private Industry.
-        public: Part of the economy taken up by State-Owned Industry.
+    Attributes
+    ----------
+    blackmarket : float
+        Part of the economy taken up by Black Market.
+    government : float
+        Part of the economy taken up by Government.
+    industry : float
+        Part of the economy taken up by Private Industry.
+    public : float
+        Part of the economy taken up by State-Owned Industry.
     """
-    blackmarket: float
-    government: float
-    industry: float
-    public: float
 
     def __init__(self, elem):
         self.blackmarket = float(elem.find('BLACKMARKET').text)
@@ -345,31 +343,37 @@ class Sectors:
 
 
 
-class Reclassification(NamedTuple):
+class Reclassification:
     """Change in a `Freedom` classification or the WA Category.
 
-    Attributes:
-        before: The old category or `Freedom` adjective.
-        after: The new category or `Freedom` adjective.
+    Attributes
+    ----------
+    before : str
+        The old category or `Freedom` adjective.
+    after : str
+        The new category or `Freedom` adjective.
     """
-    before: str
-    after: str
+
+    def __init__(self, elem):
+        self.before = elem.find('FROM').text
+        self.after = elem.find('TO').text
 
 
 class Reclassifications:
     """Reclassifications of the nation's `Freedoms` and WA Category.
     For convenience, this is falsey when no reclassifications occured.
 
-    Attributes:
-        civilrights: Reclassification of nation's Civil Rights.
-        economy: Reclassification of nation's Economy.
-        politicalfreedom: Reclassification of nation's Political Freedom.
-        govt: Change of nation's World Assembly Category.
+    Attributes
+    ----------
+    civilrights : :class:`Reclassification` or None
+        Reclassification of nation's Civil Rights.
+    economy : :class:`Reclassification` or None
+        Reclassification of nation's Economy.
+    politicalfreedom : :class:`Reclassification` or None
+        Reclassification of nation's Political Freedom.
+    govt : :class:`Reclassification` or None
+        Change of nation's World Assembly Category.
     """
-    civilrights: Optional[Reclassification]
-    economy: Optional[Reclassification]
-    politicalfreedom: Optional[Reclassification]
-    govt: Optional[Reclassification]
 
     def __init__(self, elem):
         self.civilrights = self.economy = \
@@ -385,10 +389,7 @@ class Reclassifications:
         for sub_elem in elem:
             setattr(
                 self, attr_names[sub_elem.get('type')],
-                Reclassification(
-                    before=sub_elem.find('FROM').text,
-                    after=sub_elem.find('TO').text
-                )
+                Reclassification(sub_elem)
             )
 
     def __bool__(self):
@@ -399,17 +400,17 @@ class Reclassifications:
 class CensusScaleChange:
     """Change in one of the World Census scales of a nation
 
-    Attributes:
-        info: Static information about the scale.
-        score: The scale score, after the change.
-        change: Change of the score.
-        pchange: The semi-user-friendly percentage change NationStates
-            shows by default.
+    Attributes
+    ---------
+    info : :class:`CensusInfo`
+        Static information about the scale.
+    score : float
+        The scale score, after the change.
+    change : float
+        Change of the score.
+    pchange : float
+        The semi-user-friendly percentage change NationStates shows by default.
     """
-    info: ScaleInfo
-    score: float
-    change: float
-    pchange: float
 
     def __init__(self, elem):
         self.info = census_info[int(elem.get('id'))]
@@ -421,26 +422,26 @@ class CensusScaleChange:
 class IssueResult:
     """Result of an issue.
 
-    Attributes:
-        happening: The issue effect line.  Not a sentence, mind you --
-            it's uncapitalized and does not end with a period.
-            ``None`` if the issue was dismissed.
-        census: Changes in census scores of the nation.
-        banners: The banners unlocked by answering the issue.
-        reclassifications: WA Category and Freedoms reclassifications.
-        headlines: Newspaper headlines.  NationStates returns this
-            field with unexpanded macros.  I did my best to try and
-            expand them all client-side, however there does not exist
-            a document in which they are formally defined (that is
-            sort of a pattern throughout NationStates, maybe you've
-            noticed), so I can only do so much.  Please report any
-            unexpanded macros you encounter as bugs.
+    Attributes
+    ----------
+    happening : str
+        The issue effect line.  Not a sentence, mind you -- it's
+        uncapitalized and does not end with a period.  ``None`` if the
+        issue was dismissed.
+    census : list of :class:`CensusScaleChange`
+        Changes in census scores of the nation.
+    banners : list of :class:`Banner`
+        The banners unlocked by answering the issue.
+    reclassifications : :class:`Reclassifications`
+        WA Category and Freedoms reclassifications.
+    headlines : list of str
+        Newspaper headlines.  NationStates returns this field with
+        unexpanded macros.  I did my best to try and expand them all
+        client-side, however there does not exist a document in which
+        they are formally defined (that is sort of a pattern throughout
+        NationStates, maybe you've noticed), so I can only do so much.
+        Please report any unexpanded macros you encounter as bugs.
     """
-    happening: Optional[str]
-    census: List[CensusScaleChange]
-    banners: List[Banner]
-    reclassifications: Reclassifications
-    headlines: List[str]
 
     def __init__(self, elem):
         with suppress(AttributeError):
@@ -453,7 +454,7 @@ class IssueResult:
                 raise ValueError('invalid issue')
         assert elem.find('OK').text == '1'  # honestly no idea
 
-        self.happening = elem.findtext('DESC')
+        self.happening = elem.findtext('DESC')  # TODO rename
         self.census = [
             CensusScaleChange(sub_elem) for sub_elem
             in elem.find('RANKINGS') or ()
@@ -474,19 +475,24 @@ class IssueResult:
 class IssueOption:
     """An option of an issue.
 
-    Attributes:
-        text: The option text. May contain HTML elements and character
-            references.
+    Attributes
+    ----------
+    text : str
+        The option text. May contain HTML elements and character references.
     """
-    text: str
 
     def __init__(self, elem, issue):
         self._issue = issue
         self._id = int(elem.get('id'))
         self.text = unscramble_encoding(elem.text)
 
-    def accept(self) -> Awaitable[IssueResult]:
-        """Accept the option."""
+    def accept(self):
+        """Accept the option.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`IssueResult`
+        """
         return self._issue._nation._accept_issue(self._issue.id, self._id)
 
     # TODO repr
@@ -495,24 +501,23 @@ class IssueOption:
 class Issue:
     """An issue.
 
-    Attributes:
-        id: The issue id.
-        title: The issue title.  May contain HTML elements and
-            character references.
-        text: The issue text.  May contain HTML elements and character
-            references.
-        author: Author of the issue, usually a nation.
-        editor: Editor of the issue, usually a nation.
-        options: Issue options.
-        banners: URLs of issue banners.
+    Attributes
+    ----------
+    id : str
+        The issue id.
+    title : str
+        The issue title.  May contain HTML elements and character references.
+    text : str
+        The issue text.  May contain HTML elements and character references.
+    author : str
+        Author of the issue, usually a nation.
+    editor : str
+        Editor of the issue, usually a nation.
+    options : list of :class:`IssueOption`
+        Issue options.
+    banners : str
+        URLs of issue banners.
     """
-    id: int
-    title: str
-    text: str
-    author: Optional[str]
-    editor: Optional[str]
-    options: List[IssueOption]
-    banners: List[str]
 
     def __init__(self, elem, nation):
         self._nation = nation
@@ -533,7 +538,7 @@ class Issue:
                     break
         self.banners = list(issue_banners(elem))
 
-    def dismiss(self) -> Awaitable[IssueResult]:
+    def dismiss(self):
         """Dismiss the issue."""
         return self._nation._accept_issue(self.id, -1)
 
@@ -544,32 +549,38 @@ class Issue:
 class Embassies:
     """Embassies of a region.
 
-    Attributes:
-        active: Normal, alive embassies.
-        closing: Embassies the demolition of which has been initiated,
-            but did not yet finish.
-        pending: Embassies the creation of which has been initiated,
-            but did not yet finish.
-        invited: Embassy invitations that have not yet been processed.
-        rejected: Embassy invitations that have been denied.
+    Attributes
+    ----------
+    active : list of :class:`Region`
+        Normal, alive embassies.
+    closing : list of :class:`Region`
+        Embassies the demolition of which has been initiated, but did
+        not yet finish.
+    pending : list of :class:`Region`
+        Embassies the creation of which has been initiated, but did not
+        yet finish.
+    invited : list of :class:`Region`
+        Embassy invitations that have not yet been processed.
+    rejected : list of :class:`Region`
+        Embassy invitations that have been denied.
     """
-    active: List[str]
-    closing: List[str]
-    pending: List[str]
-    invited: List[str]
-    rejected: List[str]
 
     def __init__(self, elem):
         # I know I'm iterating through them five times; I don't care.
-        self.active = [sub_elem.text for sub_elem in elem
+        self.active = [aionationstates.Region(sub_elem.text)
+                       for sub_elem in elem
                        if sub_elem.get('type') is None]
-        self.closing = [sub_elem.text for sub_elem in elem
+        self.closing = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
                         if sub_elem.get('type') == 'closing']
-        self.pending = [sub_elem.text for sub_elem in elem
+        self.pending = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
                         if sub_elem.get('type') == 'pending']
-        self.invited = [sub_elem.text for sub_elem in elem
+        self.invited = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
                         if sub_elem.get('type') == 'invited']
-        self.rejected = [sub_elem.text for sub_elem in elem
+        self.rejected = [aionationstates.Region(sub_elem.text)
+                         for sub_elem in elem
                          if sub_elem.get('type') == 'rejected']
 
 
@@ -598,25 +609,26 @@ class Authority(Flag):
 class Officer:
     """A Regional Officer.
 
-    Attributes:
-        nation: Officer's nation.
-        office: The (user-specified) office held by the officer.
-        authority: Officer's authority.
-        appointed_at: When the officer got appointed.
-        appointed_by: The nation that appointed the officer.
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Officer's nation.
+    office : str
+        The (user-specified) office held by the officer.
+    authority : :class:`OfficerAuthority`
+        Officer's authority.
+    appointed_at : naive UTC :class:`datetime.datetime`
+        When the officer got appointed.
+    appointed_by : :class:`Nation`
+        The nation that appointed the officer.
     """
-    nation: aionationstates.Nation
-    office: str
-    authority: Authority
-    appointed_at: datetime.datetime
-    appointed_by: str
 
     def __init__(self, elem):
         self.nation = aionationstates.Nation(elem.find('NATION').text)
         self.office = elem.findtext('OFFICE')
         self.authority = Authority._from_ns(elem.find('AUTHORITY').text)
         self.appointed_at = timestamp(elem.find('TIME').text)
-        self.appointed_by = elem.find('BY').text
+        self.appointed_by = aionationstates.Nation(elem.find('BY').text)
 
 
 
@@ -673,34 +685,40 @@ class PostStatus(Enum):
 class Post:
     """A post on a Regional Message Board.
 
-    Attributes:
-        id: The unique (or so it would seem) id of the post.
-        timestamp: When the post was, well, posted.
-        author: The author nation.
-        status: Status of the post.
-        text: The post text.
-        likers: Nations that liked the post.
-        suppressor: Nation that suppressed the post.  ``None`` if the
-            post has not been suppressed.
+    Attributes
+    ----------
+    id : int
+        The unique id of the post.
+    timestamp : naive UTC :class:`datetime.datetime`
+        When the post was put up.
+    author : :class:`Nation`
+        The author nation.
+    status : :class:`PostStatus`
+        Status of the post.
+    text : str
+        The post text.
+    likers : list of :class:`Nation`
+        Nations that liked the post.
+    suppressor : :class:`Nation` of None
+        Nation that suppressed the post.  ``None`` if the post has not
+        been suppressed or has been suppressed by moderators.
     """
-    id: int
-    timestamp: datetime.datetime
-    author: aionationstates.Nation
-    status: PostStatus
-    text: str
-    likers: List[str]
-    suppressor: Optional[str]
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.author = elem.find('NATION').text
+        self.author = aionationstates.Nation(elem.find('NATION').text)
         self.status = PostStatus(int(elem.find('STATUS').text))
         self.text = elem.find('MESSAGE').text  # TODO unescape?
 
         likers_elem = elem.find('LIKERS')
         self.likers = likers_elem.text.split(':') if likers_elem else []
-        self.suppressor = elem.findtext('SUPPRESSOR')
+
+        suppressor_str = elem.findtext('SUPPRESSOR')
+        if suppressor_str in ('!mod', None):
+            self.suppressor = None
+        else:
+            self.suppressor = aionationstates.Nation()
 
     # TODO repr
 
@@ -709,18 +727,19 @@ class Post:
 class Zombie:
     """The situation in a nation/region during the annual Z-Day event.
 
-    Attributes:
-        survivors: The number of citizens surviving, in millions.
-        zombies: The number of undead citizens, in millions.
-        dead: The number of dead citizens, in millions.
-        action: The nation's strategy for dealing with the disaster.
-            Either "research", "exterminate", or "export".  ``None``
-            if the instance represents regional situation.
+    Attributes
+    ----------
+    survivors : int
+        The number of citizens surviving, in millions.
+    zombies : int
+        The number of undead citizens, in millions.
+    dead : int
+        The number of dead citizens, in millions.
+    action : str or None
+        The nation's strategy for dealing with the disaster.  Either
+        "research", "exterminate", or "export".  ``None`` if the
+        instance represents regional situation.
     """
-    survivors: int
-    zombies: int
-    dead: int
-    action: Optional[str]
 
     def __init__(self, elem):
         self.survivors = int(elem.find('SURVIVORS').text)
@@ -729,42 +748,4 @@ class Zombie:
         self.action = elem.findtext('ZACTION')
 
 
-
-class ArchivedHappening:
-    """An archived happening.  NationStates doesn't store ids of those,
-    for whatever reason.
-
-    Attributes:
-        timestamp: Time of the happening.
-        text: The happening text.
-    """
-    timestamp: datetime.datetime
-    text: str
-
-    def __init__(self, elem):
-        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.text = elem.findtext('TEXT')
-
-
-class Happening(ArchivedHappening):
-    """A happening.
-
-    Attributes:
-        id: The happening id.
-        timestamp: Time of the happening.
-        text: The happening text.
-    """
-    id: int
-
-    def __init__(self, elem):
-        self.id = int(elem.get('id'))
-        super().__init__(elem)
-
-    def __repr__(self):
-        return f'<Happening #{self.id}>'
-
-
 # TODO gavote, scvote
-
-
-
