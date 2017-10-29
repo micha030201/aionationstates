@@ -2,15 +2,11 @@ from contextlib import suppress
 from asyncio import sleep
 
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch, Poll, Happening
+from aionationstates.types import Dispatch, Poll
+from aionationstates.happenings import process_happening
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
 from aionationstates.utils import utc_seconds, normalize
-
-# Needed for type annotations
-import datetime
-from typing import List, AsyncIterator, Iterable
-from aionationstates.session import ApiQuery
 import aionationstates
 
 
@@ -18,43 +14,80 @@ class World(Census, Session):
     """Interface to the NationStates World API."""
 
     @api_query('featuredregion')
-    async def featuredregion(self, root) -> str:
-        """Today's featured region."""
-        return root.find('FEATUREDREGION').text
+    async def featuredregion(self, root):
+        """Today's featured region.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Region`
+        """
+        return aionationstates.Region(root.find('FEATUREDREGION').text)
 
     @api_query('newnations')
-    async def newnations(self, root) -> List[aionationstates.Nation]:
-        """Most recently founded nations, from newest."""
+    async def newnations(self, root):
+        """Most recently founded nations, from newest.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Nation`
+        """
         return [aionationstates.Nation(n)
                 for n in root.find('NEWNATIONS').text.split(',')]
 
     @api_query('nations')
-    async def nations(self, root) -> List[aionationstates.Nation]:
-        """List of all the nations, seemingly in order of creation."""
+    async def nations(self, root):
+        """List of all the nations, seemingly in order of creation.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Nation`
+        """
         return [aionationstates.Nation(n)
-                for n in root.find('NEWNATIONS').text.split(',')]
+                for n in root.find('NATIONS').text.split(',')]
 
     @api_query('numnations')
-    async def numnations(self, root) -> int:
-        """Total number of nations."""
+    async def numnations(self, root):
+        """Total number of nations in the game.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
+        """
         return int(root.find('NUMNATIONS').text)
 
     @api_query('regions')
-    async def regions(self, root) -> List[aionationstates.Region]:
+    async def regions(self, root):
         """List of all the regions, seemingly in order of creation.
-        Not normalized.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Region`
         """
         return [aionationstates.Region(r)
                 for r in root.find('REGIONS').text.split(',')]
 
     @api_query('numregions')
-    async def numregions(self, root) -> int:
-        """Total number of regions."""
+    async def numregions(self, root):
+        """Total number of regions in the game.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of int
+        """
         return int(root.find('NUMREGIONS').text)
 
-    def regionsbytag(self, *tags: str) -> ApiQuery[List[aionationstates.Region]]:
-        """All regions belonging to any of the named tags.  Tags can be
-        preceded by a ``-`` to select regions without that tag.
+    def regionsbytag(self, *tags):
+        """All regions belonging to any of the named tags.
+
+        Parameters
+        ----------
+        *tags : str
+            Regional tags.  Can be preceded by a ``-`` to select regions
+            without that tag.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Region`
         """
         if len(tags) > 10:
             raise ValueError('You can specify up to 10 tags')
@@ -70,9 +103,18 @@ class World(Census, Session):
                     if text else [])
         return result(self)
 
-    def dispatch(self, id: int) -> ApiQuery[Dispatch]:
-        """Dispatch by id.  Primarily useful for getting dispatch
-        texts, as this is the only way to do so.
+    def dispatch(self, id):
+        """Dispatch by id.
+
+        Parameters
+        ----------
+        id : int
+            Dispatch id.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Dispatch`
+            Full dispatch (with text).
         """
         @api_query('dispatch', dispatchid=str(id))
         async def result(_, root):
@@ -82,16 +124,25 @@ class World(Census, Session):
             return Dispatch(elem)
         return result(self)
 
-    def dispatchlist(self, *, author: str = None, category: str = None,
-                     subcategory: str = None, sort: str = 'new'
-                     ) -> ApiQuery[List[Dispatch]]:
+    def dispatchlist(self, *, author=None, category=None,
+                     subcategory=None, sort='new'):
         """Find dispatches by certain criteria.
 
-        Parameters:
-            author: Nation authoring the dispatch.
-            category: Dispatch's primary category.
-            subcategory: Dispatch's secondary category.
-            sort: Sort order, 'new' or 'best'.
+        Parameters
+        ----------
+        author : str
+            Name of the nation authoring the dispatch.
+        category : str
+            Dispatch's primary category.
+        subcategory : str
+            Dispatch's secondary category.
+        sort : str
+            Sort order, 'new' or 'best'.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Dispatch`
+            Dispatch "thumbnails", missing text.
         """
         params = {'sort': sort}
         if author:
@@ -108,6 +159,8 @@ class World(Census, Session):
             if category not in dispatch_categories:
                 raise ValueError('Invalid category')
             params['dispatchcategory'] = category
+        else:
+            raise ValueError('Cannot request subcategory without category')
 
         @api_query('dispatchlist', **params)
         async def result(_, root):
@@ -117,8 +170,18 @@ class World(Census, Session):
             ]
         return result(self)
 
-    def poll(self, id: int) -> ApiQuery[Poll]:
-        """Poll with a given id."""
+    def poll(self, id):
+        """Poll with a given id.
+
+        Parameters
+        ----------
+        id : int
+            Poll id.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`Poll`
+        """
         @api_query('poll', pollid=str(id))
         async def result(_, root):
             elem = root.find('POLL')
@@ -154,30 +217,30 @@ class World(Census, Session):
 
         @api_query('happenings', **params)
         async def result(_, root):
-            return [Happening(elem) for elem in root.find('HAPPENINGS')]
+            return [process_happening(elem) for elem in root.find('HAPPENINGS')]
         return result(self)
 
-    async def happenings(
-            self, *,
-            nations: Iterable[str] = None,
-            regions: Iterable[str] = None,
-            filters: Iterable[str] = None,
-            beforeid: int = None,
-            beforetime: datetime.datetime = None
-            ) -> AsyncIterator[Happening]:
+    async def happenings(self, *, nations=None, regions=None, filters=None,
+                         beforeid=None, beforetime=None):
         """Iterate through happenings from newest to oldest.
 
-        Parameters:
-            nations: Nations happenings of which will be requested.
-                Cannot be specified at the same time with region.
-            regions: Regions happenings of which will be requested.
-                Cannot be specified at the same time with nation.
-            filters: Categories to request happenings by.  Available
-                filters are: 'law', 'change', 'dispatch', 'rmb',
-                'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
-                'vote', 'resolution', 'member', and 'endo'.
-            beforeid: Only request happenings before this id.
-            beforetime: Only request happenings before this moment.
+        Parameters
+        ----------
+        nations : iterable of str
+            Nations happenings of which will be requested.  Cannot be
+            specified at the same time with region.
+        regions : iterable of str
+            Regions happenings of which will be requested.  Cannot be
+            specified at the same time with nation.
+        filters : iterable of str
+            Categories to request happenings by.  Available filters
+            are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
+            'admin', 'move', 'founding', 'cte', 'vote', 'resolution',
+            'member', and 'endo'.
+        beforeid : int
+            Only request happenings before this id.
+        beforetime : :class:`datetime.datetime`
+            Only request happenings before this moment.
         """
         while True:
             happening_bunch = await self._get_happenings(
@@ -190,14 +253,9 @@ class World(Census, Session):
                 break
             beforeid = happening_bunch[-1].id
 
-    async def new_happenings(
-            self, poll_period: int = 30, *,
-            nations: Iterable[str] = None,
-            regions: Iterable[str] = None,
-            filters: Iterable[str] = None
-            ) -> AsyncIterator[Happening]:
-        """An asynchronous generator that yields new happenings as they
-        arrive::
+    async def new_happenings(self, poll_period=30, *, nations=None,
+                             regions=None, filters=None):
+        """New happenings as they arrive::
 
             async for happening in \\
                     world.new_happenings(region='the north pacific'):
@@ -211,26 +269,35 @@ class World(Census, Session):
         * No happening is generated more than once;
         * Happenings are generated in order from oldest to newest.
 
-        Parameters:
-            poll_period: How long to wait between requesting the next
-                bunch of happenings.  Note that this should only be
-                tweaked for latency reasons, as the function gives a
-                guarantee that all happenings will be generated.
-                Also note that, regardless of the ``poll_period`` you
-                set, all of the code in your loop body still has to
-                execute (possibly several times) before a new bunch of
-                happenings can be requested.  Consider wrapping your
-                happening-processing code in a coroutine and launching
-                it as a task from the loop body if you suspect this
-                might be an issue.
-            nations: Nations happenings of which will be requested.
-                Cannot be specified at the same time with region.
-            regions: Regions happenings of which will be requested.
-                Cannot be specified at the same time with nation.
-            filters: Categories to request happenings by.  Available
-                filters are: 'law', 'change', 'dispatch', 'rmb',
-                'embassy', 'eject', 'admin', 'move', 'founding', 'cte',
-                'vote', 'resolution', 'member', and 'endo'.
+        Parameters
+        ----------
+        poll_period : int
+            How long to wait between requesting the next bunch of
+            happenings, in seconds.  Note that this should only be
+            tweaked for latency reasons, as the function gives a
+            guarantee that all happenings will be generated.  Also note
+            that, regardless of the ``poll_period`` you set, all of the
+            code in your loop body still has to execute (possibly
+            several times) before a new bunch of happenings can be
+            requested.  Consider wrapping your happening-processing code
+            in a coroutine and launching it as a task from the loop body
+            if you suspect this might be an issue.
+        nations : iterable of str
+            Nations happenings of which will be requested.  Cannot be
+            specified at the same time with region.
+        regions : iterable of str
+            Regions happenings of which will be requested.  Cannot be
+            specified at the same time with nation.
+        filters : iterable of str
+            Categories to request happenings by.  Available filters
+            are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
+            'admin', 'move', 'founding', 'cte', 'vote', 'resolution',
+            'member', and 'endo'.
+
+        Returns
+        -------
+        an asyncronous generator that yields :class:`UnrecognizedHappening` \
+        or any of the classes that inherit from it
         """
         try:
             # We only need the happenings from this point forwards
