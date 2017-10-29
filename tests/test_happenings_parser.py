@@ -269,7 +269,7 @@ def test_poll_create_html():
     assert type(h) == happenings.PollCreation
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
-    assert h.title == '<>& ]]> ". ". &quot;.'
+    assert h.title == '<>& > ". ". &quot;.'
 
 
 def test_poll_delete():
