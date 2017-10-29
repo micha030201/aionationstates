@@ -13,6 +13,8 @@ from typing import NamedTuple
 from aionationstates.utils import banner_url
 
 
+__all__ = ('ScaleInfo', 'Banner')
+
 happening_filters = {
     'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject', 'admin',
     'move', 'founding', 'cte', 'vote', 'resolution', 'member', 'endo',
@@ -57,28 +59,31 @@ dispatch_categories = {
 }
 
 
-class ScaleInfo(NamedTuple):
+class ScaleInfo:
     """Static information about a World Census scale.
 
-    Attributes:
-        id: The scale id, a number between 0 and 80.
-        title: The scale title. For example, `Civil Rights.`
-        ranked: A scale by which a nation or region is ranked, either
-            in their region or the world. For example, `Most Extensive
-            Civil Rights.`
-        measurement: The measurement scale. For example, `Martin Luther
-            King, Jr. Units.`
-        image: An identifier NS uses for the Census tropy picture urls.
-        nation_description: Description for nations.
-        region_description: Description for regions.
+    Attributes
+    ----------
+    id : int
+        The scale id, a number between 0 and 80.
+    title : str
+        The scale title. For example, `Civil Rights.`
+    ranked : str
+        A scale by which a nation or region is ranked, either in their
+        region or the world. For example, `Most Extensive Civil Rights.`
+    measurement : str
+        The measurement scale. For example, `Martin Luther King, Jr. Units.`
+    image : str
+        An identifier NS uses for the Census tropy picture urls.
+    nation_description : str
+        Description for nations.
+    region_description : str
+        Description for regions.
     """
-    id: int
-    title: str
-    ranked: str
-    measurement: str
-    image: str
-    nation_description: str
-    region_description: str
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 census_info = {
@@ -1263,18 +1268,22 @@ census_info = {
 class Banner(NamedTuple):
     """A Rift banner.
 
-    Attributes:
-        id: The banner id.
-        name: The banner name.
-        validity: A requirement the nation has to meet in order to get
-            the banner.
+    Attributes
+    ----------
+    id : int
+        The banner id.
+    name : str
+        The banner name.
+    validity : str
+        A requirement the nation has to meet in order to get the banner.
     """
-    id: str
-    name: str = 'Custom'
-    validity: str = 'Reach a certain population threshold'
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
-    def url(self) -> str:
+    def url(self):
         """Link to the banner image."""
         return banner_url(self.id)
 
@@ -1289,7 +1298,11 @@ def banner(id):
     try:
         return banner_info[id]
     except KeyError:
-        return Banner(id)
+        return Banner(
+            id=id,
+            name='Custom',
+            validity='Reach a certain population threshold'
+        )
 
 
 banner_info = {
@@ -1327,7 +1340,7 @@ banner_info = {
     'b1': Banner(
         id='b1',
         name='Air and Glass',
-        validity=("Develop a technologically literate populace that doesn't " 
+        validity=("Develop a technologically literate populace that doesn't "
                   'care that much'),
     ),
     'b2': Banner(
