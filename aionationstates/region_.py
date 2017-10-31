@@ -19,7 +19,7 @@ class Region(NationRegion, Session):
         multiple regions.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name):
         self.id = normalize(name)
 
     def _call_api(self, params, *args, **kwargs):

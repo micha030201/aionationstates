@@ -8,8 +8,6 @@ I claim no ownership over the NationStates content and really really
 hope my usage of it can be considered Fair Use.
 """
 
-from typing import NamedTuple
-
 from aionationstates.utils import banner_url
 
 
@@ -1265,7 +1263,7 @@ census_info = {
 }
 
 
-class Banner(NamedTuple):
+class Banner:
     """A Rift banner.
 
     Attributes
