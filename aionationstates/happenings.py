@@ -154,16 +154,22 @@ class SettingsChange(UnrecognizedHappening):
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.changes = {}
-        super().__init__(text, params)
+
         # If you harbor any sort of motivation to refactor this, feel free.
         index = text.index('@@ changed its national') + 23
-        text = 'its' + text[index:]
+        new_text = 'its' + text[index:]
 
-        for substr in text.replace('" and', '",').split(','):
+        while True:
             # none of the fields are supposed to contain quotes
-            match = re.search('its (.+?) to "(.+?)"', substr)
+            match = re.search('its (.+?) to "(.+?)"', new_text)
+            if not match:
+                break
             value = unscramble_encoding(html.unescape(match.group(2)))
             self.changes[match.group(1)] = value
+            new_text = new_text[len(match.group(0)):]
+
+
+        super().__init__(text, params)
 
 
 
