@@ -77,6 +77,14 @@ def test_settings():
     assert h.changes == {'motto': 'Test arhgHsefv'}
 
 
+def test_settings_comma():
+    t = '@@testlandia@@ changed its national motto to "Test, arhgHsefv".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.SettingsChange
+    assert h.nation.id == 'testlandia'
+    assert h.changes == {'motto': 'Test, arhgHsefv'}
+
+
 def test_settings_multiple():
     t = ('@@testlandia@@ changed its national currency to "wef erkjf",'
          ' its demonym adjective to "qwdqsIO ni",'
@@ -88,6 +96,20 @@ def test_settings_multiple():
         'currency': 'wef erkjf',
         'demonym adjective': 'qwdqsIO ni',
         'demonym plural': 'ubuUuu ju'
+    }
+
+
+def test_settings_multiple_comma():
+    t = ('@@testlandia@@ changed its national currency to "wef erkjf",'
+         ' its demonym adjective to "qwdqsIO ni",'
+         ' and its demonym plural to "ubuUuu, ju".')
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.SettingsChange
+    assert h.nation.id == 'testlandia'
+    assert h.changes == {
+        'currency': 'wef erkjf',
+        'demonym adjective': 'qwdqsIO ni',
+        'demonym plural': 'ubuUuu, ju'
     }
 
 
