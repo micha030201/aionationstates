@@ -278,3 +278,33 @@ def test_poll_delete():
     assert type(h) == happenings.PollDeletion
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
+
+
+def test_zombie_cleanse():
+    t = '@@testlandia@@ was cleansed by a Level 5 Invasion Tactical Zombie Elimination Squad from @@landtestia@@, killing 195 million zombies.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.ZombieKillAction
+    assert h.recepient.id == 'testlandia'
+    assert h.sender.id == 'landtestia'
+    assert h.impact == 195
+    assert h.weapon == 'Level 5 Invasion Tactical Zombie Elimination Squad'
+
+
+def test_zombie_ravage():
+    t = '@@testlandia@@ was ravaged by a Zombie Thing Horde from @@landtestia@@, infecting 70 million survivors.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.ZombieInfectAction
+    assert h.recepient.id == 'testlandia'
+    assert h.sender.id == 'landtestia'
+    assert h.impact == 70
+    assert h.weapon == 'Zombie Thing Horde'
+
+
+def test_zombie_cure():
+    t = '@@testlandia@@ was struck by a Mk I (Immunizer) Cure Missile from @@landtestia@@, curing 5 million infected.'
+    h = happenings.process(happening_elem(t))
+    assert type(h) == happenings.ZombieCureAction
+    assert h.recepient.id == 'testlandia'
+    assert h.sender.id == 'landtestia'
+    assert h.impact == 5
+    assert h.weapon == 'Mk I (Immunizer) Cure Missile'
