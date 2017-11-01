@@ -627,6 +627,85 @@ class PollDeletion(UnrecognizedHappening):
         super().__init__(text, params)
 
 
+class ZombieAction(UnrecognizedHappening):
+    def __init__(self, match, text, params):
+        self.recepient = aionationstates.Nation(match.group(1))
+        self.weapon = match.group(2)
+        self.sender = aionationstates.Nation(match.group(3))
+        self.impact = int(match.group(4))
+        super().__init__(text, params)
+
+
+class ZombieCureAction(ZombieAction):
+    """A nation curing another nation during Z-Day.
+
+    Attributes
+    ----------
+    recepient : :class:`Nation`
+    sender : :class:`Nation`
+    weapon : str
+        Weapon type used, for example *"Mk II (Sterilizer) Cure Missile"*.
+    impact : int
+        Citizens affected, in millions.
+    """
+
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ was struck by a (.+?) from @@(.+?)@@, curing ([0-9]+) million infected.',
+            text
+        )
+        if not match:
+            raise ValueError
+        super().__init__(match, text, params)
+
+
+class ZombieKillAction(ZombieAction):
+    """A nation cleansing another nation during Z-Day.
+
+    Attributes
+    ----------
+    recepient : :class:`Nation`
+    sender : :class:`Nation`
+    weapon : str
+        Weapon type used, for example *"Level 3 Mechanized Tactical
+        Zombie Elimination Squad"*.
+    impact : int
+        Citizens affected, in millions.
+    """
+
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ was cleansed by a (.+?) from @@(.+?)@@, killing ([0-9]+) million zombies.',
+            text
+        )
+        if not match:
+            raise ValueError
+        super().__init__(match, text, params)
+
+
+class ZombieInfectAction(ZombieAction):
+    """A nation infecting another nation during Z-Day.
+
+    Attributes
+    ----------
+    recepient : :class:`Nation`
+    sender : :class:`Nation`
+    weapon : str
+        Weapon type used, for example *"Zombie Walker Horde"*.
+    impact : int
+        Citizens affected, in millions.
+    """
+
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ was ravaged by a (.+?) from @@(.+?)@@, infecting ([0-9]+) million survivors.',
+            text
+        )
+        if not match:
+            raise ValueError
+        super().__init__(match, text, params)
+
+
 happening_classes = (
     Move,
     Founding,
@@ -652,6 +731,9 @@ happening_classes = (
     EndorsementWithdrawal,
     PollCreation,
     PollDeletion,
+    ZombieCureAction,
+    ZombieKillAction,
+    ZombieInfectAction,
 )
 
 __all__ = [cls.__name__ for cls in happening_classes + (UnrecognizedHappening,)]
