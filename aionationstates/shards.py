@@ -98,3 +98,9 @@ class NationRegion(Census):
         an :class:`ApiQuery` of :class:`Zombie`
         """
         return Zombie(root.find('ZOMBIE'))
+
+    def __repr__(self):
+        return f'<{type(self).__name__} "{self.id}">'
+
+    def __eq__(self, other):
+        return self.id == other.id
