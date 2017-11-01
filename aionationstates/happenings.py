@@ -272,8 +272,7 @@ class DelegateChange(UnrecognizedHappening):
         - a nation taking the free delegate position; and
         - a delegate being removed, leaving the position empty.
 
-    As I believe this to be superfluous, this
-class represents all three.
+    As I believe this to be superfluous, this class represents all three.
     In case either the old of new delegate is missing, the corresponding
     attribute will ne `None`.
 

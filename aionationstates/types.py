@@ -12,6 +12,10 @@ from aionationstates.ns_to_human import banner, census_info
 
 
 __all__ = (
+    'RateLimitError',
+    'SessionConflictError',
+    'AuthenticationError',
+    'NotFound',
     'CensusScaleCurrent',
     'CensusScaleHistory',
     'CensusPoint',
