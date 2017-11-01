@@ -11,6 +11,7 @@ from aionationstates.utils import timestamp, unscramble_encoding
 import aionationstates
 
 
+
 class UnrecognizedHappening:
     """A happening that wasn't recognized by the system.
 
@@ -31,11 +32,13 @@ class UnrecognizedHappening:
         text: The happening text.
     """
 
-    def __init__(self, params):
-        self.id, self.timestamp, self.text = params
+    def __init__(self, text, params):
+        self.id, self.timestamp = params
+        self.text = text
 
     def __repr__(self):
         return f'<Happening #{self.id}>'
+
 
 
 class Move(UnrecognizedHappening):
@@ -48,15 +51,15 @@ class Move(UnrecognizedHappening):
     region_to : :class:`Region`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            r'@@(.+?)@@ relocated from %%(.+?)%% to %%(.+?)%%', self.text)
+            r'@@(.+?)@@ relocated from %%(.+?)%% to %%(.+?)%%', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.region_from = aionationstates.Region(match.group(2))
         self.region_to = aionationstates.Region(match.group(3))
+        super().__init__(text, params)
 
 
 class Founding(UnrecognizedHappening):
@@ -69,13 +72,13 @@ class Founding(UnrecognizedHappening):
         The feeder region nation spawned in.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
-        match = re.match('@@(.+?)@@ was founded in %%(.+?)%%', self.text)
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ was founded in %%(.+?)%%', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.region = aionationstates.Region(match.group(2))
+        super().__init__(text, params)
 
 
 class CTE(UnrecognizedHappening):
@@ -88,13 +91,13 @@ class CTE(UnrecognizedHappening):
         Region the nation CTEd in.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
-        match = re.match('@@(.+?)@@ ceased to exist in %%(.+?)%%', self.text)
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ ceased to exist in %%(.+?)%%', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.region = aionationstates.Region(match.group(2))
+        super().__init__(text, params)
 
 
 class Legislation(UnrecognizedHappening):
@@ -107,14 +110,14 @@ class Legislation(UnrecognizedHappening):
         May contain HTML elements and character references.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            r'Following new legislation in @@(.+?)@@, (.+)\.', self.text)
+            r'Following new legislation in @@(.+?)@@, (.+)\.', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.effect_line = match.group(2)
+        super().__init__(text, params)
 
 
 class FlagChange(UnrecognizedHappening):
@@ -125,12 +128,12 @@ class FlagChange(UnrecognizedHappening):
     nation : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
-        match = re.match('@@(.+?)@@ altered its national flag', self.text)
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ altered its national flag', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
 
 
 class SettingsChange(UnrecognizedHappening):
@@ -144,24 +147,24 @@ class SettingsChange(UnrecognizedHappening):
         their new values.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            '@@(.+?)@@ changed its national', self.text)
+            '@@(.+?)@@ changed its national', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.changes = {}
-
+        super().__init__(text, params)
         # If you harbor any sort of motivation to refactor this, feel free.
-        index = self.text.index('@@ changed its national') + 23
-        text = 'its' + self.text[index:]
+        index = text.index('@@ changed its national') + 23
+        text = 'its' + text[index:]
 
         for substr in text.split(','):
             # none of the fields are supposed to contain quotes
             match = re.search('its (.+?) to "(.+?)"', substr)
             value = unscramble_encoding(html.unescape(match.group(2)))
             self.changes[match.group(1)] = value
+
 
 
 class DispatchPublication(UnrecognizedHappening):
@@ -178,11 +181,10 @@ class DispatchPublication(UnrecognizedHappening):
     subcategory : str
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             r'@@(.+?)@@ published "<a href="page=dispatch/id=(.+?)">(.+?)</a>" \((.+?): (.+?)\).',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -191,6 +193,7 @@ class DispatchPublication(UnrecognizedHappening):
         self.title = unscramble_encoding(html.unescape(match.group(3)))
         self.category = match.group(4)
         self.subcategory = match.group(5)
+        super().__init__(text, params)
 
     def dispatch(self):
         """Request the full dispatch.
@@ -203,6 +206,7 @@ class DispatchPublication(UnrecognizedHappening):
         return aionationstates.world.dispatch(self.dispatch_id)
 
 
+
 class WorldAssemblyApplication(UnrecognizedHappening):
     """A nation applying to join the World Assembly.
 
@@ -211,15 +215,15 @@ class WorldAssemblyApplication(UnrecognizedHappening):
     nation : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ applied to join the World Assembly.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
 
 
 class WorldAssemblyAdmission(UnrecognizedHappening):
@@ -230,15 +234,15 @@ class WorldAssemblyAdmission(UnrecognizedHappening):
     nation : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was admitted to the World Assembly.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
 
 
 class WorldAssemblyResignation(UnrecognizedHappening):
@@ -249,15 +253,15 @@ class WorldAssemblyResignation(UnrecognizedHappening):
     nation : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ resigned from the World Assembly.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
 
 
 class DelegateChange(UnrecognizedHappening):
@@ -268,7 +272,8 @@ class DelegateChange(UnrecognizedHappening):
         - a nation taking the free delegate position; and
         - a delegate being removed, leaving the position empty.
 
-    As I believe this to be superfluous, this class represents all three.
+    As I believe this to be superfluous, this
+class represents all three.
     In case either the old of new delegate is missing, the corresponding
     attribute will ne `None`.
 
@@ -279,21 +284,20 @@ class DelegateChange(UnrecognizedHappening):
     region : :class:`Region`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ seized the position of %%(.+?)%% WA Delegate from @@(.+?)@@.',
-            self.text
+            text
         )
         if match:
             self.new_delegate = aionationstates.Nation(match.group(1))
             self.region = aionationstates.Region(match.group(2))
             self.old_delegate = aionationstates.Nation(match.group(3))
             return
-
+        super().__init__(text, params)
         match = re.match(
             '@@(.+?)@@ became WA Delegate of %%(.+?)%%.',
-            self.text
+            text
         )
         if match:
             self.new_delegate = aionationstates.Nation(match.group(1))
@@ -303,7 +307,7 @@ class DelegateChange(UnrecognizedHappening):
 
         match = re.match(
             '@@(.+?)@@ lost WA Delegate status in %%(.+?)%%.',
-            self.text
+            text
         )
         if match:
             self.old_delegate = aionationstates.Nation(match.group(1))
@@ -312,6 +316,7 @@ class DelegateChange(UnrecognizedHappening):
             return
 
         raise ValueError
+
 
 
 class CategoryChange(UnrecognizedHappening):
@@ -324,17 +329,17 @@ class CategoryChange(UnrecognizedHappening):
     category_after : str
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was reclassified from "(.+?)" to "(.+?)".',
-            self.text
+            text
         )
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.category_before = match.group(2)
         self.category_after = match.group(3)
+        super().__init__(text, params)
 
 
 class BannerCreation(UnrecognizedHappening):
@@ -345,12 +350,12 @@ class BannerCreation(UnrecognizedHappening):
     nation : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
-        match = re.match('@@(.+?)@@ created a custom banner.', self.text)
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ created a custom banner.', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
 
 
 class EmbassyConstructionRequest(UnrecognizedHappening):
@@ -366,11 +371,10 @@ class EmbassyConstructionRequest(UnrecognizedHappening):
         first one appears to be one the request was sent from.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ proposed constructing embassies between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -379,6 +383,7 @@ class EmbassyConstructionRequest(UnrecognizedHappening):
             aionationstates.Region(match.group(2)),
             aionationstates.Region(match.group(3))
         )
+        super().__init__(text, params)
 
 
 class EmbassyConstructionConfirmation(UnrecognizedHappening):
@@ -394,11 +399,10 @@ class EmbassyConstructionConfirmation(UnrecognizedHappening):
         first one appears to be one the request was accepted from.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ agreed to construct embassies between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -407,6 +411,7 @@ class EmbassyConstructionConfirmation(UnrecognizedHappening):
             aionationstates.Region(match.group(2)),
             aionationstates.Region(match.group(3))
         )
+        super().__init__(text, params)
 
 
 class EmbassyConstructionRequestWithdrawal(UnrecognizedHappening):
@@ -421,11 +426,10 @@ class EmbassyConstructionRequestWithdrawal(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ withdrew a request for embassies between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -434,6 +438,7 @@ class EmbassyConstructionRequestWithdrawal(UnrecognizedHappening):
             aionationstates.Region(match.group(2)),
             aionationstates.Region(match.group(3))
         )
+        super().__init__(text, params)
 
 
 class EmbassyConstructionAbortion(UnrecognizedHappening):
@@ -448,11 +453,10 @@ class EmbassyConstructionAbortion(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ aborted construction of embassies between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -461,6 +465,7 @@ class EmbassyConstructionAbortion(UnrecognizedHappening):
             aionationstates.Region(match.group(2)),
             aionationstates.Region(match.group(3))
         )
+        super().__init__(text, params)
 
 
 class EmbassyClosureOrder(UnrecognizedHappening):
@@ -475,11 +480,10 @@ class EmbassyClosureOrder(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ ordered the closure of embassies between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -488,6 +492,7 @@ class EmbassyClosureOrder(UnrecognizedHappening):
             aionationstates.Region(match.group(2)),
             aionationstates.Region(match.group(3))
         )
+        super().__init__(text, params)
 
 
 class EmbassyEstablishment(UnrecognizedHappening):
@@ -500,11 +505,10 @@ class EmbassyEstablishment(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             'Embassy established between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -512,6 +516,7 @@ class EmbassyEstablishment(UnrecognizedHappening):
             aionationstates.Region(match.group(1)),
             aionationstates.Region(match.group(2))
         )
+        super().__init__(text, params)
 
 
 class EmbassyCancellation(UnrecognizedHappening):
@@ -524,11 +529,10 @@ class EmbassyCancellation(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
             'Embassy cancelled between %%(.+?)%% and %%(.+?)%%.',
-            self.text
+            text
         )
         if not match:
             raise ValueError
@@ -536,6 +540,7 @@ class EmbassyCancellation(UnrecognizedHappening):
             aionationstates.Region(match.group(1)),
             aionationstates.Region(match.group(2))
         )
+        super().__init__(text, params)
 
 
 class Endorsement(UnrecognizedHappening):
@@ -547,13 +552,13 @@ class Endorsement(UnrecognizedHappening):
     endorsee : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
-        match = re.match('@@(.+?)@@ endorsed @@(.+?)@@', self.text)
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ endorsed @@(.+?)@@', text)
         if not match:
             raise ValueError
         self.endorser = aionationstates.Nation(match.group(1))
         self.endorsee = aionationstates.Nation(match.group(2))
+        super().__init__(text, params)
 
 
 class EndorsementWithdrawal(UnrecognizedHappening):
@@ -565,14 +570,14 @@ class EndorsementWithdrawal(UnrecognizedHappening):
     endorsee : :class:`Nation`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            '@@(.+?)@@ withdrew its endorsement from @@(.+?)@@', self.text)
+            '@@(.+?)@@ withdrew its endorsement from @@(.+?)@@', text)
         if not match:
             raise ValueError
         self.endorser = aionationstates.Nation(match.group(1))
         self.endorsee = aionationstates.Nation(match.group(2))
+        super().__init__(text, params)
 
 
 class PollCreation(UnrecognizedHappening):
@@ -592,15 +597,15 @@ class PollCreation(UnrecognizedHappening):
         stripped from the happening.
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            '@@(.+?)@@ created a new poll in %%(.+?)%%: "(.+?)".', self.text)
+            '@@(.+?)@@ created a new poll in %%(.+?)%%: "(.+?)".', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.region = aionationstates.Region(match.group(2))
         self.title = html.unescape(match.group(3))
+        super().__init__(text, params)
 
 
 class PollDeletion(UnrecognizedHappening):
@@ -612,15 +617,14 @@ class PollDeletion(UnrecognizedHappening):
     region : :class:`Region`
     """
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, text, params):
         match = re.match(
-            '@@(.+?)@@ deleted a regional poll in %%(.+?)%%.', self.text)
+            '@@(.+?)@@ deleted a regional poll in %%(.+?)%%.', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
         self.region = aionationstates.Region(match.group(2))
-
+        super().__init__(text, params)
 
 
 happening_classes = (
@@ -661,11 +665,11 @@ def process_happening(params):
     except TypeError:
         params_id = None
     params_timestamp = timestamp(params.find('TIMESTAMP').text)
-    params_text = params.findtext('TEXT')
-    params = (params_id, params_timestamp, params_text)
+    text = params.findtext('TEXT')
+    params = (text, (params_id, params_timestamp))
 
     for cls in happening_classes:
         with suppress(ValueError):
-            return cls(params)
+            return cls(*params)
     # TODO logging
-    return UnrecognizedHappening(params)
+    return UnrecognizedHappening(*params)
