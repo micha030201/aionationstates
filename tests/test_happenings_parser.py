@@ -91,6 +91,17 @@ def test_settings_multiple():
     }
 
 
+def test_settings_multiple2():
+    t = '@@testlandia@@ changed its national leader to "the First Grand Consul" and its nation type to "Imperial States".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.SettingsChange
+    assert h.nation.id == 'testlandia'
+    assert h.changes == {
+        'leader': 'the First Grand Consul',
+        'nation type': 'Imperial States',
+    }
+
+
 def test_settings_encoding_issues():
     t = '@@testlandia@@ changed its national motto to "&#135;&#135;&#135;&#135;&#135;&#135;".'
     h = happenings.process_happening(happening_elem(t))
