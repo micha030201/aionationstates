@@ -160,7 +160,6 @@ class SettingsChange(UnrecognizedHappening):
         text = 'its' + text[index:]
 
         for substr in text.replace('" and', '",').split(','):
-            print(substr)
             # none of the fields are supposed to contain quotes
             match = re.search('its (.+?) to "(.+?)"', substr)
             value = unscramble_encoding(html.unescape(match.group(2)))
