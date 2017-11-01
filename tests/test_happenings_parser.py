@@ -331,3 +331,29 @@ def test_zombie_cure():
     assert h.sender.id == 'landtestia'
     assert h.impact == 5
     assert h.weapon == 'Mk I (Immunizer) Cure Missile'
+
+
+def test_zombie_lockdown():
+    t = '@@testlandia@@ instituted Lockdown Zombie Border Control in %%the_east_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.ZombieBorderControlActivation
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+    assert h.type == 'Lockdown'
+
+
+def test_zombie_keycode():
+    t = '@@testlandia@@ instituted Keycode Zombie Border Control in %%the_east_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.ZombieBorderControlActivation
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'
+    assert h.type == 'Keycode'
+
+
+def test_zombie_keycode():
+    t = '@@testlandia@@ removed Zombie Border Control in %%the_east_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.ZombieBorderControlDeactivation
+    assert h.nation.id == 'testlandia'
+    assert h.region.id == 'the_east_pacific'

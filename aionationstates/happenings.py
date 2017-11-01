@@ -708,6 +708,47 @@ class ZombieInfectAction(ZombieAction):
         super().__init__(match, text, params)
 
 
+class ZombieBorderControlActivation(UnrecognizedHappening):
+    """A nation activating regional border control during Z-Day.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+    type : str
+        Type of lockdown. Currenlty either "Lockdown" or "Keycode".
+    """
+
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ instituted (.*?) Zombie Border Control in %%(.+?)%%', text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.type = match.group(2)
+        self.region = aionationstates.Region(match.group(3))
+        super().__init__(text, params)
+
+
+class ZombieBorderControlDeactivation(UnrecognizedHappening):
+    """A nation removing regional border control during Z-Day.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+    """
+
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ removed Zombie Border Control in %%(.+?)%%', text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.region = aionationstates.Region(match.group(2))
+        super().__init__(text, params)
+
+
 happening_classes = (
     Move,
     Founding,
@@ -736,6 +777,8 @@ happening_classes = (
     ZombieCureAction,
     ZombieKillAction,
     ZombieInfectAction,
+    ZombieBorderControlActivation,
+    ZombieBorderControlDeactivation,
 )
 
 __all__ = [cls.__name__ for cls in happening_classes + (UnrecognizedHappening,)]
