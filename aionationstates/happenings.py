@@ -694,6 +694,8 @@ class ZombieInfectAction(ZombieAction):
         Weapon type used, for example *"Zombie Walker Horde"*.
     impact : int
         Citizens affected, in millions.
+    convert : bool
+        Whether the nation is converted to a zombie exporter.
     """
 
     def __init__(self, text, params):
@@ -703,6 +705,7 @@ class ZombieInfectAction(ZombieAction):
         )
         if not match:
             raise ValueError
+        self.convert = text.endswith('converting to a zombie exporter! Oh no!')
         super().__init__(match, text, params)
 
 
