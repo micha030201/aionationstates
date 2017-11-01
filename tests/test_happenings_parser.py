@@ -297,6 +297,18 @@ def test_zombie_ravage():
     assert h.recepient.id == 'testlandia'
     assert h.sender.id == 'landtestia'
     assert h.impact == 70
+    assert not h.convert
+    assert h.weapon == 'Zombie Thing Horde'
+
+
+def test_zombie_ravage_convert():
+    t = '@@testlandia@@ was ravaged by a Zombie Thing Horde from @@landtestia@@, infecting 182 million survivors and converting to a zombie exporter! Oh no!'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) == happenings.ZombieInfectAction
+    assert h.recepient.id == 'testlandia'
+    assert h.sender.id == 'landtestia'
+    assert h.impact == 182
+    assert h.convert
     assert h.weapon == 'Zombie Thing Horde'
 
 
