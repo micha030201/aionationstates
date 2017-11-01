@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.world_ &#8212; aionationstates 0.1.2 documentation</title>
+    <title>aionationstates.world_ &#8212; aionationstates 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.2',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,55 +46,92 @@
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">sleep</span>
 
 <span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span><span class="p">,</span> <span class="n">Happening</span>
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span>
+<span class="kn">from</span> <span class="nn">aionationstates.happenings</span> <span class="k">import</span> <span class="n">process_happening</span>
 <span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
 <span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">dispatch_categories</span><span class="p">,</span> <span class="n">happening_filters</span>
 <span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span>
-
-<span class="c1"># Needed for type annotations</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
+<span class="kn">import</span> <span class="nn">aionationstates</span>
 
 
 <div class="viewcode-block" id="World"><a class="viewcode-back" href="../../reference.html#aionationstates.World">[docs]</a><span class="k">class</span> <span class="nc">World</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Interface to the NationStates World API.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="World.featuredregion"><a class="viewcode-back" href="../../reference.html#aionationstates.World.featuredregion">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;featuredregion&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">featuredregion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Today&#39;s featured region.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FEATUREDREGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;featuredregion&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">featuredregion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Today&#39;s featured region.</span>
 
-<div class="viewcode-block" id="World.newnations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.newnations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;newnations&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">newnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Most recently founded nations, from newest.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NEWNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="World.nations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.nations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;nations&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">nations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;List of all the nations, seemingly in order of creation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="World.numnations"><a class="viewcode-back" href="../../reference.html#aionationstates.World.numnations">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numnations&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">numnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Total number of nations.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="World.regions"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regions">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;regions&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;List of all the regions, seemingly in order of creation.</span>
-<span class="sd">        Not normalized.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Region`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>  <span class="c1"># TODO normalize?</span></div>
+        <span class="k">return</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FEATUREDREGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
-<div class="viewcode-block" id="World.numregions"><a class="viewcode-back" href="../../reference.html#aionationstates.World.numregions">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numregions&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">numregions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Total number of regions.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMREGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;newnations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">newnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Most recently founded nations, from newest.</span>
 
-<div class="viewcode-block" id="World.regionsbytag"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regionsbytag">[docs]</a>    <span class="k">def</span> <span class="nf">regionsbytag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tags</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;All regions belonging to any of the named tags.  Tags can be</span>
-<span class="sd">        preceded by a ``-`` to select regions without that tag.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Nation`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NEWNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;nations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">nations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of all the nations, seemingly in order of creation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Nation`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numnations&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">numnations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Total number of nations in the game.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMNATIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;regions&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of all the regions, seemingly in order of creation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Region`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;numregions&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">numregions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Total number of regions in the game.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMREGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+<div class="viewcode-block" id="World.regionsbytag"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regionsbytag">[docs]</a>    <span class="k">def</span> <span class="nf">regionsbytag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tags</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All regions belonging to any of the named tags.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *tags : str</span>
+<span class="sd">            Regional tags.  Can be preceded by a ``-`` to select regions</span>
+<span class="sd">            without that tag.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Region`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You can specify up to 10 tags&#39;</span><span class="p">)</span>
@@ -105,13 +142,23 @@
         <span class="c1"># regions, excluding it returns all of them.</span>
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;regionsbytag&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>  <span class="c1"># TODO normalize?</span>
-            <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">return</span> <span class="p">([</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="World.dispatch"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">Dispatch</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Dispatch by id.  Primarily useful for getting dispatch</span>
-<span class="sd">        texts, as this is the only way to do so.</span>
+<div class="viewcode-block" id="World.dispatch"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dispatch by id.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        id : int</span>
+<span class="sd">            Dispatch id.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Dispatch`</span>
+<span class="sd">            Full dispatch (with text).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatch&#39;</span><span class="p">,</span> <span class="n">dispatchid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -121,16 +168,25 @@
             <span class="k">return</span> <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="World.dispatchlist"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatchlist">[docs]</a>    <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">author</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">category</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                     <span class="n">subcategory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sort</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;new&#39;</span>
-                     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dispatch</span><span class="p">]]:</span>
+<div class="viewcode-block" id="World.dispatchlist"><a class="viewcode-back" href="../../reference.html#aionationstates.World.dispatchlist">[docs]</a>    <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">subcategory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="s1">&#39;new&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Find dispatches by certain criteria.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            author: Nation authoring the dispatch.</span>
-<span class="sd">            category: Dispatch&#39;s primary category.</span>
-<span class="sd">            subcategory: Dispatch&#39;s secondary category.</span>
-<span class="sd">            sort: Sort order, &#39;new&#39; or &#39;best&#39;.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        author : str</span>
+<span class="sd">            Name of the nation authoring the dispatch.</span>
+<span class="sd">        category : str</span>
+<span class="sd">            Dispatch&#39;s primary category.</span>
+<span class="sd">        subcategory : str</span>
+<span class="sd">            Dispatch&#39;s secondary category.</span>
+<span class="sd">        sort : str</span>
+<span class="sd">            Sort order, &#39;new&#39; or &#39;best&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Dispatch`</span>
+<span class="sd">            Dispatch &quot;thumbnails&quot;, missing text.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sort&#39;</span><span class="p">:</span> <span class="n">sort</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">author</span><span class="p">:</span>
@@ -147,6 +203,8 @@
             <span class="k">if</span> <span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dispatch_categories</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid category&#39;</span><span class="p">)</span>
             <span class="n">params</span><span class="p">[</span><span class="s1">&#39;dispatchcategory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">category</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot request subcategory without category&#39;</span><span class="p">)</span>
 
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -156,8 +214,18 @@
             <span class="p">]</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="World.poll"><a class="viewcode-back" href="../../reference.html#aionationstates.World.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">Poll</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Poll with a given id.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="World.poll"><a class="viewcode-back" href="../../reference.html#aionationstates.World.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Poll with a given id.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        id : int</span>
+<span class="sd">            Poll id.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Poll`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;poll&#39;</span><span class="p">,</span> <span class="n">pollid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
             <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLL&#39;</span><span class="p">)</span>
@@ -193,30 +261,30 @@
 
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">Happening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">process_happening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-<div class="viewcode-block" id="World.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-            <span class="n">nations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">regions</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">filters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">beforeid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">beforetime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
+<div class="viewcode-block" id="World.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">regions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">beforeid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">beforetime</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Iterate through happenings from newest to oldest.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            nations: Nations happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with region.</span>
-<span class="sd">            regions: Regions happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with nation.</span>
-<span class="sd">            filters: Categories to request happenings by.  Available</span>
-<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
-<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
-<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
-<span class="sd">            beforeid: Only request happenings before this id.</span>
-<span class="sd">            beforetime: Only request happenings before this moment.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nations : iterable of str</span>
+<span class="sd">            Nations happenings of which will be requested.  Cannot be</span>
+<span class="sd">            specified at the same time with region.</span>
+<span class="sd">        regions : iterable of str</span>
+<span class="sd">            Regions happenings of which will be requested.  Cannot be</span>
+<span class="sd">            specified at the same time with nation.</span>
+<span class="sd">        filters : iterable of str</span>
+<span class="sd">            Categories to request happenings by.  Available filters</span>
+<span class="sd">            are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;, &#39;embassy&#39;, &#39;eject&#39;,</span>
+<span class="sd">            &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;, &#39;vote&#39;, &#39;resolution&#39;,</span>
+<span class="sd">            &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">        beforeid : int</span>
+<span class="sd">            Only request happenings before this id.</span>
+<span class="sd">        beforetime : :class:`datetime.datetime`</span>
+<span class="sd">            Only request happenings before this moment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">happening_bunch</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_happenings</span><span class="p">(</span>
@@ -229,14 +297,9 @@
                 <span class="k">break</span>
             <span class="n">beforeid</span> <span class="o">=</span> <span class="n">happening_bunch</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span></div>
 
-<div class="viewcode-block" id="World.new_happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.new_happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">new_happenings</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
-            <span class="n">nations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">regions</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">filters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Happening</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;An asynchronous generator that yields new happenings as they</span>
-<span class="sd">        arrive::</span>
+<div class="viewcode-block" id="World.new_happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.new_happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">new_happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">regions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;New happenings as they arrive::</span>
 
 <span class="sd">            async for happening in \\</span>
 <span class="sd">                    world.new_happenings(region=&#39;the north pacific&#39;):</span>
@@ -250,26 +313,35 @@
 <span class="sd">        * No happening is generated more than once;</span>
 <span class="sd">        * Happenings are generated in order from oldest to newest.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            poll_period: How long to wait between requesting the next</span>
-<span class="sd">                bunch of happenings.  Note that this should only be</span>
-<span class="sd">                tweaked for latency reasons, as the function gives a</span>
-<span class="sd">                guarantee that all happenings will be generated.</span>
-<span class="sd">                Also note that, regardless of the ``poll_period`` you</span>
-<span class="sd">                set, all of the code in your loop body still has to</span>
-<span class="sd">                execute (possibly several times) before a new bunch of</span>
-<span class="sd">                happenings can be requested.  Consider wrapping your</span>
-<span class="sd">                happening-processing code in a coroutine and launching</span>
-<span class="sd">                it as a task from the loop body if you suspect this</span>
-<span class="sd">                might be an issue.</span>
-<span class="sd">            nations: Nations happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with region.</span>
-<span class="sd">            regions: Regions happenings of which will be requested.</span>
-<span class="sd">                Cannot be specified at the same time with nation.</span>
-<span class="sd">            filters: Categories to request happenings by.  Available</span>
-<span class="sd">                filters are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;,</span>
-<span class="sd">                &#39;embassy&#39;, &#39;eject&#39;, &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;,</span>
-<span class="sd">                &#39;vote&#39;, &#39;resolution&#39;, &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        poll_period : int</span>
+<span class="sd">            How long to wait between requesting the next bunch of</span>
+<span class="sd">            happenings, in seconds.  Note that this should only be</span>
+<span class="sd">            tweaked for latency reasons, as the function gives a</span>
+<span class="sd">            guarantee that all happenings will be generated.  Also note</span>
+<span class="sd">            that, regardless of the ``poll_period`` you set, all of the</span>
+<span class="sd">            code in your loop body still has to execute (possibly</span>
+<span class="sd">            several times) before a new bunch of happenings can be</span>
+<span class="sd">            requested.  Consider wrapping your happening-processing code</span>
+<span class="sd">            in a coroutine and launching it as a task from the loop body</span>
+<span class="sd">            if you suspect this might be an issue.</span>
+<span class="sd">        nations : iterable of str</span>
+<span class="sd">            Nations happenings of which will be requested.  Cannot be</span>
+<span class="sd">            specified at the same time with region.</span>
+<span class="sd">        regions : iterable of str</span>
+<span class="sd">            Regions happenings of which will be requested.  Cannot be</span>
+<span class="sd">            specified at the same time with nation.</span>
+<span class="sd">        filters : iterable of str</span>
+<span class="sd">            Categories to request happenings by.  Available filters</span>
+<span class="sd">            are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;, &#39;embassy&#39;, &#39;eject&#39;,</span>
+<span class="sd">            &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;, &#39;vote&#39;, &#39;resolution&#39;,</span>
+<span class="sd">            &#39;member&#39;, and &#39;endo&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an asyncronous generator that yields :class:`UnrecognizedHappening` \</span>
+<span class="sd">        or any of the classes that inherit from it</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># We only need the happenings from this point forwards</span>

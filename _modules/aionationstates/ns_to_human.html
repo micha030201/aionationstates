@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.ns_to_human &#8212; aionationstates 0.1.2 documentation</title>
+    <title>aionationstates.ns_to_human &#8212; aionationstates 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.2',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,10 +52,10 @@
 <span class="sd">hope my usage of it can be considered Fair Use.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">NamedTuple</span>
-
 <span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">banner_url</span>
 
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;ScaleInfo&#39;</span><span class="p">,</span> <span class="s1">&#39;Banner&#39;</span><span class="p">)</span>
 
 <span class="n">happening_filters</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;law&#39;</span><span class="p">,</span> <span class="s1">&#39;change&#39;</span><span class="p">,</span> <span class="s1">&#39;dispatch&#39;</span><span class="p">,</span> <span class="s1">&#39;rmb&#39;</span><span class="p">,</span> <span class="s1">&#39;embassy&#39;</span><span class="p">,</span> <span class="s1">&#39;eject&#39;</span><span class="p">,</span> <span class="s1">&#39;admin&#39;</span><span class="p">,</span>
@@ -101,28 +101,31 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="ScaleInfo"><a class="viewcode-back" href="../../reference.html#aionationstates.ScaleInfo">[docs]</a><span class="k">class</span> <span class="nc">ScaleInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="ScaleInfo"><a class="viewcode-back" href="../../reference.html#aionationstates.ScaleInfo">[docs]</a><span class="k">class</span> <span class="nc">ScaleInfo</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Static information about a World Census scale.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        id: The scale id, a number between 0 and 80.</span>
-<span class="sd">        title: The scale title. For example, `Civil Rights.`</span>
-<span class="sd">        ranked: A scale by which a nation or region is ranked, either</span>
-<span class="sd">            in their region or the world. For example, `Most Extensive</span>
-<span class="sd">            Civil Rights.`</span>
-<span class="sd">        measurement: The measurement scale. For example, `Martin Luther</span>
-<span class="sd">            King, Jr. Units.`</span>
-<span class="sd">        image: An identifier NS uses for the Census tropy picture urls.</span>
-<span class="sd">        nation_description: Description for nations.</span>
-<span class="sd">        region_description: Description for regions.</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The scale id, a number between 0 and 80.</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The scale title. For example, `Civil Rights.`</span>
+<span class="sd">    ranked : str</span>
+<span class="sd">        A scale by which a nation or region is ranked, either in their</span>
+<span class="sd">        region or the world. For example, `Most Extensive Civil Rights.`</span>
+<span class="sd">    measurement : str</span>
+<span class="sd">        The measurement scale. For example, `Martin Luther King, Jr. Units.`</span>
+<span class="sd">    image : str</span>
+<span class="sd">        An identifier NS uses for the Census tropy picture urls.</span>
+<span class="sd">    nation_description : str</span>
+<span class="sd">        Description for nations.</span>
+<span class="sd">    region_description : str</span>
+<span class="sd">        Description for regions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">ranked</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">measurement</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">image</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">nation_description</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">region_description</span><span class="p">:</span> <span class="nb">str</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
 
 
 <span class="n">census_info</span> <span class="o">=</span> <span class="p">{</span>
@@ -1304,21 +1307,25 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Banner"><a class="viewcode-back" href="../../reference.html#aionationstates.Banner">[docs]</a><span class="k">class</span> <span class="nc">Banner</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="Banner"><a class="viewcode-back" href="../../reference.html#aionationstates.Banner">[docs]</a><span class="k">class</span> <span class="nc">Banner</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;A Rift banner.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        id: The banner id.</span>
-<span class="sd">        name: The banner name.</span>
-<span class="sd">        validity: A requirement the nation has to meet in order to get</span>
-<span class="sd">            the banner.</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The banner id.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The banner name.</span>
+<span class="sd">    validity : str</span>
+<span class="sd">        A requirement the nation has to meet in order to get the banner.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;Custom&#39;</span>
-    <span class="n">validity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;Reach a certain population threshold&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Link to the banner image.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">banner_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
 
@@ -1333,7 +1340,11 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">banner_info</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Banner</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Banner</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Custom&#39;</span><span class="p">,</span>
+            <span class="n">validity</span><span class="o">=</span><span class="s1">&#39;Reach a certain population threshold&#39;</span>
+        <span class="p">)</span>
 
 
 <span class="n">banner_info</span> <span class="o">=</span> <span class="p">{</span>
@@ -1371,7 +1382,7 @@
     <span class="s1">&#39;b1&#39;</span><span class="p">:</span> <span class="n">Banner</span><span class="p">(</span>
         <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;b1&#39;</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Air and Glass&#39;</span><span class="p">,</span>
-        <span class="n">validity</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Develop a technologically literate populace that doesn&#39;t &quot;</span> 
+        <span class="n">validity</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Develop a technologically literate populace that doesn&#39;t &quot;</span>
                   <span class="s1">&#39;care that much&#39;</span><span class="p">),</span>
     <span class="p">),</span>
     <span class="s1">&#39;b2&#39;</span><span class="p">:</span> <span class="n">Banner</span><span class="p">(</span>

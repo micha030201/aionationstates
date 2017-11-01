@@ -11,12 +11,9 @@ Combining Shards
 
 As you are probably aware, NationStates provides a way to request multiple shards for the (ratelimit) cost of one. That is quite a useful feature, and this class has been designed specifically to take full advantage of it.
 
-.. automodule:: aionationstates.session
+.. automodule:: aionationstates
 
 .. autoclass:: ApiQuery
-    :show-inheritance:
-
-.. automodule:: aionationstates
 
 
 NationStates Interaction Objects
@@ -28,15 +25,15 @@ You should not build these objects yourself. Instead, use the following:
 
 .. data:: world
 
-    For the :any:`aionationstates.World` object;
+    For the :class:`World` object;
 
-.. function:: nation(name[, *, autologin, password])
+.. autofunction:: nation
 
-    To construct either an :any:`aionationstates.Nation` object, or :any:`aionationstates.NationControl` if `password` or `autologin` is provided; and
+    To construct either a :class:`Nation` object, or :class:`NationControl` if `password` or `autologin` is provided; and
 
 .. function:: region(name)
 
-    To construct an :any:`aionationstates.Region` object.
+    To construct a :class:`Region` object.
 
 ------
 
@@ -220,137 +217,170 @@ You should not build these objects yourself. Instead, use the following:
 Data Classes
 ------------
 
-.. autoclass:: CensusScaleCurrent
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: CensusScaleCurrent()
 
-.. autoclass:: CensusScaleHistory
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: CensusScaleHistory()
 
-.. autoclass:: CensusPoint
-    :members:
-    :undoc-members:
+.. autoclass:: CensusPoint()
 
-.. autoclass:: ScaleInfo
-    :members:
-    :undoc-members:
+.. autoclass:: ScaleInfo()
 
-.. autoclass:: Dispatch
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Dispatch()
 
-.. autoclass:: Poll
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Poll()
 
-.. autoclass:: PollOption
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: PollOption()
 
-.. autoclass:: Freedom
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Freedom()
 
-.. autoclass:: FreedomScores
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: FreedomScores()
 
-.. autoclass:: Govt
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Govt()
 
-.. autoclass:: Sectors
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Sectors()
 
-.. autoclass:: Banner
-    :members:
-    :undoc-members:
+.. autoclass:: Banner()
 
-.. autoclass:: Issue
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Issue()
 
-.. autoclass:: IssueOption
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: IssueOption()
 
-.. autoclass:: IssueResult
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: IssueResult()
 
-.. autoclass:: CensusScaleChange
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: CensusScaleChange()
 
-.. autoclass:: Reclassifications
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Reclassifications()
 
-.. autoclass:: Reclassification
-    :members:
-    :undoc-members:
+.. autoclass:: Reclassification()
 
-.. autoclass:: Embassies
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Embassies()
 
-.. autoclass:: Officer
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Officer()
 
-.. autoclass:: Authority
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-.. autoclass:: EmbassyPostingRights
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-.. autoclass:: Post
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-.. autoclass:: PostStatus
+.. autoclass:: Authority()
     :show-inheritance:
-    :members:
-    :inherited-members:
-    :undoc-members:
 
-.. autoclass:: Zombie
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: EmbassyPostingRights()
+    :show-inheritance:
 
-.. autoclass:: Happening
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: Post()
 
-.. autoclass:: ArchivedHappening
-    :members:
-    :inherited-members:
-    :undoc-members:
+.. autoclass:: PostStatus()
+    :show-inheritance:
+
+.. autoclass:: Zombie()
+
+
+
+.. autoclass:: UnrecognizedHappening()
+
+.. autoclass:: Move()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: Founding()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: CTE()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: Legislation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: FlagChange()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: SettingsChange()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: DispatchPublication()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: WorldAssemblyApplication()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: WorldAssemblyAdmission()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: WorldAssemblyResignation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: DelegateChange()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: CategoryChange()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: BannerCreation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyConstructionRequest()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyConstructionConfirmation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyConstructionRequestWithdrawal()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyConstructionAbortion()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyClosureOrder()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyEstablishment()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EmbassyCancellation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: Endorsement()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: EndorsementWithdrawal()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: PollCreation()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: PollDeletion()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: ZombieCureAction()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: ZombieKillAction()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
+.. autoclass:: ZombieInfectAction()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
 
 
 Exceptions

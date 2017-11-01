@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.nation_ &#8212; aionationstates 0.1.2 documentation</title>
+    <title>aionationstates.nation_ &#8212; aionationstates 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.2',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -47,20 +47,14 @@
 
 <span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span>
 <span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">Freedom</span><span class="p">,</span> <span class="n">FreedomScores</span><span class="p">,</span> <span class="n">Govt</span><span class="p">,</span> <span class="n">Sectors</span><span class="p">,</span> <span class="n">Zombie</span><span class="p">,</span> <span class="n">Dispatch</span><span class="p">,</span>
-    <span class="n">ArchivedHappening</span><span class="p">)</span>
+    <span class="n">Freedom</span><span class="p">,</span> <span class="n">FreedomScores</span><span class="p">,</span> <span class="n">Govt</span><span class="p">,</span> <span class="n">Sectors</span><span class="p">,</span> <span class="n">Dispatch</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
-<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">NationRegion</span>
 <span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">banner</span>
-
-<span class="c1"># Needed for type annotations</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">Banner</span>
-<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
+<span class="kn">import</span> <span class="nn">aionationstates</span>
 
 
-<div class="viewcode-block" id="Nation"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation">[docs]</a><span class="k">class</span> <span class="nc">Nation</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+<div class="viewcode-block" id="Nation"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation">[docs]</a><span class="k">class</span> <span class="nc">Nation</span><span class="p">(</span><span class="n">NationRegion</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A class to interact with the NationStates Nation public API.</span>
 
 <span class="sd">    Shards absent (incomplete):</span>
@@ -74,14 +68,15 @@
 <span class="sd">      and 74 respectively.  The gdp shard has been kept, as it appears</span>
 <span class="sd">      to be slightly different from scale 76.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        id: The defining characteristic of a nation, its</span>
-<span class="sd">            normalized name.  No two nations share the same id, and no</span>
-<span class="sd">            one id is shared by multiple nations.</span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : str</span>
+<span class="sd">        The defining characteristic of a nation, its normalized name.</span>
+<span class="sd">        No two nations share the same id, and no one id is shared by</span>
+<span class="sd">        multiple nations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -90,139 +85,230 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;URL for the nation.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;str: URL of the nation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;https://www.nationstates.net/nation=</span><span class="si">{self.id}</span><span class="s1">&#39;</span>
 
-<div class="viewcode-block" id="Nation.name"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.name">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Name of the nation, for example &#39;Testlandia&#39;.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Name of the nation, for example &#39;Testlandia&#39;.</span>
 
-<div class="viewcode-block" id="Nation.type"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.type">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Type of the nation, for example &#39;Hive Mind&#39;.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TYPE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="Nation.fullname"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.fullname">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;fullname&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Type of the nation, for example &#39;Hive Mind&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TYPE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;fullname&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">fullname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Full name of the nation, for example &#39;The Hive Mind of</span>
 <span class="sd">        Testlandia&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FULLNAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FULLNAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="Nation.motto"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.motto">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;motto&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">motto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Motto of the nation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MOTTO&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;motto&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">motto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Motto of the nation.</span>
 
-<div class="viewcode-block" id="Nation.category"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.category">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s World Assembly Category.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MOTTO&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
 
-<div class="viewcode-block" id="Nation.region"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.region">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Region in which the nation resides.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s World Assembly Category.</span>
 
-<div class="viewcode-block" id="Nation.animal"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.animal">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;animal&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">animal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s national animal.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ANIMAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="Nation.currency"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.currency">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;currency&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">currency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s national currency.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CURRENCY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Region in which the nation resides.</span>
 
-<div class="viewcode-block" id="Nation.demonym"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.demonym">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Region`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;animal&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">animal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s national animal.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ANIMAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;currency&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">currency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s national currency.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CURRENCY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s demonym, as an adjective.</span>
 
 <span class="sd">        Example: Testlandish, as in &#39;I&#39;m proud to be Testlandish.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.demonym2"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.demonym2">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym2&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym2&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s demonym, as a noun.</span>
 
 <span class="sd">        Example: Testlandian, as in &#39;I&#39;m a proud Testlandian.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.demonym2plural"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.demonym2plural">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym2plural&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym2plural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;demonym2plural&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">demonym2plural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plural of the nation&#39;s noun demonym.</span>
 
 <span class="sd">        Example: Testlandians, as in &#39;Here come the Testlandians!&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM2PLURAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEMONYM2PLURAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="Nation.flag"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.flag">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;flag&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">flag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;URL of the nation&#39;s flag.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FLAG&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;flag&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">flag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;URL of the nation&#39;s flag.</span>
 
-<div class="viewcode-block" id="Nation.majorindustry"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.majorindustry">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;majorindustry&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">majorindustry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The industry prioritized by the nation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MAJORINDUSTRY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FLAG&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-<div class="viewcode-block" id="Nation.influence"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.influence">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;influence&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">influence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INFLUENCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;majorindustry&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">majorindustry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The industry prioritized by the nation.</span>
 
-<div class="viewcode-block" id="Nation.leader"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.leader">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;leader&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">leader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MAJORINDUSTRY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;influence&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">influence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An adjective describing nation&#39;s regional influence.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INFLUENCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;leader&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">leader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s leader.  Either set by the user or the default</span>
 <span class="sd">        &#39;Leader&#39;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LEADER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.capital"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.capital">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;capital&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">capital</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LEADER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;capital&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">capital</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s capital. Either set by the user or the default</span>
 <span class="sd">        &#39;`name` City.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CAPITAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.religion"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.religion">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;religion&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">religion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CAPITAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;religion&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">religion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s main religion.  Either set by the user or the</span>
 <span class="sd">        default &#39;a major religion.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RELIGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.admirable"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.admirable">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;admirable&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">admirable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RELIGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;admirable&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">admirable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;One of the nation&#39;s qualities, at random.</span>
 
 <span class="sd">        Example: &#39;environmentally stunning&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ADMIRABLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.animaltrait"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.animaltrait">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;animaltrait&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">animaltrait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ADMIRABLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;animaltrait&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">animaltrait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Short characteristic of the nation&#39;s national animal.</span>
 
 <span class="sd">        Example: &#39;frolics freely in the nation&#39;s sparkling oceans&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ANIMALTRAIT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.crime"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.crime">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;crime&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">crime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ANIMALTRAIT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;crime&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">crime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A sentence describing the nation&#39;s crime levels.</span>
 
 <span class="sd">        Example: &#39;Crime is totally unknown, thanks to a very</span>
 <span class="sd">        well-funded police force and progressive social policies in</span>
 <span class="sd">        education and welfare.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CRIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.govtdesc"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.govtdesc">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;govtdesc&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">govtdesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CRIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;govtdesc&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">govtdesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A couple of sentences describing the nation&#39;s government.</span>
 
 <span class="sd">        Example: &#39;It is difficult to tell where the omnipresent</span>
@@ -230,11 +316,15 @@
 <span class="sd">        juggles the competing demands of Defense, Environment, and</span>
 <span class="sd">        Healthcare. It meets to discuss matters of state in the</span>
 <span class="sd">        capital city of Test City.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVTDESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.industrydesc"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.industrydesc">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;industrydesc&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">industrydesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVTDESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;industrydesc&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">industrydesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A couple of sentences describing the nation&#39;s economy,</span>
 <span class="sd">        industry, and average income.</span>
 
@@ -245,135 +335,209 @@
 <span class="sd">        industry, with major contributions from Book Publishing.</span>
 <span class="sd">        Average income is 73,510 denarii, with the richest citizens</span>
 <span class="sd">        earning 6.0 times as much as the poorest.&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INDUSTRYDESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.notable"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.notable">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;notable&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">notable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INDUSTRYDESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;notable&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">notable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A few of nation&#39;s peculiarities, at random.</span>
 
 <span class="sd">        Example: &#39;museums and concert halls, multi-spousal wedding</span>
 <span class="sd">        ceremonies, and devotion to social welfare&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NOTABLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
 
-<div class="viewcode-block" id="Nation.sensibilities"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.sensibilities">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sensibilities&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">sensibilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NOTABLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sensibilities&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">sensibilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A couple of adjectives describing the nation&#39;s citizens.</span>
 
 <span class="sd">        Example: &#39;compassionate, devout&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SENSIBILITIES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SENSIBILITIES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
 
-<div class="viewcode-block" id="Nation.population"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.population">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;population&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s population, in millions.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POPULATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;population&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s population, in millions.</span>
 
-<div class="viewcode-block" id="Nation.gdp"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.gdp">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;gdp&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">gdp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s gross domestic product.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GDP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POPULATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Nation.founded"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.founded">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;foundedtime&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">founded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;gdp&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">gdp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s gross domestic product.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GDP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;foundedtime&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">founded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;When the nation was founded.</span>
 
 <span class="sd">        ``1970-01-01 00:00`` for nations founded in Antiquity.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FOUNDEDTIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Nation.firstlogin"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.firstlogin">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;firstlogin&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">firstlogin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FOUNDEDTIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;firstlogin&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">firstlogin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;When the nation was first logged into.</span>
 
 <span class="sd">        ``1970-01-01 00:00`` for nations first logged into during</span>
 <span class="sd">        Antiquity.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FIRSTLOGIN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FIRSTLOGIN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Nation.lastlogin"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.lastlogin">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;lastlogin&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">lastlogin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;When the nation was last logged into.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LASTLOGIN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;lastlogin&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">lastlogin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When the nation was last logged into.</span>
 
-<div class="viewcode-block" id="Nation.wa"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.wa">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;wa&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">wa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Whether the nation is a member of the World Assembly or not.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNSTATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;WA Member&#39;</span></div>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LASTLOGIN&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Nation.freedom"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.freedom">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedom&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">freedom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Freedom</span><span class="p">:</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;wa&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">wa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Whether the nation is a member of the World Assembly or not.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNSTATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;WA Member&#39;</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedom&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">freedom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
 <span class="sd">        Civil Rights, Economy, and Political Freedom, as expressive</span>
 <span class="sd">        adjectives.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Freedom</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOM&#39;</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Nation.freedomscores"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.freedomscores">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedomscores&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">freedomscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FreedomScores</span><span class="p">:</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Freedom`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Freedom</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOM&#39;</span><span class="p">))</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedomscores&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">freedomscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
 <span class="sd">        Civil Rights, Economy, and Political Freedom, as percentages.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`FreedomScores`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">FreedomScores</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOMSCORES&#39;</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">FreedomScores</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOMSCORES&#39;</span><span class="p">))</span>
 
-<div class="viewcode-block" id="Nation.govt"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.govt">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;govt&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">govt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Govt</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s government expenditure, as percentages.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Govt</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVT&#39;</span><span class="p">))</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;govt&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">govt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s government expenditure, as percentages.</span>
 
-<div class="viewcode-block" id="Nation.deaths"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.deaths">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;deaths&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">deaths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Causes of death in the nation, as percentages.&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Govt`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Govt</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVT&#39;</span><span class="p">))</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;deaths&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">deaths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Causes of death in the nation, as percentages.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of dict with keys of str and values of float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEATHS&#39;</span><span class="p">)</span>
-        <span class="p">}</span></div>
+        <span class="p">}</span>
 
-<div class="viewcode-block" id="Nation.endorsements"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.endorsements">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;endorsements&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">endorsements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Endorsements the nation has received.&quot;&quot;&quot;</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;endorsements&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">endorsements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Endorsements the nation has received.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Nation`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ENDORSEMENTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-        <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Nation</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">text</span> <span class="k">else</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="Nation.legislation"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.legislation">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;legislation&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">legislation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;legislation&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">legislation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Effects of the most recently passed legislation.</span>
 
 <span class="sd">        May contain HTML elements and character references.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LEGISLATION&#39;</span><span class="p">)]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LEGISLATION&#39;</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="Nation.sectors"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.sectors">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sectors&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">sectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sectors</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Components of the nation&#39;s economy, as percentages.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Sectors</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SECTORS&#39;</span><span class="p">))</span></div>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sectors&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">sectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Components of the nation&#39;s economy, as percentages.</span>
 
-<div class="viewcode-block" id="Nation.dispatchlist"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.dispatchlist">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dispatch</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s published dispatches.&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Sectors`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Sectors</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SECTORS&#39;</span><span class="p">))</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s published dispatches.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Dispatch`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCHLIST&#39;</span><span class="p">)</span>
-        <span class="p">]</span></div>
+        <span class="p">]</span>
 
-<div class="viewcode-block" id="Nation.zombie"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.zombie">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;zombie&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">zombie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Zombie</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s condition during the annual Z-Day event.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Zombie</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIE&#39;</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="Nation.verify"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.verify">[docs]</a>    <span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checksum</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<div class="viewcode-block" id="Nation.verify"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.verify">[docs]</a>    <span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checksum</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Interface to the `NationStates Verification API</span>
 <span class="sd">        &lt;https://www.nationstates.net/pages/api.html#verification&gt;`_.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            checksum: The user-supplied verification code.  Expires if</span>
-<span class="sd">                the nation logs out, if it performs a significant</span>
-<span class="sd">                in-game action such as moving regions or endorsing</span>
-<span class="sd">                another nation, and after it is successfully verified.</span>
-<span class="sd">            token: A token specific to your service and the nation</span>
-<span class="sd">                being verified.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        checksum : str</span>
+<span class="sd">            The user-supplied verification code.  Expires if the nation</span>
+<span class="sd">            logs out, if it performs a significant in-game action such</span>
+<span class="sd">            as moving regions or endorsing another nation, and after it</span>
+<span class="sd">            is successfully verified.</span>
+<span class="sd">        token : str</span>
+<span class="sd">            A token specific to your service and the nation being verified.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;verify&#39;</span><span class="p">,</span> <span class="s1">&#39;checksum&#39;</span><span class="p">:</span> <span class="n">checksum</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
@@ -386,29 +550,34 @@
             <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VERIFY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Nation.verification_url"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.verification_url">[docs]</a>    <span class="k">def</span> <span class="nf">verification_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="Nation.verification_url"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.verification_url">[docs]</a>    <span class="k">def</span> <span class="nf">verification_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;URL the user needs to follow in order to get the</span>
 <span class="sd">        verification code for the nation.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            token: A token specific to your service and the nation</span>
-<span class="sd">                being verified.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        token : str</span>
+<span class="sd">            A token specific to your service and the nation being verified.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;https://www.nationstates.net/&#39;</span>
                     <span class="n">f</span><span class="s1">&#39;page=verify_login?token=</span><span class="si">{token}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;https://www.nationstates.net/page=verify_login&#39;</span></div>
 
-<div class="viewcode-block" id="Nation.banners"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.banners">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;banners&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">banners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Banner</span><span class="p">]:</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;banners&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">banners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s visible banners.  If the user has set a primary</span>
 <span class="sd">        banner, it will be the first element in the list.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Banner`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">expand_macros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_macros_expander</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="k">await</span> <span class="n">banner</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">_expand_macros</span><span class="p">(</span><span class="n">expand_macros</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BANNERS&#39;</span><span class="p">)</span>
-        <span class="p">]</span></div>
+        <span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_get_macros_expander</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># The only macros present in the banner names are name,</span>
@@ -462,15 +631,13 @@
 
         <span class="k">return</span> <span class="n">expand_macros</span>
 
-<div class="viewcode-block" id="Nation.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.happenings">[docs]</a>    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ArchivedHappening</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Get the happenings of the nation, the ones archived on its</span>
-<span class="sd">        in-game page.  Newest to oldest.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">ArchivedHappening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span></div>
+<div class="viewcode-block" id="Nation.description"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.description">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s full description, as seen on its in-game page.</span>
 
-<div class="viewcode-block" id="Nation.description"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.description">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Nation&#39;s full description, as seen on its in-game page.&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an awaitable of str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_web</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;nation=</span><span class="si">{self.id}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span>
             <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>

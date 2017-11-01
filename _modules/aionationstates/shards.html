@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.shards &#8212; aionationstates 0.1.2 documentation</title>
+    <title>aionationstates.shards &#8212; aionationstates 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.2',
+        VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,18 +45,16 @@
 <span></span><span class="sd">&quot;&quot;&quot;Interfaces to shards shared between APIs. Designed to be mixed in</span>
 <span class="sd">with Session, otherwise useless.&quot;&quot;&quot;</span>
 
-<span class="c1"># TODO: happenings (region history as well?), censusranks, wabadges</span>
+<span class="c1"># TODO: censusranks, wabadges</span>
 
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">CensusScaleCurrent</span><span class="p">,</span> <span class="n">CensusScaleHistory</span>
+<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">CensusScaleCurrent</span><span class="p">,</span> <span class="n">CensusScaleHistory</span><span class="p">,</span> <span class="n">Zombie</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.happenings</span> <span class="k">import</span> <span class="n">UnrecognizedHappening</span>
 <span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">api_query</span>
-
-<span class="c1"># Needed for type annotations</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">ApiQuery</span>
 
 
 <span class="k">class</span> <span class="nc">Census</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">census</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">CensusScaleCurrent</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">census</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Current World Census data.</span>
 
 <span class="sd">        By default returns data on today&#39;s featured World Census</span>
@@ -64,8 +62,14 @@
 <span class="sd">        order to request data on all scales at once you can do</span>
 <span class="sd">        ``x.census(*range(81))``.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            scales: World Census scales, integers between 0 and 80.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scales : int</span>
+<span class="sd">            World Census scales, integers between 0 and 80.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :class:`ApiQuery` of a list of :class:`CensusScaleCurrent` objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;score+rank+rrank+prank+prrank&#39;</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
@@ -78,9 +82,7 @@
             <span class="p">]</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-
-    <span class="k">def</span> <span class="nf">censushistory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">int</span>
-                      <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiQuery</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">CensusScaleHistory</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">censushistory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Historical World Census data.</span>
 
 <span class="sd">        Was split into its own method for the sake of simplicity and</span>
@@ -94,8 +96,14 @@
 <span class="sd">        Returns data for the entire length of history NationStates</span>
 <span class="sd">        stores.  There is no way to override that.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">            scales: World Census scales, integers between 0 and 80.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scales : int</span>
+<span class="sd">            World Census scales, integers between 0 and 80.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :class:`ApiQuery` of a list of :class:`CensusScaleHistory` objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;history&#39;</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
@@ -108,7 +116,38 @@
             <span class="p">]</span>
 
 
+<span class="k">class</span> <span class="nc">NationRegion</span><span class="p">(</span><span class="n">Census</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Shards shared by Nation &amp; Region APIs.&quot;&quot;&quot;</span>
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Happenings archived on the in-game page.  Newest to oldest.</span>
 
+<span class="sd">        Happenings are not parsed because they are different from</span>
+<span class="sd">        the ones in the normal feed and I see no practical use-cases</span>
+<span class="sd">        for having these parsed as well.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of \</span>
+<span class="sd">        :class:`happenings.UnrecognizedHappening`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">UnrecognizedHappening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;zombie&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">zombie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;State during the annual Z-Day event.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Zombie`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Zombie</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIE&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;{type(self).__name__} &quot;</span><span class="si">{self.id}</span><span class="s1">&quot;&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
 </pre></div>
 
           </div>
