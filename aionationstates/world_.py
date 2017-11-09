@@ -210,10 +210,11 @@ class World(Census, Session):
             regions = ','.join(map(normalize, regions))
             params['view'] = f'region.{regions}'
 
-        if beforetime:
-            params['beforetime'] = str(utc_seconds(beforetime))
-        elif beforeid:
+        # Id has to be the default for the happenings generator to work.
+        if beforeid:
             params['beforeid'] = str(beforeid)
+        elif beforetime:
+            params['beforetime'] = str(utc_seconds(beforetime))
 
         @api_query('happenings', **params)
         async def result(_, root):
@@ -241,6 +242,11 @@ class World(Census, Session):
             Only request happenings before this id.
         beforetime : :class:`datetime.datetime`
             Only request happenings before this moment.
+
+        Returns
+        -------
+        an asynchronous generator that yields :class:`UnrecognizedHappening` \
+        or any of the classes that inherit from it
         """
         while True:
             happening_bunch = await self._get_happenings(
@@ -296,7 +302,7 @@ class World(Census, Session):
 
         Returns
         -------
-        an asyncronous generator that yields :class:`UnrecognizedHappening` \
+        an asynchronous generator that yields :class:`UnrecognizedHappening` \
         or any of the classes that inherit from it
         """
         try:
