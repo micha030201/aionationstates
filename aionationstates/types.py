@@ -740,16 +740,20 @@ class Post:
         self.timestamp = timestamp(elem.find('TIMESTAMP').text)
         self.author = aionationstates.Nation(elem.find('NATION').text)
         self.status = PostStatus(int(elem.find('STATUS').text))
-        self.text = elem.find('MESSAGE').text  # TODO unescape?
+        self.text = unscramble_encoding(html.unescape(elem.find('MESSAGE').text))
 
-        likers_elem = elem.find('LIKERS')
-        self.likers = likers_elem.text.split(':') if likers_elem else []
+        likers = elem.findtext('LIKERS')
+        if likers:
+            self.likers = [aionationstates.nation(name) for name
+                           in likers.split(':')]
+        else:
+            self.likers = []
 
         suppressor_str = elem.findtext('SUPPRESSOR')
         if suppressor_str in ('!mod', None):
             self.suppressor = None
         else:
-            self.suppressor = aionationstates.Nation()
+            self.suppressor = aionationstates.Nation(suppressor_str)
 
     # TODO repr
 
