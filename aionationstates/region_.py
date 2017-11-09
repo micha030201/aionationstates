@@ -1,8 +1,11 @@
 import html
+from itertools import count
+from asyncio import sleep
+from contextlib import suppress
 
 from aionationstates.utils import normalize, timestamp
 from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority, Embassies, Poll)
+    EmbassyPostingRights, Officer, Authority, Embassies, Poll, Post)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import NationRegion
 import aionationstates
@@ -228,5 +231,102 @@ class Region(NationRegion, Session):
         """
         elem = root.find('POLL')
         return Poll(elem) if elem else None
+
+    # Messages interface:
+
+    def _get_messages(self, *, limit=100, offset=0, fromid=None):
+        params = {'limit': str(limit), 'offset': str(offset)}
+        if fromid is not None:
+            params['fromid'] = str(fromid)
+
+        @api_query('messages', **params)
+        async def result(_, root):
+            return [Post(elem) for elem in root.find('MESSAGES')]
+        return result(self)
+
+    async def messages(self):
+        """Iterate through RMB posts from newest to oldest.
+
+        Returns
+        -------
+        an asynchronous generator that yields :class:`Post`
+        """
+        # Messages may be posted on the RMB while the generator is running.
+        oldest_id_seen = float('inf')
+        for offset in count(step=100):
+            posts_bunch = await self._get_messages(offset=offset)
+            for post in reversed(posts_bunch):
+                if post.id < oldest_id_seen:
+                    yield post
+            oldest_id_seen = posts_bunch[0].id
+            if len(posts_bunch) < 100:
+                break
+
+    async def new_messages(self, poll_period=30, *, fromid=None):
+        """New messages on the Regional Message Board::
+
+            tnp = region('The North Pacific')
+            async for post in tnp.new_messages():
+                # Your processing code here
+                print(post.text)  # As an example
+
+        Guarantees that:
+
+        * Every post is generated from the moment the generator is started;
+        * No post is generated more than once;
+        * Posts are generated in order from oldest to newest.
+
+        Parameters
+        ----------
+        poll_period : int
+            How long to wait between requesting the next bunch of
+            posts, in seconds.  Ignored while catching up to the end
+            of the Message Board, meaning that no matter how long of a
+            period you set you will never encounter a situation where
+            posts are made faster than the generator can deliver them.
+
+            Note that, regardless of the ``poll_period`` you set, all
+            of the code in your loop body still has to execute (possibly
+            several times) before a new bunch of posts can be
+            requested.  Consider wrapping your post-processing code
+            in a coroutine and launching it as a task from the loop body
+            if you suspect this might be an issue.
+        fromid : int
+            Request posts starting with the one with this id, as
+            as opposed to the last one at the time.  Useful if you
+            need to avoid losing posts between restarts.  Set to `1`
+            to request the entire RMB history chronologically.
+
+        Returns
+        -------
+        an asynchronous generator that yields :class:`Post`
+        """
+        if fromid is not None:
+            # fromid of 0 gets ignored by NS
+            fromid = 1 if fromid == 0 else fromid
+        else:
+            try:
+                # We only need the posts from this point forwards
+                fromid = (await self._get_messages(limit=1))[0].id + 1
+            except IndexError:
+                # Empty RMB
+                fromid = 1
+            # Sleep before the loop body to avoid wasting the first request.
+            # We only want to apply this "optimization" if fromid was not
+            # specified, as only then we know for sure we're at the end of the
+            # RMB.
+            await sleep(poll_period)
+
+        while True:
+            posts = await self._get_messages(fromid=fromid)
+
+            with suppress(IndexError):
+                fromid = posts[-1].id + 1
+
+            for post in posts:
+                yield post
+
+            if len(posts) < 100:
+                await sleep(poll_period)
 
     # TODO: history, messages
