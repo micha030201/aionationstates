@@ -183,7 +183,7 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: happenings
 
-.. autoclass:: World
+.. autoclass:: World()
 
     .. automethod:: featuredregion
 
@@ -204,6 +204,8 @@ You should not build these objects yourself. Instead, use the following:
     .. automethod:: dispatchlist
 
     .. automethod:: poll
+
+    .. automethod:: tgqueue
 
     .. automethod:: census
 
@@ -269,6 +271,8 @@ Data Classes
     :show-inheritance:
 
 .. autoclass:: Zombie()
+
+.. autoclass:: TGQueue()
 
 
 

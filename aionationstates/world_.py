@@ -2,7 +2,7 @@ from contextlib import suppress
 from asyncio import sleep
 
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch, Poll
+from aionationstates.types import Dispatch, Poll, TGQueue
 from aionationstates.happenings import process_happening
 from aionationstates.shards import Census
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
@@ -189,6 +189,16 @@ class World(Census, Session):
                 raise ValueError(f'No poll found with id {id}')
             return Poll(elem)
         return result(self)
+
+    @api_query('tgqueue')
+    async def tgqueue(self, root):
+        """Count of currently enqueued recruitment telegrams.
+
+        Returns
+        -------
+        :class:`TGQueue`
+        """
+        return TGQueue(root.find('TGQUEUE'))
 
     # Happenings interface:
 

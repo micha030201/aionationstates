@@ -1,6 +1,7 @@
 # TODO slots
 
 import html
+import re
 from contextlib import suppress
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
@@ -39,6 +40,7 @@ __all__ = (
     'Post',
     'PostStatus',
     'Zombie',
+    'TGQueue',
 )
 
 
@@ -744,7 +746,7 @@ class Post:
 
         likers = elem.findtext('LIKERS')
         if likers:
-            self.likers = [aionationstates.nation(name) for name
+            self.likers = [aionationstates.Nation(name) for name
                            in likers.split(':')]
         else:
             self.likers = []
@@ -755,7 +757,26 @@ class Post:
         else:
             self.suppressor = aionationstates.Nation(suppressor_str)
 
-    # TODO repr
+    def quote(self, text=None):
+        """Quote this post.
+
+        Parameters
+        ----------
+        text : str
+            Text to quote.  Defaults to the whole text of the post.
+
+        Returns
+        -------
+        str
+            A NationStates bbCode quote of the post.
+        """
+        text = text or re.sub(r'\[quote=.+?\[/quote\]', '',
+                              self.text, flags=re.DOTALL
+                              ).strip('\n')
+        return f'[quote={self.author.id};{self.id}]{text}[/quote]'
+
+    def __repr__(self):
+        return f'<Post #{self.id}>'
 
 
 
@@ -783,4 +804,18 @@ class Zombie:
         self.action = elem.findtext('ZACTION')
 
 
+
+class TGQueue:
+    """Current length of recruinment telegram queues.
+
+    Attributes
+    ----------
+    manual : int
+    stamp : int
+    api : int
+    """
+    def __init__(self, elem):
+        self.manual = int(elem.find('MANUAL').text)
+        self.stamp = int(elem.find('MASS').text)
+        self.api = int(elem.find('API').text)
 # TODO gavote, scvote
