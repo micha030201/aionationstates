@@ -200,6 +200,34 @@ class World(Census, Session):
         """
         return TGQueue(root.find('TGQUEUE'))
 
+    async def send_telegram(self, *, client_key, telegram_id,
+                            telegram_key, recepient):
+        """A basic interface to the Telegrams API.
+
+        Parameters
+        ----------
+        client_key : str
+            Telegrams API Client Key.
+        telegram_id : int or str
+            Telegram id.
+        telegram_key : str
+            Telegram key.
+        recepient : str
+            Name of the nation you want to telegram.
+
+        Returns
+        -------
+        an awaitable
+        """
+        params = {
+            'a': 'sendTG',
+            'client': client_key,
+            'tgid': str(telegram_id),
+            'key': telegram_key,
+            'to': recepient
+        }
+        return await self._call_api(params)
+
     # Happenings interface:
 
     def _get_happenings(self, *, nations, regions, filters, limit=100,

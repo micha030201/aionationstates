@@ -163,8 +163,12 @@ class Session:
         if resp.status == 403:
             raise AuthenticationError
         if resp.status == 429:
-            raise RateLimitError(
-                f'ratelimited for {resp.headers["X-Retry-After"]} seconds')
+            try:
+                raise RateLimitError(
+                    f'ratelimited for {resp.headers["X-Retry-After"]} seconds')
+            except KeyError:
+                # This can happen yes, Telegrams API is one of the cases
+                raise RateLimitError
         if resp.status == 409:
             raise SessionConflictError('previous login too recent')
         if resp.status == 404:

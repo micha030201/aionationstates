@@ -38,6 +38,7 @@ You should not build these objects yourself. Instead, use the following:
 ------
 
 .. autoclass:: Nation
+    :no-members:
 
     .. autoattribute:: url
 
@@ -117,6 +118,8 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: dispatchlist
 
+    .. automethod:: policies
+
     .. automethod:: zombie
 
     .. automethod:: banners
@@ -134,10 +137,12 @@ You should not build these objects yourself. Instead, use the following:
     .. automethod:: verify
 
 .. autoclass:: NationControl
+    :no-members:
 
     .. automethod:: issues
 
 .. autoclass:: Region
+    :no-members:
 
     .. autoattribute:: url
 
@@ -184,6 +189,7 @@ You should not build these objects yourself. Instead, use the following:
     .. automethod:: happenings
 
 .. autoclass:: World()
+    :no-members:
 
     .. automethod:: featuredregion
 
@@ -240,6 +246,8 @@ Data Classes
 .. autoclass:: Govt()
 
 .. autoclass:: Sectors()
+
+.. autoclass:: Policy()
 
 .. autoclass:: Banner()
 

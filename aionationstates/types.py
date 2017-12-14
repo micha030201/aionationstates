@@ -6,6 +6,7 @@ from contextlib import suppress
 from enum import Flag, Enum, auto
 from functools import reduce, total_ordering
 from operator import or_
+from collections import namedtuple
 
 import aionationstates
 from aionationstates.utils import timestamp, banner_url, unscramble_encoding
@@ -41,6 +42,7 @@ __all__ = (
     'PostStatus',
     'Zombie',
     'TGQueue',
+    'Policy',
 )
 
 
@@ -112,8 +114,8 @@ class CensusScaleCurrent:
         return f'<CensusScaleCurrent #{self.info.id} {self.info.title}>'
 
 
-class CensusPoint:
-    """What the scale score was on a particular date.
+class CensusPoint(namedtuple('CensusPoint', ['timestamp', 'score'])):
+    """A namedtuple of what the scale score was on a particular date.
 
     Attributes
     ----------
@@ -122,10 +124,12 @@ class CensusPoint:
     score : float
         What it was.
     """
+    __slots__ = ()
 
-    def __init__(self, elem):
-        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
-        self.score = float(elem.find('SCORE').text)
+    def __new__(cls, elem):
+        stamp = timestamp(elem.find('TIMESTAMP').text)
+        score = float(elem.find('SCORE').text)
+        return super(cls, CensusPoint).__new__(cls, stamp, score)
 
 
 class CensusScaleHistory:
@@ -223,9 +227,16 @@ class PollOption:
     """
 
     def __init__(self, elem):
+        # Troublesome characters are cut from option texts, so unscrambling is
+        # not necessary.
         self.text = html.unescape(elem.findtext('OPTIONTEXT'))
-        voters = elem.find('VOTERS').text
-        self.voters = voters.split(':') if voters else []
+
+        voters = elem.findtext('VOTERS')
+        if voters:
+            self.voters = [aionationstates.Nation(voter)
+                           for voter in voters.split(':')]
+        else:
+            self.voters = []
 
 
 class Poll:
@@ -237,7 +248,7 @@ class Poll:
         The poll id.
     title : str
         The poll title.
-    text : str
+    text : str or None
         The poll text.
     region : :class:`Region`
         Region the poll was posted in.
@@ -249,11 +260,16 @@ class Poll:
 
     def __init__(self, elem):
         self.id = int(elem.get('id'))
+        # Troublesome characters are cut from poll titles and texts, so
+        # unscrambling is not necessary.
         self.title = html.unescape(elem.findtext('TITLE'))
-        try:
-            self.text = html.unescape(elem.findtext('TEXT'))
-        except AttributeError:
+
+        text = elem.findtext('TEXT')
+        if text:
+            self.text = html.unescape(text)
+        else:
             self.text = None
+
         self.region = aionationstates.Region(elem.find('REGION').text)
         self.author = aionationstates.Nation(elem.find('AUTHOR').text)
         self.start = timestamp(elem.find('START').text)
@@ -373,6 +389,32 @@ class Sectors:
         self.government = float(elem.find('GOVERNMENT').text)
         self.industry = float(elem.find('INDUSTRY').text)
         self.public = float(elem.find('PUBLIC').text)
+
+
+class Policy:
+    """One of nation's policies.
+
+    Attributes
+    ----------
+    name : str
+    category : str
+    description : str
+    banner : str
+        URL of the policy picture.
+    """
+
+    def __init__(self, elem):
+        self.name = elem.find('NAME').text
+        self.category = elem.find('CAT').text
+        self.description = elem.find('DESC').text
+        self.banner = banner_url(elem.find('PIC').text)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.name == other.name
+
+    def __hash__(self):
+        return hash((self.name,))
+
 
 
 

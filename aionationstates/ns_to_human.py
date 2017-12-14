@@ -84,8 +84,8 @@ class ScaleInfo:
             setattr(self, key, value)
 
 
-census_info = {
-    0: ScaleInfo(
+census_info = [
+    ScaleInfo(
         id=0,
         title='Civil Rights',
         ranked='Most Extensive Civil Rights',
@@ -100,7 +100,7 @@ census_info = {
                             'go about their personal business without '
                             'interference or regulation from government.'),
     ),
-    1: ScaleInfo(
+    ScaleInfo(
         id=1,
         title='Economy',
         ranked='Most Efficient Economies',
@@ -113,7 +113,7 @@ census_info = {
                             'efficient at translating raw resources, '
                             'including people, into economic output.'),
     ),
-    2: ScaleInfo(
+    ScaleInfo(
         id=2,
         title='Political Freedom',
         ranked='Most Politically Free',
@@ -126,7 +126,7 @@ census_info = {
                             'amount of freedom to select their own '
                             'government.'),
     ),
-    3: ScaleInfo(
+    ScaleInfo(
         id=3,
         title='Population',
         ranked='Largest Populations',
@@ -137,7 +137,7 @@ census_info = {
         region_description=('The following regions have the most citizens '
                             'per nation.'),
     ),
-    4: ScaleInfo(
+    ScaleInfo(
         id=4,
         title='Wealth Gaps',
         ranked='Greatest Rich-Poor Divides',
@@ -152,7 +152,7 @@ census_info = {
                             'Regions low on the list have high levels of '
                             'income equality.'),
     ),
-    5: ScaleInfo(
+    ScaleInfo(
         id=5,
         title='Death Rate',
         ranked='Highest Unexpected Death Rate',
@@ -169,7 +169,7 @@ census_info = {
                             'causes, such as crime, preventable illness, '
                             'accident, and government encouragement.'),
     ),
-    6: ScaleInfo(
+    ScaleInfo(
         id=6,
         title='Compassion',
         ranked='Most Compassionate Citizens',
@@ -182,7 +182,7 @@ census_info = {
                             'kittens revealed the following regions to be '
                             'the most compassionate.'),
     ),
-    7: ScaleInfo(
+    ScaleInfo(
         id=7,
         title='Eco-Friendliness',
         ranked='Most Eco-Friendly Governments',
@@ -197,7 +197,7 @@ census_info = {
                             'always be reflected in the quality of that '
                             "region's environment."),
     ),
-    8: ScaleInfo(
+    ScaleInfo(
         id=8,
         title='Social Conservatism',
         ranked='Most Conservative',
@@ -212,7 +212,7 @@ census_info = {
                             'may do in their personal lives, whether via '
                             'community values or government-imposed law.'),
     ),
-    9: ScaleInfo(
+    ScaleInfo(
         id=9,
         title='Nudity',
         ranked='Nudest',
@@ -225,7 +225,7 @@ census_info = {
                             'calculated which regions have the greatest '
                             'acreages of flesh on public display.'),
     ),
-    10: ScaleInfo(
+    ScaleInfo(
         id=10,
         title='Industry: Automobile Manufacturing',
         ranked='Largest Automobile Manufacturing Sector',
@@ -240,7 +240,7 @@ census_info = {
                             'order to estimate which regions have the '
                             'largest auto industries.'),
     ),
-    11: ScaleInfo(
+    ScaleInfo(
         id=11,
         title='Industry: Cheese Exports',
         ranked='Largest Cheese Export Sector',
@@ -255,7 +255,7 @@ census_info = {
                             'regions have the most developed cheese '
                             'exports.'),
     ),
-    12: ScaleInfo(
+    ScaleInfo(
         id=12,
         title='Industry: Basket Weaving',
         ranked='Largest Basket Weaving Sector',
@@ -270,7 +270,7 @@ census_info = {
                             'to determine which regions have the most '
                             'developed Basket Weaving industries.'),
     ),
-    13: ScaleInfo(
+    ScaleInfo(
         id=13,
         title='Industry: Information Technology',
         ranked='Largest Information Technology Sector',
@@ -285,7 +285,7 @@ census_info = {
                             'which regions have the largest Information '
                             'Technology industries.'),
     ),
-    14: ScaleInfo(
+    ScaleInfo(
         id=14,
         title='Industry: Pizza Delivery',
         ranked='Largest Pizza Delivery Sector',
@@ -300,7 +300,7 @@ census_info = {
                             'which regions have the biggest Pizza Delivery '
                             'industries.'),
     ),
-    15: ScaleInfo(
+    ScaleInfo(
         id=15,
         title='Industry: Trout Fishing',
         ranked='Largest Trout Fishing Sector',
@@ -313,7 +313,7 @@ census_info = {
                             'with fishmongers in order to determine which '
                             'regions have the largest fishing industries.'),
     ),
-    16: ScaleInfo(
+    ScaleInfo(
         id=16,
         title='Industry: Arms Manufacturing',
         ranked='Largest Arms Manufacturing Sector',
@@ -326,7 +326,7 @@ census_info = {
                             'crates of smuggled weapons to determine which '
                             'regions have the largest arms industry.'),
     ),
-    17: ScaleInfo(
+    ScaleInfo(
         id=17,
         title='Sector: Agriculture',
         ranked='Largest Agricultural Sector',
@@ -341,7 +341,7 @@ census_info = {
                             'to determine which regions have the largest '
                             'agricultural sectors.'),
     ),
-    18: ScaleInfo(
+    ScaleInfo(
         id=18,
         title='Industry: Beverage Sales',
         ranked='Largest Soda Pop Sector',
@@ -354,7 +354,7 @@ census_info = {
                             'syrup water in order to determine which '
                             'regions have the largest beverage industries.'),
     ),
-    19: ScaleInfo(
+    ScaleInfo(
         id=19,
         title='Industry: Timber Woodchipping',
         ranked='Largest Timber Woodchipping Industry',
@@ -367,7 +367,7 @@ census_info = {
                             'desertification in order to calculate which '
                             'regions have the largest timber industry.'),
     ),
-    20: ScaleInfo(
+    ScaleInfo(
         id=20,
         title='Industry: Mining',
         ranked='Largest Mining Sector',
@@ -382,7 +382,7 @@ census_info = {
                             'which regions have the largest mining '
                             'industries.'),
     ),
-    21: ScaleInfo(
+    ScaleInfo(
         id=21,
         title='Industry: Insurance',
         ranked='Largest Insurance Industry',
@@ -397,7 +397,7 @@ census_info = {
                             'regions have the most extensive Insurance '
                             'industries.'),
     ),
-    22: ScaleInfo(
+    ScaleInfo(
         id=22,
         title='Industry: Furniture Restoration',
         ranked='Largest Furniture Restoration Industry',
@@ -412,7 +412,7 @@ census_info = {
                             'regions have the largest Furniture '
                             'Restoration industries.'),
     ),
-    23: ScaleInfo(
+    ScaleInfo(
         id=23,
         title='Industry: Retail',
         ranked='Largest Retail Industry',
@@ -425,7 +425,7 @@ census_info = {
                             'ennui to determine which regions have the '
                             'largest retail industries.'),
     ),
-    24: ScaleInfo(
+    ScaleInfo(
         id=24,
         title='Industry: Book Publishing',
         ranked='Largest Publishing Industry',
@@ -440,7 +440,7 @@ census_info = {
                             'textbooks to determine which regions have the '
                             'largest book publishing industries.'),
     ),
-    25: ScaleInfo(
+    ScaleInfo(
         id=25,
         title='Industry: Gambling',
         ranked='Largest Gambling Industry',
@@ -453,7 +453,7 @@ census_info = {
                             'figures in order to determine which regions '
                             'have the largest gambling industries.'),
     ),
-    26: ScaleInfo(
+    ScaleInfo(
         id=26,
         title='Sector: Manufacturing',
         ranked='Largest Manufacturing Sector',
@@ -468,7 +468,7 @@ census_info = {
                             'determine which regions have the largest '
                             'Manufacturing sectors.'),
     ),
-    27: ScaleInfo(
+    ScaleInfo(
         id=27,
         title='Government Size',
         ranked='Largest Governments',
@@ -485,7 +485,7 @@ census_info = {
                             'into consideration economic output, social '
                             'and cultural significance, and raw size.'),
     ),
-    28: ScaleInfo(
+    ScaleInfo(
         id=28,
         title='Welfare',
         ranked='Largest Welfare Programs',
@@ -500,7 +500,7 @@ census_info = {
                             'tend to have weak or non-existent government '
                             'welfare.'),
     ),
-    29: ScaleInfo(
+    ScaleInfo(
         id=29,
         title='Public Healthcare',
         ranked='Most Extensive Public Healthcare',
@@ -515,7 +515,7 @@ census_info = {
                             'regions had the most effective and '
                             'well-funded public healthcare facilities.'),
     ),
-    30: ScaleInfo(
+    ScaleInfo(
         id=30,
         title='Law Enforcement',
         ranked='Most Advanced Law Enforcement',
@@ -532,7 +532,7 @@ census_info = {
                             'deployed by the law enforcement agencies of '
                             'different regions.'),
     ),
-    31: ScaleInfo(
+    ScaleInfo(
         id=31,
         title='Business Subsidization',
         ranked='Most Subsidized Industry',
@@ -545,7 +545,7 @@ census_info = {
                             'developing and supporting industry, a '
                             "practice known as 'corporate welfare.'"),
     ),
-    32: ScaleInfo(
+    ScaleInfo(
         id=32,
         title='Religiousness',
         ranked='Most Devout',
@@ -560,7 +560,7 @@ census_info = {
                             "citizens' beliefs in order to determine which "
                             'regions were the most devout.'),
     ),
-    33: ScaleInfo(
+    ScaleInfo(
         id=33,
         title='Income Equality',
         ranked='Most Income Equality',
@@ -577,7 +577,7 @@ census_info = {
                             'mean that poor incomes are 50% of rich '
                             'incomes.'),
     ),
-    34: ScaleInfo(
+    ScaleInfo(
         id=34,
         title='Niceness',
         ranked='Nicest Citizens',
@@ -592,7 +592,7 @@ census_info = {
                             'which seemed most friendly and concerned for '
                             'others.'),
     ),
-    35: ScaleInfo(
+    ScaleInfo(
         id=35,
         title='Rudeness',
         ranked='Rudest Citizens',
@@ -607,7 +607,7 @@ census_info = {
                             'study to determine which populations were '
                             'most brash, rude, or brusque.'),
     ),
-    36: ScaleInfo(
+    ScaleInfo(
         id=36,
         title='Intelligence',
         ranked='Smartest Citizens',
@@ -624,7 +624,7 @@ census_info = {
                             'which regions have the most quick-witted, '
                             'insightful, and knowledgeable citizens.'),
     ),
-    37: ScaleInfo(
+    ScaleInfo(
         id=37,
         title='Ignorance',
         ranked='Most Ignorant Citizens',
@@ -639,7 +639,7 @@ census_info = {
                             'fell into the categories "ignorant," '
                             '"oblivious," or "just plain dumb."'),
     ),
-    38: ScaleInfo(
+    ScaleInfo(
         id=38,
         title='Political Apathy',
         ranked='Most Politically Apathetic Citizens',
@@ -656,7 +656,7 @@ census_info = {
                             'political situation by ticking the "Don\'t '
                             'Give a Damn" box.'),
     ),
-    39: ScaleInfo(
+    ScaleInfo(
         id=39,
         title='Health',
         ranked='Healthiest Citizens',
@@ -667,7 +667,7 @@ census_info = {
         region_description=('A measure of the general physical health of '
                             'citizens in each region.'),
     ),
-    40: ScaleInfo(
+    ScaleInfo(
         id=40,
         title='Cheerfulness',
         ranked='Most Cheerful Citizens',
@@ -682,7 +682,7 @@ census_info = {
                             'determine which were the most relentlessly '
                             'cheerful.'),
     ),
-    41: ScaleInfo(
+    ScaleInfo(
         id=41,
         title='Weather',
         ranked='Best Weather',
@@ -693,7 +693,7 @@ census_info = {
         region_description=('The following regions were determined to have '
                             'the best all-round weather.'),
     ),
-    42: ScaleInfo(
+    ScaleInfo(
         id=42,
         title='Compliance',
         ranked='Lowest Crime Rates',
@@ -708,7 +708,7 @@ census_info = {
                             'order to test the reluctance of citizens to '
                             'break the law.'),
     ),
-    43: ScaleInfo(
+    ScaleInfo(
         id=43,
         title='Safety',
         ranked='Safest',
@@ -725,7 +725,7 @@ census_info = {
                             'people taking late walks to determine how '
                             'safe each region is to visit.'),
     ),
-    44: ScaleInfo(
+    ScaleInfo(
         id=44,
         title='Lifespan',
         ranked='Longest Average Lifespans',
@@ -738,7 +738,7 @@ census_info = {
                             'preventable death, with their citizens '
                             'enjoying longer average lifespans.'),
     ),
-    45: ScaleInfo(
+    ScaleInfo(
         id=45,
         title='Ideological Radicality',
         ranked='Most Extreme',
@@ -751,7 +751,7 @@ census_info = {
                             'of how odd, extreme, or fundamentalist their '
                             'social, economic, and political systems are.'),
     ),
-    46: ScaleInfo(
+    ScaleInfo(
         id=46,
         title='Defense Forces',
         ranked='Most Advanced Defense Forces',
@@ -764,7 +764,7 @@ census_info = {
                             'regional defense, and are most secure against '
                             'foreign aggression.'),
     ),
-    47: ScaleInfo(
+    ScaleInfo(
         id=47,
         title='Pacifism',
         ranked='Most Pacifist',
@@ -781,7 +781,7 @@ census_info = {
                             'nonexistent militaries, and peace-loving '
                             'citizens.'),
     ),
-    48: ScaleInfo(
+    ScaleInfo(
         id=48,
         title='Economic Freedom',
         ranked='Most Pro-Market',
@@ -796,7 +796,7 @@ census_info = {
                             'you believe the government is committed to '
                             'free market policies?"'),
     ),
-    49: ScaleInfo(
+    ScaleInfo(
         id=49,
         title='Taxation',
         ranked='Highest Average Tax Rates',
@@ -813,7 +813,7 @@ census_info = {
                             "used averages to rank the world's most taxing "
                             'governments.'),
     ),
-    50: ScaleInfo(
+    ScaleInfo(
         id=50,
         title='Freedom From Taxation',
         ranked='Lowest Overall Tax Burden',
@@ -828,7 +828,7 @@ census_info = {
                             'measures in order to determine which placed '
                             'the lowest tax burden on their citizens.'),
     ),
-    51: ScaleInfo(
+    ScaleInfo(
         id=51,
         title='Corruption',
         ranked='Most Corrupt Governments',
@@ -843,7 +843,7 @@ census_info = {
                             'frequently bribes were required to complete '
                             'simple administrative requests.'),
     ),
-    52: ScaleInfo(
+    ScaleInfo(
         id=52,
         title='Integrity',
         ranked='Least Corrupt Governments',
@@ -858,7 +858,7 @@ census_info = {
                             'inducements to bend the rules and recorded '
                             'how often their proposals were declined.'),
     ),
-    53: ScaleInfo(
+    ScaleInfo(
         id=53,
         title='Authoritarianism',
         ranked='Most Authoritarian',
@@ -873,7 +873,7 @@ census_info = {
                             'of time that passed before they were '
                             'approached by dark-suited officials.'),
     ),
-    54: ScaleInfo(
+    ScaleInfo(
         id=54,
         title='Youth Rebelliousness',
         ranked='Most Rebellious Youth',
@@ -890,7 +890,7 @@ census_info = {
                             'regions have relatively high levels of '
                             'youth-related crime.'),
     ),
-    55: ScaleInfo(
+    ScaleInfo(
         id=55,
         title='Culture',
         ranked='Most Cultured',
@@ -905,7 +905,7 @@ census_info = {
                             'have found the following regions to be the '
                             'most cultured.'),
     ),
-    56: ScaleInfo(
+    ScaleInfo(
         id=56,
         title='Employment',
         ranked='Highest Workforce Participation Rate',
@@ -918,7 +918,7 @@ census_info = {
                             'daytime television chat shows to estimate the '
                             'percentage of citizens who are employed.'),
     ),
-    57: ScaleInfo(
+    ScaleInfo(
         id=57,
         title='Public Transport',
         ranked='Most Advanced Public Transport',
@@ -933,7 +933,7 @@ census_info = {
                             'regions have the most extensive, well-funded '
                             'public transportation systems.'),
     ),
-    58: ScaleInfo(
+    ScaleInfo(
         id=58,
         title='Tourism',
         ranked='Most Popular Tourist Destinations',
@@ -946,7 +946,7 @@ census_info = {
                             'international tourists in order to determine '
                             "the world's favourite regions to sight-see."),
     ),
-    59: ScaleInfo(
+    ScaleInfo(
         id=59,
         title='Weaponization',
         ranked='Most Armed',
@@ -959,7 +959,7 @@ census_info = {
                             'their hands in order to ascertain the average '
                             'number of deadly weapons per citizen.'),
     ),
-    60: ScaleInfo(
+    ScaleInfo(
         id=60,
         title='Recreational Drug Use',
         ranked='Highest Drug Use',
@@ -972,7 +972,7 @@ census_info = {
                             "dubious content to determine which regions' "
                             'citizens consume the most recreational drugs.'),
     ),
-    61: ScaleInfo(
+    ScaleInfo(
         id=61,
         title='Obesity',
         ranked='Fattest Citizens',
@@ -985,7 +985,7 @@ census_info = {
                             'Cheetos and Twinkies to ascertain which '
                             'regions most enjoyed the "kind bud."'),
     ),
-    62: ScaleInfo(
+    ScaleInfo(
         id=62,
         title='Secularism',
         ranked='Most Secular',
@@ -1002,7 +1002,7 @@ census_info = {
                             'wellbeing in order to determine the most '
                             'godforsaken regions.'),
     ),
-    63: ScaleInfo(
+    ScaleInfo(
         id=63,
         title='Environmental Beauty',
         ranked='Most Beautiful Environments',
@@ -1019,7 +1019,7 @@ census_info = {
                             'the most attractive and best cared for '
                             'environments.'),
     ),
-    64: ScaleInfo(
+    ScaleInfo(
         id=64,
         title='Charmlessness',
         ranked='Most Avoided',
@@ -1034,7 +1034,7 @@ census_info = {
                             'ghastly places to spend a vacation, or, '
                             'indeed, any time at all.'),
     ),
-    65: ScaleInfo(
+    ScaleInfo(
         id=65,
         title='Influence',
         ranked='Most Influential',
@@ -1049,7 +1049,7 @@ census_info = {
                             'to determine which regions were the greatest '
                             'international diplomacy heavyweights.'),
     ),
-    66: ScaleInfo(
+    ScaleInfo(
         id=66,
         title='World Assembly Endorsements',
         ranked='Most World Assembly Endorsements',
@@ -1064,7 +1064,7 @@ census_info = {
                             'number of endorsements per nation in each '
                             'region.'),
     ),
-    67: ScaleInfo(
+    ScaleInfo(
         id=67,
         title='Averageness',
         ranked='Most Average',
@@ -1077,7 +1077,7 @@ census_info = {
                             'tribute to those most overlooked of regions: '
                             'the determinedly average.'),
     ),
-    68: ScaleInfo(
+    ScaleInfo(
         id=68,
         title='Human Development Index',
         ranked='Most Developed',
@@ -1092,7 +1092,7 @@ census_info = {
                             'average life expectancy, education, and '
                             'income.'),
     ),
-    69: ScaleInfo(
+    ScaleInfo(
         id=69,
         title='Primitiveness',
         ranked='Most Primitive',
@@ -1107,7 +1107,7 @@ census_info = {
                             'attributed to the unknowable will of '
                             'animal-based spirit gods.'),
     ),
-    70: ScaleInfo(
+    ScaleInfo(
         id=70,
         title='Scientific Advancement',
         ranked='Most Scientifically Advanced',
@@ -1126,7 +1126,7 @@ census_info = {
                             'rejuvenation therapies. Responses based on '
                             'Star Trek were discarded.'),
     ),
-    71: ScaleInfo(
+    ScaleInfo(
         id=71,
         title='Inclusiveness',
         ranked='Most Inclusive',
@@ -1139,7 +1139,7 @@ census_info = {
                             'all citizens were commonly treated as equally '
                             'valuable members of society.'),
     ),
-    72: ScaleInfo(
+    ScaleInfo(
         id=72,
         title='Average Income',
         ranked='Highest Average Incomes',
@@ -1152,7 +1152,7 @@ census_info = {
                             'average spending power of citizens in each '
                             'region.'),
     ),
-    73: ScaleInfo(
+    ScaleInfo(
         id=73,
         title='Average Income of Poor',
         ranked='Highest Poor Incomes',
@@ -1163,7 +1163,7 @@ census_info = {
         region_description=('The World Census studied the spending power '
                             'of the poorest 10% of citizens in each region.'),
     ),
-    74: ScaleInfo(
+    ScaleInfo(
         id=74,
         title='Average Income of Rich',
         ranked='Highest Wealthy Incomes',
@@ -1174,7 +1174,7 @@ census_info = {
         region_description=('The World Census studied the spending power '
                             'of the richest 10% of citizens in each region.'),
     ),
-    75: ScaleInfo(
+    ScaleInfo(
         id=75,
         title='Public Education',
         ranked='Most Advanced Public Education',
@@ -1191,7 +1191,7 @@ census_info = {
                             'widespread, well-funded, and advanced public '
                             'education programs.'),
     ),
-    76: ScaleInfo(
+    ScaleInfo(
         id=76,
         title='Economic Output',
         ranked='Highest Economic Output',
@@ -1208,7 +1208,7 @@ census_info = {
                             'populations, were noted to have a distinct '
                             'advantage.'),
     ),
-    77: ScaleInfo(
+    ScaleInfo(
         id=77,
         title='Crime',
         ranked='Highest Crime Rates',
@@ -1221,7 +1221,7 @@ census_info = {
                             'back alleys in order to determine which '
                             'regions have the highest crime rates.'),
     ),
-    78: ScaleInfo(
+    ScaleInfo(
         id=78,
         title='Foreign Aid',
         ranked='Highest Foreign Aid Spending',
@@ -1234,7 +1234,7 @@ census_info = {
                             'several war-torn regions to determine which '
                             'regions spent the most on international aid. '),
     ),
-    79: ScaleInfo(
+    ScaleInfo(
         id=79,
         title='Black Market',
         ranked='Largest Black Market',
@@ -1247,7 +1247,7 @@ census_info = {
                             'deals and handshake agreements in order to '
                             "study the size of regions' informal economies."),
     ),
-    80: ScaleInfo(
+    ScaleInfo(
         id=80,
         title='Residency',
         ranked='Most Stationary',
@@ -1260,7 +1260,7 @@ census_info = {
                             'which regions have the most physically '
                             'grounded nations.'),
     ),
-}
+]
 
 
 class Banner:

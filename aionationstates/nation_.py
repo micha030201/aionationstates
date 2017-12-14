@@ -3,7 +3,7 @@ import html
 
 from aionationstates.utils import normalize, timestamp, unscramble_encoding
 from aionationstates.types import (
-    Freedom, FreedomScores, Govt, Sectors, Dispatch)
+    Freedom, FreedomScores, Govt, Sectors, Dispatch, Policy)
 from aionationstates.session import Session, api_query
 from aionationstates.shards import NationRegion
 from aionationstates.ns_to_human import banner
@@ -389,6 +389,26 @@ class Nation(NationRegion, Session):
         """
         return root.find('UNSTATUS').text == 'WA Member'
 
+    def tgcanrecruit(self, region=None):
+        """Whether the nation will receive a recruitment telegram.
+
+        Useful in conjunction with the Telegrams API.
+
+        Parameters
+        ----------
+        region : str
+            Name of the region you are recruiting for.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of bool
+        """
+        params = {'from': normalize(region)} if region is not None else {}
+        @api_query('tgcanrecruit', **params)
+        async def result(_, root):
+            return bool(int(root.find('TGCANRECRUIT').text))
+        return result(self)
+
     @api_query('freedom')
     async def freedom(self, root):
         """Nation's `Freedoms`: three basic indicators of the nation's
@@ -479,6 +499,19 @@ class Nation(NationRegion, Session):
         return [
             Dispatch(elem)
             for elem in root.find('DISPATCHLIST')
+        ]
+
+    @api_query('policies')
+    async def policies(self, root):
+        """Nation's policies.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Policy`
+        """
+        return [
+            Policy(elem)
+            for elem in root.find('POLICIES')
         ]
 
     def verify(self, checksum, *, token=None):

@@ -70,6 +70,7 @@ class Census:
                 CensusScaleHistory(scale_elem)
                 for scale_elem in root.find('CENSUS')
             ]
+        return result(self)
 
 
 class NationRegion(Census):
@@ -103,4 +104,8 @@ class NationRegion(Census):
         return f'<{type(self).__name__} "{self.id}">'
 
     def __eq__(self, other):
+        # TODO Nation('qwerty') != Region('qwerty')
         return self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
