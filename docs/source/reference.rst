@@ -21,22 +21,6 @@ NationStates Interaction Objects
 
 Objects to interact with NationStates web interface and API.
 
-You should not build these objects yourself. Instead, use the following:
-
-.. data:: world
-
-    For the :class:`World` object;
-
-.. autofunction:: nation
-
-    To construct either a :class:`Nation` object, or :class:`NationControl` if `password` or `autologin` is provided; and
-
-.. function:: region(name)
-
-    To construct a :class:`Region` object.
-
-------
-
 .. autoclass:: Nation
     :no-members:
 
