@@ -25,7 +25,7 @@ class Census:
 
         Returns
         -------
-        :class:`ApiQuery` of a list of :class:`CensusScaleCurrent` objects
+        an :class:`ApiQuery` of a list of :class:`CensusScaleCurrent` objects
         """
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scales:
@@ -59,7 +59,7 @@ class Census:
 
         Returns
         -------
-        :class:`ApiQuery` of a list of :class:`CensusScaleHistory` objects
+        an :class:`ApiQuery` of a list of :class:`CensusScaleHistory` objects
         """
         params = {'mode': 'history'}
         if scales:
@@ -86,7 +86,7 @@ class NationRegion(Census):
         Returns
         -------
         an :class:`ApiQuery` of a list of \
-        :class:`happenings.UnrecognizedHappening`
+        :class:`UnrecognizedHappening`
         """
         return [UnrecognizedHappening(elem) for elem in root.find('HAPPENINGS')]
 

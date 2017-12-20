@@ -417,7 +417,6 @@ class Policy:
 
 
 
-
 class Reclassification:
     """Change in a `Freedom` classification or the WA Category.
 

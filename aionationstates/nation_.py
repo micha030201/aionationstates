@@ -527,6 +527,10 @@ class Nation(NationRegion, Session):
             is successfully verified.
         token : str
             A token specific to your service and the nation being verified.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of bool
         """
         params = {'a': 'verify', 'checksum': checksum}
         if token:
@@ -547,6 +551,10 @@ class Nation(NationRegion, Session):
         ----------
         token : str
             A token specific to your service and the nation being verified.
+
+        Returns
+        -------
+        str
         """
         if token:
             return ('https://www.nationstates.net/'

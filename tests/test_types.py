@@ -23,7 +23,7 @@ def test_post():
     assert post.likers == []
     assert post.status == PostStatus.NORMAL
     assert post.suppressor is None
-    assert post.author == nation('testlandia')
+    assert post.author == Nation('testlandia')
 
 
 def test_post_likers():
@@ -40,11 +40,11 @@ def test_post_likers():
     assert post.text == 'qwerty'
     assert post.id == 12345
     assert post.timestamp == datetime.datetime.utcfromtimestamp(1510000000)
-    assert post.likers == [nation('aphrodite'), nation('apollo'),
-                           nation('ares'), nation('artemis')]
+    assert post.likers == [Nation('aphrodite'), Nation('apollo'),
+                           Nation('ares'), Nation('artemis')]
     assert post.status == PostStatus.NORMAL
     assert post.suppressor is None
-    assert post.author == nation('testlandia')
+    assert post.author == Nation('testlandia')
 
 
 def test_post_quote():
@@ -193,3 +193,34 @@ def test_poll_notext():
         </POLL>
     '''))
     assert poll.text is None
+
+
+def test_govt():
+    govt = Govt(elem('''
+        <GOVT>
+            <ADMINISTRATION>5.6</ADMINISTRATION>
+            <DEFENCE>13.4</DEFENCE>
+            <EDUCATION>11.2</EDUCATION>
+            <ENVIRONMENT>14.2</ENVIRONMENT>
+            <HEALTHCARE>12.5</HEALTHCARE>
+            <COMMERCE>6.1</COMMERCE>
+            <INTERNATIONALAID>5.1</INTERNATIONALAID>
+            <LAWANDORDER>8.2</LAWANDORDER>
+            <PUBLICTRANSPORT>7.4</PUBLICTRANSPORT>
+            <SOCIALEQUALITY>4.9</SOCIALEQUALITY>
+            <SPIRITUALITY>5.1</SPIRITUALITY>
+            <WELFARE>6.3</WELFARE>
+        </GOVT>
+    '''))
+    assert govt.administration == 5.6
+    assert govt.defence == 13.4
+    assert govt.education == 11.2
+    assert govt.environment == 14.2
+    assert govt.healthcare == 12.5
+    assert govt.commerce == 6.1
+    assert govt.internationalaid == 5.1
+    assert govt.lawandorder == 8.2
+    assert govt.publictransport == 7.4
+    assert govt.socialequality == 4.9
+    assert govt.spirituality == 5.1
+    assert govt.welfare == 6.3

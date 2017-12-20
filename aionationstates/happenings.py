@@ -22,19 +22,35 @@ class UnrecognizedHappening:
     of its incompleteness.
 
     Note that all the other classes in the `happenings` module inherit
-    from this import class, so all the attributes listed below are
-    present on them as well.
+    from this class, so all the attributes listed below are present on
+    them as well.
 
-    Attributes:
-        id: The happening id.  `None` if the happening is from a national or
-            regional archive.
-        timestamp: Time of the happening.
-        text: The happening text.
+    Attributes
+    ----------
+    id : int
+        The happening id.  `None` if the happening is from a national or
+        regional archive.
+    timestamp : naive UTC :class:`datetime.datetime`
+        Time of the happening.
+    text : str
+        The happening text.
     """
 
     def __init__(self, text, params):
         self.id, self.timestamp = params
         self.text = text
+
+    def __eq__(self, other):
+        if not isinstance(other, UnrecognizedHappening):
+            return False
+        if self.id is None or other.id is None:
+            raise TypeError('Cannot compare archived happening.')
+        return self.id == other.id
+
+    def __hash__(self):
+        if self.id is None:
+            raise TypeError('Cannot hash archived happening.')
+        return hash((self.id,))
 
     def __repr__(self):
         return f'<Happening #{self.id}>'
@@ -212,7 +228,6 @@ class DispatchPublication(UnrecognizedHappening):
         return aionationstates.world.dispatch(self.dispatch_id)
 
 
-
 class WorldAssemblyApplication(UnrecognizedHappening):
     """A nation applying to join the World Assembly.
 
@@ -330,7 +345,7 @@ class CategoryChange(UnrecognizedHappening):
     Attributes
     ----------
     nation : :class:`Nation`
-    catogory_before : str
+    category_before : str
     category_after : str
     """
 

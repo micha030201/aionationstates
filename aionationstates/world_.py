@@ -267,10 +267,10 @@ class World(Census, Session):
         ----------
         nations : iterable of str
             Nations happenings of which will be requested.  Cannot be
-            specified at the same time with region.
+            specified at the same time with `regions`.
         regions : iterable of str
             Regions happenings of which will be requested.  Cannot be
-            specified at the same time with nation.
+            specified at the same time with `nations`.
         filters : iterable of str
             Categories to request happenings by.  Available filters
             are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
@@ -279,7 +279,7 @@ class World(Census, Session):
         beforeid : int
             Only request happenings before this id.
         beforetime : :class:`datetime.datetime`
-            Only request happenings before this moment.
+            Only request happenings that occured before this moment.
 
         Returns
         -------
@@ -328,10 +328,10 @@ class World(Census, Session):
             if you suspect this might be an issue.
         nations : iterable of str
             Nations happenings of which will be requested.  Cannot be
-            specified at the same time with region.
+            specified at the same time with `regions`.
         regions : iterable of str
             Regions happenings of which will be requested.  Cannot be
-            specified at the same time with nation.
+            specified at the same time with `nations`.
         filters : iterable of str
             Categories to request happenings by.  Available filters
             are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
