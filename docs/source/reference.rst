@@ -223,14 +223,6 @@ Data Classes
 
 .. autoclass:: PollOption()
 
-.. autoclass:: Freedom()
-
-.. autoclass:: FreedomScores()
-
-.. autoclass:: Govt()
-
-.. autoclass:: Sectors()
-
 .. autoclass:: Policy()
 
 .. autoclass:: Banner()

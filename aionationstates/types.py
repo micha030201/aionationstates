@@ -24,10 +24,6 @@ __all__ = (
     'Dispatch',
     'Poll',
     'PollOption',
-    'Freedom',
-    'FreedomScores',
-    'Govt',
-    'Sectors',
     'Issue',
     'IssueOption',
     'IssueResult',
@@ -282,115 +278,6 @@ class Poll:
 
 
 
-class Freedom:
-    """Nation's `Freedoms`: three basic indicators of the nation's
-    Civil Rights, Economy, and Political Freedom, as expressive
-    adjectives.
-
-    Attributes
-    ----------
-    civilrights : str
-        Nation's Civil Rights.
-    economy : str
-        Nation's Economic Prosperity.
-    politicalfreedom : str
-        Nation's Political Freedom.
-    """
-
-    def __init__(self, elem):
-        self.civilrights = elem.find('CIVILRIGHTS').text
-        self.economy = elem.find('ECONOMY').text
-        self.politicalfreedom = elem.find('POLITICALFREEDOM').text
-
-
-class FreedomScores:
-    """Nation's `Freedoms`: three basic indicators of the nation's
-    Civil Rights, Economy, and Political Freedom, as percentages.
-
-    Attributes
-    ----------
-    civilrights : str
-        Nation's Civil Rights.
-    economy : str
-        Nation's Economic Prosperity.
-    politicalfreedom : str
-        Nation's Political Freedom.
-    """
-
-    def __init__(self, elem):
-        self.civilrights = int(elem.find('CIVILRIGHTS').text)
-        self.economy = int(elem.find('ECONOMY').text)
-        self.politicalfreedom = int(elem.find('POLITICALFREEDOM').text)
-
-
-class Govt:
-    """Nation's government expenditure, as percentages.
-
-    Attributes
-    ----------
-    administration : float
-        The percentage of nation's budget spent on Administration.
-    defence : float
-        The percentage of nation's budget spent on Defence.
-    education : float
-        The percentage of nation's budget spent on Public Education.
-    environment : float
-        The percentage of nation's budget spent on Enviromental Protection.
-    healthcare : float
-        The percentage of nation's budget spent on Public Healthcare.
-    commerce : float
-        The percentage of nation's budget spent on Industry.
-    internationalaid : float
-        The percentage of nation's budget spent on International Aid.
-    lawandorder : float
-        The percentage of nation's budget spent on Law & Order.
-    publictransport : float
-        The percentage of nation's budget spent on Public Transportation.
-    socialequality : float
-        The percentage of nation's budget spent on Social Policy.
-    spirituality : float
-        The percentage of nation's budget spent on Spirituality.
-    welfare : float
-        The percentage of nation's budget spent on Welfare.
-    """
-
-    def __init__(self, elem):
-        self.administration = float(elem.find('ADMINISTRATION').text)
-        self.defence = float(elem.find('DEFENCE').text)
-        self.education = float(elem.find('EDUCATION').text)
-        self.environment = float(elem.find('ENVIRONMENT').text)
-        self.healthcare = float(elem.find('HEALTHCARE').text)
-        self.commerce = float(elem.find('COMMERCE').text)
-        self.internationalaid = float(elem.find('INTERNATIONALAID').text)
-        self.lawandorder = float(elem.find('LAWANDORDER').text)
-        self.publictransport = float(elem.find('PUBLICTRANSPORT').text)
-        self.socialequality = float(elem.find('SOCIALEQUALITY').text)
-        self.spirituality = float(elem.find('SPIRITUALITY').text)
-        self.welfare = float(elem.find('WELFARE').text)
-
-
-class Sectors:
-    """Components of a nation's economy.
-
-    Attributes
-    ----------
-    blackmarket : float
-        Part of the economy taken up by Black Market.
-    government : float
-        Part of the economy taken up by Government.
-    industry : float
-        Part of the economy taken up by Private Industry.
-    public : float
-        Part of the economy taken up by State-Owned Industry.
-    """
-
-    def __init__(self, elem):
-        self.blackmarket = float(elem.find('BLACKMARKET').text)
-        self.government = float(elem.find('GOVERNMENT').text)
-        self.industry = float(elem.find('INDUSTRY').text)
-        self.public = float(elem.find('PUBLIC').text)
-
-
 class Policy:
     """One of nation's policies.
 
@@ -476,7 +363,7 @@ class CensusScaleChange:
 
     Attributes
     ---------
-    info : :class:`CensusInfo`
+    info : :class:`ScaleInfo`
         Static information about the scale.
     score : float
         The scale score, after the change.

@@ -1,9 +1,9 @@
 import re
 import html
+from collections import OrderedDict
 
 from aionationstates.utils import normalize, timestamp, unscramble_encoding
-from aionationstates.types import (
-    Freedom, FreedomScores, Govt, Sectors, Dispatch, Policy)
+from aionationstates.types import Dispatch, Policy
 from aionationstates.session import Session, api_query
 from aionationstates.shards import NationRegion
 from aionationstates.ns_to_human import banner
@@ -417,9 +417,18 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of :class:`Freedom`
+        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \
+        keys and values of str
+            Keys being, in order: ``Civil Rights``, ``Economy``, and
+            ``Political Freedom``.
         """
-        return Freedom(root.find('FREEDOM'))
+        elem = root.find('FREEDOM')
+        result = OrderedDict()
+
+        result['Civil Rights'] = elem.find('CIVILRIGHTS').text
+        result['Economy'] = elem.find('ECONOMY').text
+        result['Political Freedom'] = elem.find('POLITICALFREEDOM').text
+        return result
 
     @api_query('freedomscores')
     async def freedomscores(self, root):
@@ -428,9 +437,18 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of :class:`FreedomScores`
+        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \
+        keys of str and values of int
+            Keys being, in order: ``Civil Rights``, ``Economy``, and
+            ``Political Freedom``.
         """
-        return FreedomScores(root.find('FREEDOMSCORES'))
+        elem = root.find('FREEDOMSCORES')
+        result = OrderedDict()
+
+        result['Civil Rights'] = int(elem.find('CIVILRIGHTS').text)
+        result['Economy'] = int(elem.find('ECONOMY').text)
+        result['Political Freedom'] = int(elem.find('POLITICALFREEDOM').text)
+        return result
 
     @api_query('govt')
     async def govt(self, root):
@@ -438,9 +456,49 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of :class:`Govt`
+        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \
+        keys of str and values of float
+            Keys being, in order: ``Administration``, ``Defence``,
+            ``Education``, ``Environment``, ``Healthcare``, ``Industry``,
+            ``International Aid``, ``Law & Order``, ``Public Transport``,
+            ``Social Policy``, and ``Spirituality``.
         """
-        return Govt(root.find('GOVT'))
+        elem = root.find('GOVT')
+        result = OrderedDict()
+
+        result['Administration'] = float(elem.find('ADMINISTRATION').text)
+        result['Defence'] = float(elem.find('DEFENCE').text)
+        result['Education'] = float(elem.find('EDUCATION').text)
+        result['Environment'] = float(elem.find('ENVIRONMENT').text)
+        result['Healthcare'] = float(elem.find('HEALTHCARE').text)
+        result['Industry'] = float(elem.find('COMMERCE').text)  # Don't ask
+        result['International Aid'] = float(elem.find('INTERNATIONALAID').text)
+        result['Law & Order'] = float(elem.find('LAWANDORDER').text)
+        result['Public Transport'] = float(elem.find('PUBLICTRANSPORT').text)
+        result['Social Policy'] = float(elem.find('SOCIALEQUALITY').text)  # Shh
+        result['Spirituality'] = float(elem.find('SPIRITUALITY').text)
+        result['Welfare'] = float(elem.find('WELFARE').text)
+        return result
+
+    @api_query('sectors')
+    async def sectors(self, root):
+        """Components of the nation's economy, as percentages.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \
+        keys of str and values of float
+            Keys being, in order: ``Black Market (estimated)``, ``Government``,
+            ``Private Industry``, and ``State-Owned Industry``.
+        """
+        elem = root.find('SECTORS')
+        result = OrderedDict()
+
+        result['Black Market (estimated)'] = float(elem.find('BLACKMARKET').text)
+        result['Government'] = float(elem.find('GOVERNMENT').text)
+        result['Private Industry'] = float(elem.find('INDUSTRY').text)
+        result['State-Owned Industry'] = float(elem.find('PUBLIC').text)
+        return result
 
     @api_query('deaths')
     async def deaths(self, root):
@@ -477,16 +535,6 @@ class Nation(NationRegion, Session):
         an :class:`ApiQuery` of a list of str
         """
         return [elem.text for elem in root.find('LEGISLATION')]
-
-    @api_query('sectors')
-    async def sectors(self, root):
-        """Components of the nation's economy, as percentages.
-
-        Returns
-        -------
-        an :class:`ApiQuery` of :class:`Sectors`
-        """
-        return Sectors(root.find('SECTORS'))
 
     @api_query('dispatchlist')
     async def dispatchlist(self, root):
