@@ -458,7 +458,7 @@ class Nation(NationRegion, Session):
         -------
         an :class:`ApiQuery` of :class:`collections.OrderedDict` with \
         keys of str and values of float
-            Keys being, in order: ``Administration``, ``Defence``,
+            Keys being, in order: ``Administration``, ``Defense``,
             ``Education``, ``Environment``, ``Healthcare``, ``Industry``,
             ``International Aid``, ``Law & Order``, ``Public Transport``,
             ``Social Policy``, and ``Spirituality``.
@@ -467,7 +467,7 @@ class Nation(NationRegion, Session):
         result = OrderedDict()
 
         result['Administration'] = float(elem.find('ADMINISTRATION').text)
-        result['Defence'] = float(elem.find('DEFENCE').text)
+        result['Defense'] = float(elem.find('DEFENCE').text)  # match the web UI
         result['Education'] = float(elem.find('EDUCATION').text)
         result['Environment'] = float(elem.find('ENVIRONMENT').text)
         result['Healthcare'] = float(elem.find('HEALTHCARE').text)
