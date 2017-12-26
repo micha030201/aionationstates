@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import datetime
 
+import pytest
+
 from aionationstates import *
 
 
@@ -193,3 +195,82 @@ def test_poll_notext():
         </POLL>
     '''))
     assert poll.text is None
+
+
+def test_issueresult_invalid_option():
+    with pytest.raises(ValueError):
+        IssueResult(elem('''
+        <ISSUE id="365" choice="42">
+            <ERROR>Invalid choice.</ERROR>
+        </ISSUE>
+        '''))
+
+
+def test_issueresult_invalid_issue():
+    with pytest.raises(ValueError):
+        IssueResult(elem('''
+        <ISSUE id="365456" choice="42">
+            <ERROR>Issue already processed!</ERROR>
+        </ISSUE>
+        '''))
+
+
+def test_issueresult():
+    issueresult = IssueResult(elem('''
+      <ISSUE id="365" choice="2">
+        <OK>1</OK>
+        <DESC>qwerty</DESC>
+        <RANKINGS>
+          <RANK id="0">
+            <SCORE>65.53</SCORE>
+            <CHANGE>4.46</CHANGE>
+            <PCHANGE>7.303095</PCHANGE>
+          </RANK>
+          <RANK id="36">
+            <SCORE>23.87</SCORE>
+            <CHANGE>0.93</CHANGE>
+            <PCHANGE>4.054054</PCHANGE>
+          </RANK>
+          <RANK id="37">
+            <SCORE>18.85</SCORE>
+            <CHANGE>-1.20</CHANGE>
+            <PCHANGE>-5.985037</PCHANGE>
+          </RANK>
+        </RANKINGS>
+        <RECLASSIFICATIONS>
+          <RECLASSIFY type="0">
+            <FROM>Good</FROM>
+            <TO>Very Good</TO>
+          </RECLASSIFY>
+        </RECLASSIFICATIONS>
+        <HEADLINES>
+          <HEADLINE>srrgbrgbrgb</HEADLINE>
+          <HEADLINE>mniomnthnmith</HEADLINE>
+        </HEADLINES>
+      </ISSUE>
+    '''))
+    assert issueresult.effect_line == 'qwerty'
+
+    assert issueresult.census[0].info.title == 'Civil Rights'
+    assert issueresult.census[0].score == 65.53
+    assert issueresult.census[0].change == 4.46
+    assert issueresult.census[0].pchange == 7.303095
+
+    assert issueresult.census[1].score == 23.87
+    assert issueresult.census[1].change == 0.93
+    assert issueresult.census[1].pchange == 4.054054
+
+    assert issueresult.census[2].score == 18.85
+    assert issueresult.census[2].change == -1.20
+    assert issueresult.census[2].pchange == -5.985037
+
+    assert issueresult.reclassifications.civilrights.before == 'Good'
+    assert issueresult.reclassifications.civilrights.after == 'Very Good'
+    assert (
+        issueresult.reclassifications.economy
+        is issueresult.reclassifications.politicalfreedom
+        is issueresult.reclassifications.govt
+        is None
+    )
+
+    assert issueresult.headlines == ['srrgbrgbrgb', 'mniomnthnmith']
