@@ -13,7 +13,7 @@ As you are probably aware, NationStates provides a way to request multiple shard
 
 .. automodule:: aionationstates
 
-.. autoclass:: ApiQuery
+.. autoclass:: ApiQuery()
 
 
 NationStates Interaction Objects
