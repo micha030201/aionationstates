@@ -235,10 +235,6 @@ Data Classes
 
 .. autoclass:: CensusScaleChange()
 
-.. autoclass:: Reclassifications()
-
-.. autoclass:: Reclassification()
-
 .. autoclass:: Embassies()
 
 .. autoclass:: Officer()

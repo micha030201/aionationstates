@@ -264,13 +264,6 @@ def test_issueresult():
     assert issueresult.census[2].change == -1.20
     assert issueresult.census[2].pchange == -5.985037
 
-    assert issueresult.reclassifications.civilrights.before == 'Good'
-    assert issueresult.reclassifications.civilrights.after == 'Very Good'
-    assert (
-        issueresult.reclassifications.economy
-        is issueresult.reclassifications.politicalfreedom
-        is issueresult.reclassifications.govt
-        is None
-    )
-
+    assert issueresult.reclassifications == [
+        'Civil Rights rose from Good to Very Good']
     assert issueresult.headlines == ['srrgbrgbrgb', 'mniomnthnmith']

@@ -28,8 +28,6 @@ __all__ = (
     'IssueOption',
     'IssueResult',
     'CensusScaleChange',
-    'Reclassifications',
-    'Reclassification',
     'Embassies',
     'Officer',
     'Authority',
@@ -304,58 +302,21 @@ class Policy:
 
 
 
-class Reclassification:
-    """Change in a `Freedom` classification or the WA Category.
-
-    Attributes
-    ----------
-    before : str
-        The old category or `Freedom` adjective.
-    after : str
-        The new category or `Freedom` adjective.
-    """
-
-    def __init__(self, elem):
-        self.before = elem.find('FROM').text
-        self.after = elem.find('TO').text
-
-
-class Reclassifications:
-    """Reclassifications of the nation's `Freedoms` and WA Category.
-    For convenience, this is falsey when no reclassifications occured.
-
-    Attributes
-    ----------
-    civilrights : :class:`Reclassification` or None
-        Reclassification of nation's Civil Rights.
-    economy : :class:`Reclassification` or None
-        Reclassification of nation's Economy.
-    politicalfreedom : :class:`Reclassification` or None
-        Reclassification of nation's Political Freedom.
-    govt : :class:`Reclassification` or None
-        Change of nation's World Assembly Category.
-    """
-
-    def __init__(self, elem):
-        self.civilrights = self.economy = \
-            self.politicalfreedom = self.govt = None
-        if elem is None:
-            return
-        attr_names = {
-            '0': 'civilrights',
-            '1': 'economy',
-            '2': 'politicalfreedom',
-            'govt': 'govt'
-        }
-        for sub_elem in elem:
-            setattr(
-                self, attr_names[sub_elem.get('type')],
-                Reclassification(sub_elem)
-            )
-
-    def __bool__(self):
-        return (self.civilrights or self.economy
-                or self.politicalfreedom or self.govt)
+def reclassifications(elem, census):
+    if elem is None:
+        return []
+    census = {scale.info.id: scale for scale in census}
+    for sub_elem in elem:
+        before, after = sub_elem.find('FROM').text, sub_elem.find('TO').text
+        reclassification_type = sub_elem.get('type')
+        if reclassification_type == 'govt':
+            # There is supposed to be the name of the nation here, bt
+            # the code is more than messy enough as is.
+            yield f'Nation was reclassified from {before} to {after}'
+        else:
+            scale = census[int(reclassification_type)]
+            changed = 'rose' if scale.change > 0 else 'fell'
+            yield f'{scale.info.title} {changed} from {before} to {after}'
 
 
 class CensusScaleChange:
@@ -385,7 +346,7 @@ class IssueResult:
 
     Attributes
     ----------
-    happening : str
+    effect_line : str
         The issue effect line.  Not a sentence, mind you -- it's
         uncapitalized and does not end with a period.  ``None`` if the
         issue was dismissed.
@@ -393,8 +354,9 @@ class IssueResult:
         Changes in census scores of the nation.
     banners : list of :class:`Banner`
         The banners unlocked by answering the issue.
-    reclassifications : :class:`Reclassifications`
-        WA Category and Freedoms reclassifications.
+    reclassifications : list of str
+        All WA Category and Freedoms reclassifications listed, for
+        example ``Civil Rights fell from Very Good to Good``.
     headlines : list of str
         Newspaper headlines.  NationStates returns this field with
         unexpanded macros.  I did my best to try and expand them all
@@ -415,7 +377,7 @@ class IssueResult:
                 raise ValueError('invalid issue')
         assert elem.find('OK').text == '1'  # honestly no idea
 
-        self.happening = elem.findtext('DESC')  # TODO rename
+        self.effect_line = elem.findtext('DESC')
         self.census = [
             CensusScaleChange(sub_elem) for sub_elem
             in elem.find('RANKINGS') or ()
@@ -424,8 +386,9 @@ class IssueResult:
             banner(sub_elem.text) for sub_elem
             in elem.find('UNLOCKS') or ()
         ]
-        self.reclassifications = Reclassifications(
-            elem.find('RECLASSIFICATIONS'))
+        self.reclassifications = list(
+            reclassifications(elem.find('RECLASSIFICATIONS'), self.census)
+        )
         self.headlines = [
             sub_elem.text for sub_elem
             in elem.find('HEADLINES') or ()
