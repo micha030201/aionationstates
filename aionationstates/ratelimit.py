@@ -1,43 +1,45 @@
-"""Decorators for compliance with NationStates' API and web rate limits."""
+"""Compliance with NationStates' API and web rate limits."""
 
-import time
 import asyncio
+import logging
 from functools import partial
+from contextlib import suppress
 
 
-# Measured in seconds between each request:
-# (with a bit of wiggle room added)
-api_limit = 0.6 + 0.1  # https://www.nationstates.net/pages/api.html#ratelimits
-web_limit = 6 + 0.5    # https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
+logger = logging.getLogger('aionationstates')
 
 
-# A hack to make them mutable
-last_time_called_api = [0]
-last_time_called_web = [0]
-
-
-def _rate_limiter(func, limit, last_time_called):
-    async def wrapper(*args, **kwargs):
-        elapsed = time.perf_counter() - last_time_called[0]
-        left_to_wait = limit - elapsed
-        if left_to_wait > 0:
-            last_time_called[0] = time.perf_counter() + left_to_wait
-            await asyncio.sleep(left_to_wait)
+async def _ratelimit_queue_consumer(queue, clean_every):
+    while True:
+        await queue.get()
+        # A bit of wiggle room for network delays and such.
+        await asyncio.sleep(clean_every + clean_every / 20)
+        if queue.qsize() == queue.maxsize:
+            logger.info(
+                'clearing saturated request buffer'
+                f' of length {queue.maxsize + 1}')
         else:
-            last_time_called[0] = time.perf_counter()
-
-        return await func(*args, **kwargs)
-    return wrapper
-
-
-api = partial(
-    _rate_limiter,
-    limit=api_limit, last_time_called=last_time_called_api
-)
-
-web = partial(
-    _rate_limiter,
-    limit=web_limit, last_time_called=last_time_called_web
-)
+            logger.debug(
+                f'clearing request buffer of length {queue.maxsize + 1}'
+                f' containing {queue.qsize() + 1} items')
+        with suppress(asyncio.QueueEmpty):
+            while True:
+                queue.get_nowait()
 
 
+def _create_ratelimiter(requests_allowed, per):
+    # We have to make queues one item shorter than the number of allowed
+    # requests because the consumers consumes an extra item while
+    # waiting for it to be added to the queue.
+    queue = asyncio.Queue(maxsize=requests_allowed - 1)
+    asyncio.get_event_loop().create_task(_ratelimit_queue_consumer(queue, per))
+    return partial(queue.put, None)
+
+
+# "API Rate Limit: 50 requests per 30 seconds."
+# https://www.nationstates.net/pages/api.html#ratelimits
+api = _create_ratelimiter(requests_allowed=50, per=30)
+
+# "Scripts must send no more than 10 requests per minute."
+# https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
+web = _create_ratelimiter(requests_allowed=10, per=60)

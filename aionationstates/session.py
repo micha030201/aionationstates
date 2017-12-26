@@ -156,8 +156,8 @@ class Session:
                     text=await resp.text()
                 )
 
-    @ratelimit.api
     async def _base_call_api(self, method, **kwargs):
+        await ratelimit.api()
         logger.debug(f'Calling API {method} {kwargs}')
         resp = await self._request(method, API_URL, **kwargs)
         if resp.status == 403:
@@ -179,8 +179,8 @@ class Session:
     async def _call_api(self, params, **kwargs):
         return await self._base_call_api('GET', params=params, **kwargs)
 
-    @ratelimit.web
     async def _call_web(self, path, *, method='GET', **kwargs):
+        await ratelimit.web()
         logger.debug(f'Calling web {method} {path} {kwargs}')
         resp = await self._request(method, NS_URL + path.strip('/'), **kwargs)
         if '<html lang="en" id="page_login">' in resp.text:
