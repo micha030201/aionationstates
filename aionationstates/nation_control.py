@@ -80,9 +80,5 @@ class NationControl(Nation, Session):
                 await banner._expand_macros(expand_macros)
                 for banner in issue_result.banners
             ]
-            issue_result.headlines = [
-                await expand_macros(headline)
-                for headline in issue_result.headlines
-            ]
             return issue_result
         return result(self)

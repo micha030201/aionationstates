@@ -625,15 +625,8 @@ class Nation(NationRegion, Session):
         ]
 
     def _get_macros_expander(self):
-        # The only macros present in the banner names are name,
-        # demonym, and faith.  If the NS admins ever choose to answer
-        # my request and fix the unexpanded macros in issue effect
-        # headlines, the rest should be removed as unnecessary.
-        query = (
-            self.demonym() + self.demonym2() + self.demonym2plural()
-            + self.name() + self.religion() + self.animal() + self.capital()
-            + self.leader() + self.currency()
-        )
+        # The only three macros present in the banner names:
+        query = self.demonym() + self.name() + self.religion()
         query_result = None
 
         async def expand_macros(line):
@@ -645,32 +638,8 @@ class Nation(NationRegion, Session):
                 return (
                     line
                     .replace('@@DEMONYM@@', query_result[0])
-                    .replace('@@DEMONYM2@@', query_result[1])
-                    # Not documented, or even mentioned anywhere.
-                    # Discovered through experimentation.  No idea if
-                    # that's a pattern or not.
-                    # More experimentation will tell, I guess?
-                    .replace('@@PL(DEMONYM2)@@', query_result[2])
-                    # I feel filthy just looking at this.  Surely, NS
-                    # wouldn't put bits of Perl code to be executed
-                    # into macros?  Surely, their implementation can't
-                    # be that bad?
-                    # Yeah right.  Ha ha.  Ha.
-                    .replace('@@uc($nation->query("name"))@@',
-                             query_result[3].upper())
-                    # I wasn't that nihilistic before starting to write
-                    # this library, was I?
-                    .replace('@@NAME@@', query_result[3])
-                    .replace('@@FAITH@@', query_result[4])
-                    .replace('@@ANIMAL@@', query_result[5])
-                    # Am I surprised that even in their code they have
-                    # two ways to query data, used interchangeably?
-                    # At this point, not really, no.
-                    .replace('@@$nation->query_capital()@@', query_result[6])
-                    # I just hope there aren't enough headlines with
-                    # macros to force me into using regex.
-                    .replace('@@LEADER@@', query_result[7])
-                    .replace('@@CURRENCY@@', query_result[8])
+                    .replace('@@NAME@@', query_result[1])
+                    .replace('@@FAITH@@', query_result[2])
                 )
             return line
 
