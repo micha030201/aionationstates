@@ -1,13 +1,43 @@
 import re
 import html
+from contextlib import suppress
 from collections import OrderedDict
 
-from aionationstates.utils import normalize, timestamp, unscramble_encoding
-from aionationstates.types import Dispatch, Policy
-from aionationstates.session import Session, api_query
-from aionationstates.shards import NationRegion
-from aionationstates.ns_to_human import banner
+from aionationstates.utils import (
+    normalize, timestamp, unscramble_encoding, logger, banner_url)
+from aionationstates.session import Session, api_query, api_command
+from aionationstates.shared import NationRegion, Dispatch
+from aionationstates.ns_to_human import census_info
 import aionationstates
+
+
+__all__ = ('Policy', 'Nation', 'CensusScaleChange', 'IssueResult',
+           'IssueOption', 'Issue', 'Nation', 'NationControl')
+
+
+class Policy:
+    """One of nation's policies.
+
+    Attributes
+    ----------
+    name : str
+    category : str
+    description : str
+    banner : str
+        URL of the policy picture.
+    """
+
+    def __init__(self, elem):
+        self.name = elem.find('NAME').text
+        self.category = elem.find('CAT').text
+        self.description = elem.find('DESC').text
+        self.banner = banner_url(elem.find('PIC').text)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.name == other.name
+
+    def __hash__(self):
+        return hash((self.name,))
 
 
 class Nation(NationRegion, Session):
@@ -461,7 +491,7 @@ class Nation(NationRegion, Session):
             Keys being, in order: ``Administration``, ``Defense``,
             ``Education``, ``Environment``, ``Healthcare``, ``Industry``,
             ``International Aid``, ``Law & Order``, ``Public Transport``,
-            ``Social Policy``, and ``Spirituality``.
+            ``Social Policy``, ``Spirituality``, and ``Welfare``.
         """
         elem = root.find('GOVT')
         result = OrderedDict()
@@ -616,11 +646,11 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of :class:`Banner`
+        an :class:`ApiQuery` of a list of str
+            URLs of the banner pictures.
         """
-        expand_macros = self._get_macros_expander()
         return [
-            await banner(elem.text)._expand_macros(expand_macros)
+            banner_url(elem.text)
             for elem in root.find('BANNERS')
         ]
 
@@ -665,3 +695,248 @@ class Nation(NationRegion, Session):
             .replace('<p>', '\n\n')
             .strip()
         )
+
+
+# Issue outcome processing:
+
+def reclassifications(elem, census):
+    if elem is None:
+        return []
+    census = {scale.info.id: scale for scale in census}
+    for sub_elem in elem:
+        before, after = sub_elem.find('FROM').text, sub_elem.find('TO').text
+        reclassification_type = sub_elem.get('type')
+        if reclassification_type == 'govt':
+            # There is supposed to be the name of the nation here, bt
+            # the code is more than messy enough as is.
+            yield f'Nation was reclassified from {before} to {after}'
+        else:
+            scale = census[int(reclassification_type)]
+            changed = 'rose' if scale.change > 0 else 'fell'
+            yield f'{scale.info.title} {changed} from {before} to {after}'
+
+
+class CensusScaleChange:
+    """Change in one of the World Census scales of a nation
+
+    Attributes
+    ---------
+    info : :class:`ScaleInfo`
+        Static information about the scale.
+    score : float
+        The scale score, after the change.
+    change : float
+        Change of the score.
+    pchange : float
+        The semi-user-friendly percentage change NationStates shows by default.
+    """
+
+    def __init__(self, elem):
+        self.info = census_info[int(elem.get('id'))]
+        self.score = float(elem.find('SCORE').text)
+        self.change = float(elem.find('CHANGE').text)
+        self.pchange = float(elem.find('PCHANGE').text)
+
+
+class IssueResult:
+    """Result of an issue.
+
+    Attributes
+    ----------
+    effect_line : str
+        The issue effect line.  Not a sentence, mind you -- it's
+        uncapitalized and does not end with a period.  ``None`` if the
+        issue was dismissed.
+    census : list of :class:`CensusScaleChange`
+        Changes in census scores of the nation.
+    banners : list of :class:`Banner`
+        The banners unlocked by answering the issue.
+    reclassifications : list of str
+        All WA Category and Freedoms reclassifications listed, for
+        example ``Civil Rights fell from Very Good to Good``.
+    headlines : list of str
+        Newspaper headlines.  NationStates returns this field with
+        unexpanded macros.  I did my best to try and expand them all
+        client-side, however there does not exist a document in which
+        they are formally defined (that is sort of a pattern throughout
+        NationStates, maybe you've noticed), so I can only do so much.
+        Please report any unexpanded macros you encounter as bugs.
+    """
+
+    def __init__(self, elem):
+        with suppress(AttributeError):
+            error = elem.find('ERROR').text
+            if error == 'Invalid choice.':
+                raise ValueError('invalid option')
+            elif error == 'Issue already processed!':
+                # I know it may not be obvious, but that's exactly
+                # what NS is trying to say here.
+                raise ValueError('invalid issue')
+        assert elem.find('OK').text == '1'  # honestly no idea
+
+        self.effect_line = elem.findtext('DESC')
+        self.census = [
+            CensusScaleChange(sub_elem) for sub_elem
+            in elem.find('RANKINGS') or ()
+        ]
+        self.banners = [
+            banner(sub_elem.text) for sub_elem  # TODO
+            in elem.find('UNLOCKS') or ()
+        ]
+        self.reclassifications = list(
+            reclassifications(elem.find('RECLASSIFICATIONS'), self.census)
+        )
+        self.headlines = [
+            sub_elem.text for sub_elem
+            in elem.find('HEADLINES') or ()
+        ]
+
+
+# Unsolved issues:
+
+class IssueOption:
+    """An option of an issue.
+
+    Attributes
+    ----------
+    text : str
+        The option text. May contain HTML elements and character references.
+    """
+
+    def __init__(self, elem, issue):
+        self._issue = issue
+        self._id = int(elem.get('id'))
+        self.text = unscramble_encoding(elem.text)
+
+    def accept(self):
+        """Accept the option.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of :class:`IssueResult`
+        """
+        return self._issue._nation._accept_issue(self._issue.id, self._id)
+
+    # TODO repr
+
+
+class Issue:
+    """An issue.
+
+    Attributes
+    ----------
+    id : str
+        The issue id.
+    title : str
+        The issue title.  May contain HTML elements and character references.
+    text : str
+        The issue text.  May contain HTML elements and character references.
+    author : str
+        Author of the issue, usually a nation.
+    editor : str
+        Editor of the issue, usually a nation.
+    options : list of :class:`IssueOption`
+        Issue options.
+    banners : str
+        URLs of issue banners.
+    """
+
+    def __init__(self, elem, nation):
+        self._nation = nation
+        self.id = int(elem.get('id'))
+        self.title = elem.find('TITLE').text
+        self.text = unscramble_encoding(elem.find('TEXT').text)
+        self.author = elem.findtext('AUTHOR')
+        self.editor = elem.findtext('EDITOR')
+        self.options = [
+            IssueOption(sub_elem, self)
+            for sub_elem in elem.findall('OPTION')
+        ]
+        def issue_banners(elem):
+            for x in range(1, 10):  # Should be more than enough.
+                try:
+                    yield banner_url(elem.find(f'PIC{x}').text)
+                except AttributeError:
+                    break
+        self.banners = list(issue_banners(elem))
+
+    def dismiss(self):
+        """Dismiss the issue."""
+        return self._nation._accept_issue(self.id, -1)
+
+    # TODO repr
+
+
+class NationControl(Nation):
+    """Interface to the NationStates private Nation API.  Subclasses
+    :any:`aionationstates.Nation`.
+
+    Credentials are not checked upon initialization, you will only know
+    if you've made a mistake after you try to make the first request.
+    """
+    def __init__(self, name, autologin='', password=''):
+        if not password and not autologin:
+            raise ValueError('No password or autologin supplied')
+        self.password = password
+        self.autologin = autologin
+        # Weird things happen if the supplied pin doesn't follow the format
+        self.pin = '0000000000'
+        super().__init__(name)
+
+    async def _base_call_api(self, method, **kwargs):
+        headers = {
+            'X-Password': self.password,
+            'X-Autologin': self.autologin,
+            'X-Pin': self.pin
+        }
+        resp = await super()._base_call_api(method, headers=headers, **kwargs)
+        with suppress(KeyError):
+            self.pin = resp.headers['X-Pin']
+            logger.info(f'Updating pin for {self.id} from API header')
+            self.autologin = resp.headers['X-Autologin']
+            logger.info(f'Setting autologin for {self.id} from API header')
+        return resp
+
+    async def _call_web(self, path, method='GET', **kwargs):
+        if not self.autologin:
+            # Obtain autologin in case only password was provided
+            await self._call_api({'nation': self.id, 'q': 'nextissue'})
+        cookies = {
+            # Will not work with unescaped equals sign
+            'autologin': self.id + '%3D' + self.autologin,
+            'pin': self.pin
+        }
+        resp = await super()._call_web(path, method=method,
+                                       cookies=cookies, **kwargs)
+        with suppress(KeyError):
+            self.pin = resp.cookies['pin'].value
+            logger.info(f'Updating pin for {self.id} from web cookie')
+        return resp
+
+    async def _call_api_command(self, data, **kwargs):
+        data['nation'] = self.id
+        return await self._base_call_api('POST', data=data, **kwargs)
+
+    # End of authenticated session handling
+
+    @api_query('issues')
+    async def issues(self, root):
+        """Issues the nation currently faces.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Issue`
+        """
+        return [Issue(elem, self) for elem in root.find('ISSUES')]
+
+    def _accept_issue(self, issue_id, option_id):
+        @api_command('issue', issue=str(issue_id), option=str(option_id))
+        async def result(_, root):
+            issue_result = IssueResult(root.find('ISSUE'))
+            expand_macros = self._get_macros_expander()
+            issue_result.banners = [
+                await banner._expand_macros(expand_macros)
+                for banner in issue_result.banners
+            ]
+            return issue_result
+        return result(self)

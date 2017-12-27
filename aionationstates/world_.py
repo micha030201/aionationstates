@@ -2,12 +2,52 @@ from contextlib import suppress
 from asyncio import sleep
 
 from aionationstates.session import Session, api_query
-from aionationstates.types import Dispatch, Poll, TGQueue
 from aionationstates.happenings import process_happening
-from aionationstates.shards import Census
+from aionationstates.shared import Census, Dispatch, Poll
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
-from aionationstates.utils import utc_seconds, normalize
+from aionationstates.utils import utc_seconds, normalize, banner_url
 import aionationstates
+
+
+__all__ = ('TGQueue', 'Banner', 'World', 'world')
+
+
+class TGQueue:
+    """Current length of recruinment telegram queues.
+
+    Attributes
+    ----------
+    manual : int
+    stamp : int
+    api : int
+    """
+    def __init__(self, elem):
+        self.manual = int(elem.find('MANUAL').text)
+        self.stamp = int(elem.find('MASS').text)
+        self.api = int(elem.find('API').text)
+
+
+class Banner:
+    """A Rift banner.
+
+    Attributes
+    ----------
+    id : int
+        The banner id.
+    name : str
+        The banner name.
+    validity : str
+        A requirement the nation has to meet in order to get the banner.
+    """
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    @property
+    def url(self):
+        """Link to the banner image."""
+        return banner_url(self.id)
 
 
 class World(Census, Session):
@@ -369,3 +409,6 @@ class World(Census, Session):
 
             for happening in reversed(happenings):
                 yield happening
+
+
+world = World()

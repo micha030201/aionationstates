@@ -1,14 +1,218 @@
+import re
+import enum
 import html
 from itertools import count
 from asyncio import sleep
 from contextlib import suppress
+from functools import reduce, total_ordering
+from operator import or_
 
-from aionationstates.utils import normalize, timestamp
-from aionationstates.types import (
-    EmbassyPostingRights, Officer, Authority, Embassies, Poll, Post)
+from aionationstates.utils import normalize, timestamp, unscramble_encoding
 from aionationstates.session import Session, api_query
-from aionationstates.shards import NationRegion
+from aionationstates.shared import NationRegion, Poll
 import aionationstates
+
+
+__all__ = ('Embassies', 'Authority', 'Officer', 'EmbassyPostingRights',
+           'PostStatus', 'Post', 'Region')
+
+
+class Embassies:
+    """Embassies of a region.
+
+    Attributes
+    ----------
+    active : list of :class:`Region`
+        Normal, alive embassies.
+    closing : list of :class:`Region`
+        Embassies the demolition of which has been initiated, but did
+        not yet finish.
+    pending : list of :class:`Region`
+        Embassies the creation of which has been initiated, but did not
+        yet finish.
+    invited : list of :class:`Region`
+        Embassy invitations that have not yet been processed.
+    rejected : list of :class:`Region`
+        Embassy invitations that have been denied.
+    """
+
+    def __init__(self, elem):
+        # I know I'm iterating through them five times; I don't care.
+        self.active = [aionationstates.Region(sub_elem.text)
+                       for sub_elem in elem
+                       if sub_elem.get('type') is None]
+        self.closing = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
+                        if sub_elem.get('type') == 'closing']
+        self.pending = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
+                        if sub_elem.get('type') == 'pending']
+        self.invited = [aionationstates.Region(sub_elem.text)
+                        for sub_elem in elem
+                        if sub_elem.get('type') == 'invited']
+        self.rejected = [aionationstates.Region(sub_elem.text)
+                         for sub_elem in elem
+                         if sub_elem.get('type') == 'rejected']
+
+
+class Authority(enum.Flag):
+    """Authority of a Regional Officer, Delegate, or Founder."""
+    EXECUTIVE      = X = enum.auto()
+    WORLD_ASSEMBLY = W = enum.auto()
+    APPEARANCE     = A = enum.auto()
+    BORDER_CONTROL = B = enum.auto()
+    COMMUNICATIONS = C = enum.auto()
+    EMBASSIES      = E = enum.auto()
+    POLLS          = P = enum.auto()
+
+    @classmethod
+    def _from_ns(cls, string):
+        """This is the only sane way I could find to make Flag enums
+        work with individual characters as flags.
+        """
+        return reduce(or_, (cls[char] for char in string))
+
+    def __repr__(self):
+        return f'<OfficerAuthority.{self.name}>'
+
+
+class Officer:
+    """A Regional Officer.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Officer's nation.
+    office : str
+        The (user-specified) office held by the officer.
+    authority : :class:`OfficerAuthority`
+        Officer's authority.
+    appointed_at : naive UTC :class:`datetime.datetime`
+        When the officer got appointed.
+    appointed_by : :class:`Nation`
+        The nation that appointed the officer.
+    """
+
+    def __init__(self, elem):
+        self.nation = aionationstates.Nation(elem.find('NATION').text)
+        self.office = elem.findtext('OFFICE')
+        self.authority = Authority._from_ns(elem.find('AUTHORITY').text)
+        self.appointed_at = timestamp(elem.find('TIME').text)
+        self.appointed_by = aionationstates.Nation(elem.find('BY').text)
+
+
+@total_ordering
+class EmbassyPostingRights(enum.Enum):
+    """Who out of embassy regions' residents can post on the Regional
+    Message Board.
+    """
+    NOBODY = 1
+    DELEGATES_AND_FOUNDERS = 2
+    COMMUNICATIONS_OFFICERS = 3
+    OFFICERS = 4
+    EVERYBODY = 5
+
+    @classmethod
+    def _from_ns(cls, string):
+        values = {
+            '0': 1,  # The reason I have to do all this nonsense.
+            'con': 2,
+            'com': 3,
+            'off': 4,
+            'all': 5,
+        }
+        return cls(values[string])
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+
+class PostStatus(enum.Enum):
+    """Status of a post on a Regional Message Board.
+
+    Attributes:
+        NORMAL: A regular post.
+        SUPPRESSED: The post got suppressed by a regional official.
+        DELETED: The post got deleted by its author.
+        MODERATED: The post got suppressed by a game moderator.
+    """
+    NORMAL = 0
+    SUPPRESSED = 1
+    DELETED = 2
+    MODERATED = 9
+
+    @property
+    def viewable(self) -> bool:
+        """Whether the post content can still be accessed.  Shortcut
+        for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.
+        """
+        return self.value in (0, 1)
+
+
+class Post:
+    """A post on a Regional Message Board.
+
+    Attributes
+    ----------
+    id : int
+        The unique id of the post.
+    timestamp : naive UTC :class:`datetime.datetime`
+        When the post was put up.
+    author : :class:`Nation`
+        The author nation.
+    status : :class:`PostStatus`
+        Status of the post.
+    text : str
+        The post text.
+    likers : list of :class:`Nation`
+        Nations that liked the post.
+    suppressor : :class:`Nation` of None
+        Nation that suppressed the post.  ``None`` if the post has not
+        been suppressed or has been suppressed by moderators.
+    """
+
+    def __init__(self, elem):
+        self.id = int(elem.get('id'))
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
+        self.author = aionationstates.Nation(elem.find('NATION').text)
+        self.status = PostStatus(int(elem.find('STATUS').text))
+        self.text = unscramble_encoding(html.unescape(elem.find('MESSAGE').text))
+
+        likers = elem.findtext('LIKERS')
+        if likers:
+            self.likers = [aionationstates.Nation(name) for name
+                           in likers.split(':')]
+        else:
+            self.likers = []
+
+        suppressor_str = elem.findtext('SUPPRESSOR')
+        if suppressor_str in ('!mod', None):
+            self.suppressor = None
+        else:
+            self.suppressor = aionationstates.Nation(suppressor_str)
+
+    def quote(self, text=None):
+        """Quote this post.
+
+        Parameters
+        ----------
+        text : str
+            Text to quote.  Defaults to the whole text of the post.
+
+        Returns
+        -------
+        str
+            A NationStates bbCode quote of the post.
+        """
+        text = text or re.sub(r'\[quote=.+?\[/quote\]', '',
+                              self.text, flags=re.DOTALL
+                              ).strip('\n')
+        return f'[quote={self.author.id};{self.id}]{text}[/quote]'
+
+    def __repr__(self):
+        return f'<Post #{self.id}>'
 
 
 class Region(NationRegion, Session):

@@ -1,5 +1,12 @@
 import re
+import logging
 from datetime import datetime, timezone
+
+
+__all__ = ('datetime_to_ns',)
+
+
+logger = logging.getLogger('aionationstates')
 
 
 def normalize(identifier):
@@ -84,7 +91,7 @@ def unscramble_encoding(text):
     )
 
 
-def datetime_to_ns(then: datetime) -> str:
+def datetime_to_ns(then):
     """Transform a ``datetime`` object into a NationStates-style
     string, for example "6 days ago", "105 minutes ago", etc.
     """
@@ -145,4 +152,3 @@ def datetime_to_ns(then: datetime) -> str:
         return '1 minute ago'
 
     return 'Seconds ago'
-

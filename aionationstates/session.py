@@ -1,4 +1,3 @@
-import logging
 from warnings import warn
 from collections import namedtuple
 import xml.etree.ElementTree as ET
@@ -7,16 +6,41 @@ import aiohttp
 
 from aionationstates import __version__
 from aionationstates import ratelimit
-from aionationstates.types import (
-    RateLimitError, SessionConflictError, AuthenticationError, NotFound)
+from aionationstates.utils import logger
+
+
+__all__ = ('set_user_agent', 'RateLimitError', 'SessionConflictError',
+           'AuthenticationError', 'NotFound', 'ApiQuery')
 
 
 NS_URL = 'https://www.nationstates.net/'
 API_PATH = 'cgi-bin/api.cgi'
 API_URL = NS_URL + API_PATH
 
-logger = logging.getLogger('aionationstates')
 
+def set_user_agent(user_agent):
+    Session._USER_AGENT = user_agent
+
+
+# Exceptions:
+
+class RateLimitError(Exception):
+    pass
+
+
+class SessionConflictError(Exception):
+    pass
+
+
+class AuthenticationError(Exception):
+    pass
+
+
+class NotFound(Exception):
+    pass
+
+
+# API conviniences:
 
 class ApiQuery:
     """A request to the NationStates API.
@@ -120,9 +144,7 @@ def api_command(c, **data):
     return decorator
 
 
-def set_user_agent(user_agent: str) -> None:
-    Session._USER_AGENT = user_agent
-
+# Networking:
 
 # Needed because aiohttp's API is weird and every my attempt at making
 # a proper use of it has led to sadness and despair.
