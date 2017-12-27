@@ -6,13 +6,20 @@ class HashableDict(dict):
         return hash(frozenset(self.items()))
 
 
-def request(params, method='GET', **kwargs):
-    params = HashableDict(params)
+def request(method, **kwargs):
     kwargs = HashableDict(
         (key, HashableDict(value))
         for key, value in kwargs.items()
     )
-    return (params, method, kwargs)
+    return (method, kwargs)
+
+
+def get(params):
+    return request('GET', params=params)
+
+
+def post(data):
+    return request('POST', data=data)
 
 
 def response(text, *, status=None, url=None,
