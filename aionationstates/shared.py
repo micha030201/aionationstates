@@ -31,8 +31,8 @@ class PollOption:
     """
 
     def __init__(self, elem):
-        # Troublesome characters are cut from option texts, so unscrambling is
-        # not necessary.
+        # Troublesome characters are cut from option texts, so
+        # unscrambling is not necessary.
         self.text = html.unescape(elem.findtext('OPTIONTEXT'))
 
         voters = elem.findtext('VOTERS')
@@ -80,6 +80,12 @@ class Poll:
         self.stop = timestamp(elem.find('STOP').text)
         self.options = [PollOption(option_elem)
                         for option_elem in elem.find('OPTIONS')]
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
 
     def __repr__(self):
         return f'<Poll id={self.id}>'
@@ -144,6 +150,12 @@ class Dispatch:
         """
         return aionationstates.world.dispatch(self.id)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
+
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
 
@@ -151,7 +163,7 @@ class Dispatch:
 # Census data classes:
 
 class CensusScaleCurrent:
-    """World Census scale data about a nation.
+    """Current World Census scale data.
 
     .. warning::
 
@@ -164,9 +176,12 @@ class CensusScaleCurrent:
         not a way to reliably test).  You will need to account for
         that in your code.
 
+    Obviously, regions lack :attr:`rrank` and :attr:`prrank`, and the
+    world only has :attr:`score`.
+
     Attributes
     ----------
-    info : :class:`CensusInfo`
+    info : :class:`ScaleInfo`
         Static information about the scale.
     score : float
         The absolute census score.  All the other scale values are
@@ -220,14 +235,14 @@ class CensusPoint(namedtuple('CensusPoint', ['timestamp', 'score'])):
 
 
 class CensusScaleHistory:
-    """Change of a World Census scale score of a nation through time.
+    """Change of a World Census scale score through time.
 
     Attributes
     ----------
     info : :class:`ScaleInfo`
         Static information about the scale.
     history : list of :class:`CensusPoint`
-        The data itself.
+        The actual data.
     """
 
     def __init__(self, elem):
@@ -261,6 +276,7 @@ class Census:
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scales:
             params['scale'] = '+'.join(str(x) for x in scales)
+
         @api_query('census', **params)
         async def result(_, root):
             return [
@@ -295,6 +311,7 @@ class Census:
         params = {'mode': 'history'}
         if scales:
             params['scale'] = '+'.join(str(x) for x in scales)
+
         @api_query('census', **params)
         async def result(_, root):
             return [
@@ -344,7 +361,8 @@ class NationRegion(Census):
         an :class:`ApiQuery` of a list of \
         :class:`UnrecognizedHappening`
         """
-        return [UnrecognizedHappening(elem) for elem in root.find('HAPPENINGS')]
+        return [UnrecognizedHappening(elem)
+                for elem in root.find('HAPPENINGS')]
 
     @api_query('zombie')
     async def zombie(self, root):

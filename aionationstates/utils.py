@@ -34,66 +34,68 @@ def unscramble_encoding(text):
     (This entire lib is, honestly.)
 
     Specifically, somewhere in the process W-1252 encoded text is
-    wrongly interpreted to be ISO-8859-1, resulting in *some*
-    characters being deterministically unintentionally replaced with
-    useless to the user Unicode control chars.
+    wrongly interpreted to be ISO-8859-1, resulting in *some* characters
+    being deterministically unintentionally replaced with useless to the
+    user Unicode control chars.
 
     This is a very common problem.  Common enough, in fact, to be
     accounted for in the HTML treatment of Character References as
     defined by the specification.  Well, it is technically a parse
-    error, but nobody really cares since the correct, expected
-    character is returned.  For this reason, the bug is not present
-    (or at least not visible) on the NS web interface, and only shows
-    itself when dealing with the API.
+    error, but nobody really cares since the correct, expected character
+    is returned.  For this reason, the bug is not present (or at least
+    not visible) on the NS web interface, and only shows itself when
+    dealing with the API.
 
     Interestingly enough, these characters are not always serialized as
     NCRs, in the dispatch CDATA they are represented literally, meaning
-    that even modifying the XML parser to include a bit of HTML
-    leniency would not be enough.  Not that anyone would do that
-    regardless.
+    that even modifying the XML parser to include a bit of HTML leniency
+    would not be enough.  Not that anyone would do that regardless.
 
 
-    This function reverses the process, substiuting the unprintable
-    mess returned by NS for the Unicode characters it must have
-    originated from.
+    This function reverses the process, substiuting the unprintable mess
+    returned by NS for the Unicode characters it must have originated
+    from.
 
     It's a bit ugly, but gets the job done.
     """
-    return (
-        text
-        .replace('\u0080', '\N{EURO SIGN}')
-        .replace('\u0082', '\N{SINGLE LOW-9 QUOTATION MARK}')
-        .replace('\u0083', '\N{LATIN SMALL LETTER F WITH HOOK}')
-        .replace('\u0084', '\N{DOUBLE LOW-9 QUOTATION MARK}')
-        .replace('\u0085', '\N{HORIZONTAL ELLIPSIS}')
-        .replace('\u0086', '\N{DAGGER}')
-        .replace('\u0087', '\N{DOUBLE DAGGER}')
-        .replace('\u0088', '\N{MODIFIER LETTER CIRCUMFLEX ACCENT}')
-        .replace('\u0089', '\N{PER MILLE SIGN}')
-        .replace('\u008A', '\N{LATIN CAPITAL LETTER S WITH CARON}')
-        .replace('\u008B', '\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}')
-        .replace('\u008C', '\N{LATIN CAPITAL LIGATURE OE}')
-        .replace('\u008E', '\N{LATIN CAPITAL LETTER Z WITH CARON}')
-        .replace('\u0091', '\N{LEFT SINGLE QUOTATION MARK}')
-        .replace('\u0092', '\N{RIGHT SINGLE QUOTATION MARK}')
-        .replace('\u0093', '\N{LEFT DOUBLE QUOTATION MARK}')
-        .replace('\u0094', '\N{RIGHT DOUBLE QUOTATION MARK}')
-        .replace('\u0095', '\N{BULLET}')
-        .replace('\u0096', '\N{EN DASH}')
-        .replace('\u0097', '\N{EM DASH}')
-        .replace('\u0098', '\N{SMALL TILDE}')
-        .replace('\u0099', '\N{TRADE MARK SIGN}')
-        .replace('\u009A', '\N{LATIN SMALL LETTER S WITH CARON}')
-        .replace('\u009B', '\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}')
-        .replace('\u009C', '\N{LATIN SMALL LIGATURE OE}')
-        .replace('\u009E', '\N{LATIN SMALL LETTER Z WITH CARON}')
-        .replace('\u009F', '\N{LATIN CAPITAL LETTER Y WITH DIAERESIS}')
-    )
+    return text.translate(unscramble_table)
+
+unscramble_table = str.maketrans({
+    '\u0080': '\N{EURO SIGN}',
+    '\u0082': '\N{SINGLE LOW-9 QUOTATION MARK}',
+    '\u0083': '\N{LATIN SMALL LETTER F WITH HOOK}',
+    '\u0084': '\N{DOUBLE LOW-9 QUOTATION MARK}',
+    '\u0085': '\N{HORIZONTAL ELLIPSIS}',
+    '\u0086': '\N{DAGGER}',
+    '\u0087': '\N{DOUBLE DAGGER}',
+    '\u0088': '\N{MODIFIER LETTER CIRCUMFLEX ACCENT}',
+    '\u0089': '\N{PER MILLE SIGN}',
+    '\u008A': '\N{LATIN CAPITAL LETTER S WITH CARON}',
+    '\u008B': '\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}',
+    '\u008C': '\N{LATIN CAPITAL LIGATURE OE}',
+    '\u008E': '\N{LATIN CAPITAL LETTER Z WITH CARON}',
+    '\u0091': '\N{LEFT SINGLE QUOTATION MARK}',
+    '\u0092': '\N{RIGHT SINGLE QUOTATION MARK}',
+    '\u0093': '\N{LEFT DOUBLE QUOTATION MARK}',
+    '\u0094': '\N{RIGHT DOUBLE QUOTATION MARK}',
+    '\u0095': '\N{BULLET}',
+    '\u0096': '\N{EN DASH}',
+    '\u0097': '\N{EM DASH}',
+    '\u0098': '\N{SMALL TILDE}',
+    '\u0099': '\N{TRADE MARK SIGN}',
+    '\u009A': '\N{LATIN SMALL LETTER S WITH CARON}',
+    '\u009B': '\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}',
+    '\u009C': '\N{LATIN SMALL LIGATURE OE}',
+    '\u009E': '\N{LATIN SMALL LETTER Z WITH CARON}',
+    '\u009F': '\N{LATIN CAPITAL LETTER Y WITH DIAERESIS}',
+})
 
 
 def datetime_to_ns(then):
-    """Transform a ``datetime`` object into a NationStates-style
-    string, for example "6 days ago", "105 minutes ago", etc.
+    """Transform a :any:`datetime.datetime` into a NationStates-style
+    string.
+
+    For example "6 days ago", "105 minutes ago", etc.
     """
     if then == datetime(1970, 1, 1, 0, 0):
         return 'Antiquity'

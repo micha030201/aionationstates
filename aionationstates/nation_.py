@@ -60,6 +60,9 @@ class Policy:
     def __hash__(self):
         return hash((self.name,))
 
+    def __repr__(self):
+        return f'<Policy "{self.name}">'
+
 
 class Nation(NationRegion, Session):
     """A class to interact with the NationStates Nation public API.
@@ -68,12 +71,12 @@ class Nation(NationRegion, Session):
 
     * **lastactivity** - There is no timestamp version, and the value
       is kind of useless anyways.
-    * **govtpriority** - Use the govt shard.
+    * **govtpriority** - Use the :meth:`govt` shard.
     * **factbooks**, **dispatches**, **factbooklist** - Use the
-      dispatchlist shard.
-    * **income**, **poorest**, **richest** - Use census scales 72, 73,
-      and 74 respectively.  The gdp shard has been kept, as it appears
-      to be slightly different from scale 76.
+      :meth:`dispatchlist` shard.
+    * **income**, **poorest**, **richest** - Use :meth:`census` scales
+      72, 73, and 74 respectively.  The :meth:`gdp` shard has been kept,
+      as it appears to be slightly different from scale 76.
 
     Attributes
     ----------

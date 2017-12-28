@@ -49,6 +49,15 @@ class Banner:
         """Link to the banner image."""
         return banner_url(self.id)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
+
+    def __repr__(self):
+        return f'<Banner #{self.id} "{self.name}">'
+
 
 class World(Census, Session):
     """Interface to the NationStates World API."""

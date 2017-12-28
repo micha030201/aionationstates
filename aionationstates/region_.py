@@ -132,11 +132,16 @@ class EmbassyPostingRights(enum.Enum):
 class PostStatus(enum.Enum):
     """Status of a post on a Regional Message Board.
 
-    Attributes:
-        NORMAL: A regular post.
-        SUPPRESSED: The post got suppressed by a regional official.
-        DELETED: The post got deleted by its author.
-        MODERATED: The post got suppressed by a game moderator.
+    Attributes
+    ----------
+    NORMAL
+        A regular post.
+    SUPPRESSED
+        The post got suppressed by a regional officer.
+    DELETED
+        The post got deleted by its author.
+    MODERATED
+        The post got suppressed by a game moderator.
     """
     NORMAL = 0
     SUPPRESSED = 1
@@ -144,9 +149,9 @@ class PostStatus(enum.Enum):
     MODERATED = 9
 
     @property
-    def viewable(self) -> bool:
-        """Whether the post content can still be accessed.  Shortcut
-        for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.
+    def viewable(self):
+        """bool: Whether the post content can still be accessed.
+        Shortcut for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.
         """
         return self.value in (0, 1)
 
@@ -211,6 +216,12 @@ class Post:
                               ).strip('\n')
         return f'[quote={self.author.id};{self.id}]{text}[/quote]'
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
+
     def __repr__(self):
         return f'<Post #{self.id}>'
 
@@ -232,7 +243,6 @@ class Region(NationRegion, Session):
     def _call_api(self, params, *args, **kwargs):
         params['region'] = self.id
         return super()._call_api(*args, params=params, **kwargs)
-
 
     @property
     def url(self):
@@ -533,4 +543,4 @@ class Region(NationRegion, Session):
             if len(posts) < 100:
                 await sleep(poll_period)
 
-    # TODO: history, messages
+    # TODO: history

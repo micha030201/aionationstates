@@ -29,7 +29,7 @@ async def _ratelimit_queue_consumer(queue, clean_every):
 
 def _create_ratelimiter(requests_allowed, per):
     # We have to make queues one item shorter than the number of allowed
-    # requests because the consumers consumes an extra item while
+    # requests because the consumers consume an extra item while
     # waiting for it to be added to the queue.
     queue = asyncio.Queue(maxsize=requests_allowed - 1)
     asyncio.get_event_loop().create_task(_ratelimit_queue_consumer(queue, per))
