@@ -223,6 +223,9 @@ Data Classes
 
 .. autoclass:: PollOption()
 
+.. autoclass:: WAMembership()
+    :show-inheritance:
+
 .. autoclass:: Policy()
 
 .. autoclass:: Banner()

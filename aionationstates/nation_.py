@@ -1,5 +1,6 @@
 import re
 import html
+import enum
 from contextlib import suppress
 from collections import OrderedDict
 
@@ -12,7 +13,27 @@ import aionationstates
 
 
 __all__ = ('Policy', 'Nation', 'CensusScaleChange', 'IssueResult',
-           'IssueOption', 'Issue', 'Nation', 'NationControl')
+           'IssueOption', 'Issue', 'Nation', 'NationControl',
+           'WAMembership')
+
+
+class WAMembership(enum.Enum):
+    """Nation's World Assembly status.
+
+    Falsey when the nation doesn't hold membership.
+
+    Attributes
+    ----------
+    MEMBER
+    DELEGATE
+    NONMEMBER
+    """
+    MEMBER = 'WA Member'
+    DELEGATE = 'WA Delegate'
+    NONMEMBER = 'Non-member'
+
+    def __bool__(self):
+        return self is not self.NONMEMBER
 
 
 class Policy:
@@ -415,9 +436,9 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of bool
+        an :class:`ApiQuery` of :class:`WAMembership`
         """
-        return root.find('UNSTATUS').text == 'WA Member'
+        return WAMembership(root.find('UNSTATUS').text)
 
     def tgcanrecruit(self, region=None):
         """Whether the nation will receive a recruitment telegram.
