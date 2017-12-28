@@ -197,26 +197,33 @@ def test_poll_notext():
     assert poll.text is None
 
 
-def test_issueresult_invalid_option():
+async def noop(s):
+    return s
+
+
+@pytest.mark.asyncio
+async def test_issueresult_invalid_option():
     with pytest.raises(ValueError):
-        IssueResult(elem('''
+        await IssueResult(elem('''
         <ISSUE id="365" choice="42">
             <ERROR>Invalid choice.</ERROR>
         </ISSUE>
-        '''))
+        '''), noop)
 
 
-def test_issueresult_invalid_issue():
+@pytest.mark.asyncio
+async def test_issueresult_invalid_issue():
     with pytest.raises(ValueError):
-        IssueResult(elem('''
+        await IssueResult(elem('''
         <ISSUE id="365456" choice="42">
             <ERROR>Issue already processed!</ERROR>
         </ISSUE>
-        '''))
+        '''), noop)
 
 
-def test_issueresult():
-    issueresult = IssueResult(elem('''
+@pytest.mark.asyncio
+async def test_issueresult():
+    issueresult = await IssueResult(elem('''
       <ISSUE id="365" choice="2">
         <OK>1</OK>
         <DESC>qwerty</DESC>
@@ -248,7 +255,7 @@ def test_issueresult():
           <HEADLINE>mniomnthnmith</HEADLINE>
         </HEADLINES>
       </ISSUE>
-    '''))
+    '''), noop)
     assert issueresult.effect_line == 'qwerty'
 
     assert issueresult.census[0].info.title == 'Civil Rights'

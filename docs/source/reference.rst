@@ -195,6 +195,8 @@ Objects to interact with NationStates web interface and API.
 
     .. automethod:: poll
 
+    .. automethod:: banner
+
     .. automethod:: tgqueue
 
     .. automethod:: census

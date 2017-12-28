@@ -5,7 +5,8 @@ from contextlib import suppress
 from collections import OrderedDict
 
 from aionationstates.utils import (
-    normalize, timestamp, unscramble_encoding, logger, banner_url)
+    normalize, timestamp, unscramble_encoding, logger, banner_url, aobject,
+    alist)
 from aionationstates.session import Session, api_query, api_command
 from aionationstates.shared import NationRegion, Dispatch
 from aionationstates.ns_to_human import census_info
@@ -377,7 +378,6 @@ class Nation(NationRegion, Session):
         """
         return root.find('SENSIBILITIES').text
 
-
     @api_query('population')
     async def population(self, root):
         """Nation's population, in millions.
@@ -723,21 +723,20 @@ class Nation(NationRegion, Session):
 
 # Issue outcome processing:
 
-def reclassifications(elem, census):
-    if elem is None:
-        return []
-    census = {scale.info.id: scale for scale in census}
-    for sub_elem in elem:
-        before, after = sub_elem.find('FROM').text, sub_elem.find('TO').text
-        reclassification_type = sub_elem.get('type')
-        if reclassification_type == 'govt':
-            # There is supposed to be the name of the nation here, bt
-            # the code is more than messy enough as is.
-            yield f'Nation was reclassified from {before} to {after}'
-        else:
-            scale = census[int(reclassification_type)]
-            changed = 'rose' if scale.change > 0 else 'fell'
-            yield f'{scale.info.title} {changed} from {before} to {after}'
+async def reclassifications(elem, census, expand_macros):
+    if elem is not None:
+        census = {scale.info.id: scale for scale in census[:3]}
+        for sub_elem in elem:
+            before = sub_elem.find('FROM').text
+            after = sub_elem.find('TO').text
+            reclassification_type = sub_elem.get('type')
+            if reclassification_type == 'govt':
+                yield await expand_macros(
+                    f'@@NAME@@ was reclassified from {before} to {after}')
+            else:
+                scale = census[int(reclassification_type)]
+                changed = 'rose' if scale.change > 0 else 'fell'
+                yield f'{scale.info.title} {changed} from {before} to {after}'
 
 
 class CensusScaleChange:
@@ -762,7 +761,7 @@ class CensusScaleChange:
         self.pchange = float(elem.find('PCHANGE').text)
 
 
-class IssueResult:
+class IssueResult(aobject):
     """Result of an issue.
 
     Attributes
@@ -779,15 +778,10 @@ class IssueResult:
         All WA Category and Freedoms reclassifications listed, for
         example ``Civil Rights fell from Very Good to Good``.
     headlines : list of str
-        Newspaper headlines.  NationStates returns this field with
-        unexpanded macros.  I did my best to try and expand them all
-        client-side, however there does not exist a document in which
-        they are formally defined (that is sort of a pattern throughout
-        NationStates, maybe you've noticed), so I can only do so much.
-        Please report any unexpanded macros you encounter as bugs.
+        Newspaper headlines.
     """
 
-    def __init__(self, elem):
+    async def __init__(self, elem, expand_macros):
         with suppress(AttributeError):
             error = elem.find('ERROR').text
             if error == 'Invalid choice.':
@@ -804,11 +798,12 @@ class IssueResult:
             in elem.find('RANKINGS') or ()
         ]
         self.banners = [
-            banner(sub_elem.text) for sub_elem  # TODO
-            in elem.find('UNLOCKS') or ()
+            await aionationstates.world.banner(sub_elem.text, expand_macros)
+            for sub_elem in elem.find('UNLOCKS') or ()
         ]
-        self.reclassifications = list(
-            reclassifications(elem.find('RECLASSIFICATIONS'), self.census)
+        self.reclassifications = await alist(
+            reclassifications(elem.find('RECLASSIFICATIONS'),
+                              self.census, expand_macros)
         )
         self.headlines = [
             sub_elem.text for sub_elem
@@ -956,11 +951,6 @@ class NationControl(Nation):
     def _accept_issue(self, issue_id, option_id):
         @api_command('issue', issue=str(issue_id), option=str(option_id))
         async def result(_, root):
-            issue_result = IssueResult(root.find('ISSUE'))
-            expand_macros = self._get_macros_expander()
-            issue_result.banners = [
-                await banner._expand_macros(expand_macros)
-                for banner in issue_result.banners
-            ]
-            return issue_result
+            return await IssueResult(
+                root.find('ISSUE'), self._get_macros_expander())
         return result(self)

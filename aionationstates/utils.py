@@ -91,6 +91,28 @@ unscramble_table = str.maketrans({
 })
 
 
+class aobject:
+    """Inheriting this class allows you to define an async __init__.
+
+    Code shamelessly ripped from StackOverflow.
+
+    Before getting angry at me for abusing python features, remind
+    yourself that all async/await code is already an abuse of generators
+    and embrace the simple truth that practicality beats purity.
+    """
+    async def __new__(cls, *a, **kw):
+        instance = super().__new__(cls)
+        await instance.__init__(*a, **kw)
+        return instance
+
+    async def __init__(self):
+        pass
+
+
+async def alist(asyncgen):
+    return [item async for item in asyncgen]
+
+
 def datetime_to_ns(then):
     """Transform a :any:`datetime.datetime` into a NationStates-style
     string.

@@ -5,7 +5,7 @@ from aionationstates.session import Session, api_query
 from aionationstates.happenings import process_happening
 from aionationstates.shared import Census, Dispatch, Poll
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
-from aionationstates.utils import utc_seconds, normalize, banner_url
+from aionationstates.utils import utc_seconds, normalize, banner_url, aobject
 import aionationstates
 
 
@@ -27,7 +27,7 @@ class TGQueue:
         self.api = int(elem.find('API').text)
 
 
-class Banner:
+class Banner(aobject):
     """A Rift banner.
 
     Attributes
@@ -40,9 +40,10 @@ class Banner:
         A requirement the nation has to meet in order to get the banner.
     """
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    async def __init__(self, elem, expand_macros):
+        self.id = elem.get('id')
+        self.name = await expand_macros(elem.find('NAME').text)
+        self.validity = await expand_macros(elem.find('VALIDITY').text)
 
     @property
     def url(self):
@@ -238,6 +239,29 @@ class World(Census, Session):
                 raise ValueError(f'No poll found with id {id}')
             return Poll(elem)
         return result(self)
+
+    def banner(self, *ids, _expand_macros=None):
+        """Get data about banners by their ids.
+
+        Parameters
+        ----------
+        *ids : str
+           Banner ids.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`Banner`
+
+        """
+        async def noop(s):
+            return s
+
+        _expand_macros = _expand_macros or noop
+
+        @api_query('banner', banner=','.join(ids))
+        async def result(_, root):
+            return [await Banner(elem, _expand_macros)
+                    for elem in root.find('BANNERS')]
 
     @api_query('tgqueue')
     async def tgqueue(self, root):
