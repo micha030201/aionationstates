@@ -9,7 +9,7 @@ from contextlib import suppress
 from aionationstates.happenings import UnrecognizedHappening
 from aionationstates.session import api_query
 from aionationstates.utils import (
-    timestamp, unscramble_encoding, DataClassWithId)
+    timestamp, unscramble_encoding, DataClassWithId, normalize)
 from aionationstates.ns_to_human import census_info
 import aionationstates
 
@@ -347,6 +347,9 @@ class Zombie:
 # Shards shared by Nation & Region APIs:
 
 class NationRegion(DataClassWithId, Census):
+    def __init__(self, name):
+        self.id = normalize(name)
+
     @api_query('happenings')
     async def happenings(self, root):
         """Happenings archived on the in-game page.  Newest to oldest.

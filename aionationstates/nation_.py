@@ -92,10 +92,6 @@ class Nation(NationRegion, Session):
         No two nations share the same id, and no one id is shared by
         multiple nations.
     """
-
-    def __init__(self, name):
-        self.id = normalize(name)
-
     def __eq__(self, other):
         # Nation('testlandia') == NationControl('testlandia, password='123')
         return isinstance(other, Nation) and self.id == other.id

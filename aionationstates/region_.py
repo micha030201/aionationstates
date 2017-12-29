@@ -8,7 +8,7 @@ from functools import reduce, total_ordering
 from operator import or_
 
 from aionationstates.utils import (
-    normalize, timestamp, unscramble_encoding, DataClassWithId)
+    timestamp, unscramble_encoding, DataClassWithId)
 from aionationstates.session import Session, api_query
 from aionationstates.shared import NationRegion, Poll
 import aionationstates
@@ -266,10 +266,6 @@ class Region(NationRegion, Session):
         No two regions share the same id, and no one id is shared by
         multiple regions.
     """
-
-    def __init__(self, name):
-        self.id = normalize(name)
-
     def _call_api(self, params, *args, **kwargs):
         params['region'] = self.id
         return super()._call_api(*args, params=params, **kwargs)
