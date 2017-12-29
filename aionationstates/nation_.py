@@ -25,9 +25,12 @@ class WAMembership(enum.Enum):
 
     Attributes
     ----------
-    MEMBER
-    DELEGATE
-    NONMEMBER
+    MEMBER : :class:`WAMembership`
+        The nation is a member of the World Assembly.
+    DELEGATE : :class:`WAMembership`
+        The nation is a World Assembly Delegate of one of the regions.
+    NONMEMBER : :class:`WAMembership`
+        The nation is not a member of the World Assembly.
     """
     MEMBER = 'WA Member'
     DELEGATE = 'WA Delegate'
@@ -43,8 +46,11 @@ class Policy:
     Attributes
     ----------
     name : str
+        Name of the policy.
     category : str
+        Category of the policy.
     description : str
+        Short description of the policy.
     banner : str
         URL of the policy picture.
     """
@@ -569,7 +575,7 @@ class Nation(NationRegion, Session):
 
     @api_query('endorsements')
     async def endorsements(self, root):
-        """Endorsements the nation has received.
+        """Regional neighbours endorsing the nation.
 
         Returns
         -------
@@ -762,7 +768,7 @@ class CensusScaleChange:
 
 
 class IssueResult(aobject):
-    """Result of an issue.
+    """Outcome of an issue.
 
     Attributes
     ----------
@@ -775,8 +781,10 @@ class IssueResult(aobject):
     banners : list of :class:`Banner`
         The banners unlocked by answering the issue.
     reclassifications : list of str
-        All WA Category and Freedoms reclassifications listed, for
-        example ``Civil Rights fell from Very Good to Good``.
+        All WA Category and Freedoms reclassifications listed, such as
+        `Civil Rights fell from Very Good to Good`, `Testlandia was
+        reclassified from Inoffensive Centrist Democracy to Democratic
+        Socialists`, etc..
     headlines : list of str
         Newspaper headlines.
     """
@@ -819,7 +827,7 @@ class IssueOption:
     Attributes
     ----------
     text : str
-        The option text. May contain HTML elements and character references.
+        The option text.  May contain HTML elements and character references.
     """
 
     def __init__(self, elem, issue):
@@ -832,11 +840,12 @@ class IssueOption:
 
         Returns
         -------
-        an :class:`ApiQuery` of :class:`IssueResult`
+        an awaitable of :class:`IssueResult`
         """
         return self._issue._nation._accept_issue(self._issue.id, self._id)
 
-    # TODO repr
+    def __repr__(self):
+        return f'<Option {self._id} of issue #{self._issue.id}>'
 
 
 class Issue:
@@ -851,9 +860,9 @@ class Issue:
     text : str
         The issue text.  May contain HTML elements and character references.
     author : str
-        Author of the issue, usually a nation.
+        Author of the issue, usually the name of a nation.
     editor : str
-        Editor of the issue, usually a nation.
+        Author of the issue, usually the name of a nation.
     options : list of :class:`IssueOption`
         Issue options.
     banners : str
@@ -880,15 +889,21 @@ class Issue:
         self.banners = list(issue_banners(elem))
 
     def dismiss(self):
-        """Dismiss the issue."""
+        """Dismiss the issue.
+
+        Returns
+        -------
+        an awaitable of :class:`IssueResult`
+        """
         return self._nation._accept_issue(self.id, -1)
 
-    # TODO repr
+    def __repr__(self):
+        return f'<Issue #{self.id}>'
 
 
 class NationControl(Nation):
     """Interface to the NationStates private Nation API.  Subclasses
-    :any:`aionationstates.Nation`.
+    :class:`Nation`.
 
     Credentials are not checked upon initialization, you will only know
     if you've made a mistake after you try to make the first request.

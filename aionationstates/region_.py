@@ -56,7 +56,30 @@ class Embassies:
 
 
 class Authority(enum.Flag):
-    """Authority of a Regional Officer, Delegate, or Founder."""
+    """Authority of a Regional Officer, Delegate, or Founder.
+
+    Attributes
+    ----------
+    X = EXECUTIVE : :class:`Authority`
+        Can appoint/dismiss Officers and set their authority.
+    W = WORLD_ASSEMBLY : :class:`Authority`
+        Can approve World Assembly proposals.
+    A = APPEARANCE : :class:`Authority`
+        Can modify the World Factbook Entry, Flag, and Tags, and pin
+        Dispatches.
+    B = BORDER_CONTROL : :class:`Authority`
+        Can eject/ban/unban nations and set/modify/remove the region
+        password.
+    C = COMMUNICATIONS : :class:`Authority`
+        Can send region-wide telegrams without stamps, compose Welcome
+        telegrams, suppress & unsuppress posts on the Regional Message
+        Board, and control who can recruit for the region.
+    E = EMBASSIES : :class:`Authority`
+        Can open/close embassies with other regions and modify embassy
+        posting privileges.
+    P = POLLS : :class:`Authority`
+        Can create polls.
+    """
     EXECUTIVE      = X = enum.auto()
     WORLD_ASSEMBLY = W = enum.auto()
     APPEARANCE     = A = enum.auto()
@@ -68,8 +91,7 @@ class Authority(enum.Flag):
     @classmethod
     def _from_ns(cls, string):
         """This is the only sane way I could find to make Flag enums
-        work with individual characters as flags.
-        """
+        work with individual characters as flags."""
         return reduce(or_, (cls[char] for char in string))
 
     def __repr__(self):
@@ -85,7 +107,7 @@ class Officer:
         Officer's nation.
     office : str
         The (user-specified) office held by the officer.
-    authority : :class:`OfficerAuthority`
+    authority : :class:`Authority`
         Officer's authority.
     appointed_at : naive UTC :class:`datetime.datetime`
         When the officer got appointed.
@@ -105,6 +127,22 @@ class Officer:
 class EmbassyPostingRights(enum.Enum):
     """Who out of embassy regions' residents can post on the Regional
     Message Board.
+
+    Can be compared and ordered.
+
+    Attributes
+    ----------
+    NOBODY : :class:`EmbassyPostingRights`
+        No members of the embassy regions can post.
+    DELEGATES_AND_FOUNDERS : :class:`EmbassyPostingRights`
+        Only the Founders and WA Delegates of embassy regions can post.
+    COMMUNICATIONS_OFFICERS : :class:`EmbassyPostingRights`
+        Only Regional Officers of embassy regions with the
+        Communications authority can post.
+    OFFICERS : :class:`EmbassyPostingRights`
+        All Regional Officers of embassy regions can post.
+    EVERYBODY : :class:`EmbassyPostingRights`
+        All members of embassy regions can post.
     """
     NOBODY = 1
     DELEGATES_AND_FOUNDERS = 2
@@ -134,13 +172,13 @@ class PostStatus(enum.Enum):
 
     Attributes
     ----------
-    NORMAL
+    NORMAL : :class:`PostStatus`
         A regular post.
-    SUPPRESSED
+    SUPPRESSED : :class:`PostStatus`
         The post got suppressed by a regional officer.
-    DELETED
+    DELETED : :class:`PostStatus`
         The post got deleted by its author.
-    MODERATED
+    MODERATED : :class:`PostStatus`
         The post got suppressed by a game moderator.
     """
     NORMAL = 0
@@ -294,8 +332,10 @@ class Region(NationRegion, Session):
 
     @api_query('delegatevotes')
     async def delegatevotes(self, root):
-        """Number of the World Assembly votes the region's Delegate
-        has.
+        """Number of the votes in the World Assembly the region's
+        Delegate has.
+
+        Equal to the number of endorsements they have received.
 
         Returns
         -------
@@ -411,7 +451,8 @@ class Region(NationRegion, Session):
     @api_query('officers')
     async def officers(self, root):
         """Regional Officers.  Does not include the Founder or
-        the Delegate, unless they have additional litles as Officers.
+        the Delegate, unless they have additional titles as Officers.
+
         In the correct order.
 
         Returns
@@ -437,11 +478,13 @@ class Region(NationRegion, Session):
 
     @api_query('poll')
     async def poll(self, root):
-        """Current regional poll.
+        """The poll currently running in the region.
 
         Returns
         -------
         an :class:`ApiQuery` of :class:`Poll`
+        an :class:`ApiQuery` of None
+            If no poll is currently running.
         """
         elem = root.find('POLL')
         return Poll(elem) if elem else None
