@@ -13,8 +13,9 @@ from aionationstates.ns_to_human import census_info
 import aionationstates
 
 
-__all__ = ('PollOption', 'Poll', 'Dispatch', 'CensusScaleCurrent',
-           'CensusPoint', 'CensusScaleHistory', 'Zombie')
+__all__ = ('PollOption', 'Poll', 'DispatchThumbnail', 'Dispatch',
+           'CensusScaleCurrent', 'CensusPoint', 'CensusScaleHistory',
+           'Zombie')
 
 
 # Shared data classes:
@@ -91,8 +92,8 @@ class Poll:
         return f'<Poll id={self.id}>'
 
 
-class Dispatch:
-    """A dispatch.
+class DispatchThumbnail:
+    """A dispatch `thumbnail`, missing text.
 
     Attributes
     ----------
@@ -115,11 +116,7 @@ class Dispatch:
     edited : naive UTC :class:`datetime.datetime`
         When the dispatch last got edited.  Equal to ``created`` for
         dispatches that were never edited.
-    text : str or None
-        The dispatch text.  ``None`` if the dispatch came from anywhere
-        other than the World dispatch shard.
     """
-
     def __init__(self, elem):
         self.id = int(elem.get('id'))
         self.title = unscramble_encoding(
@@ -136,11 +133,6 @@ class Dispatch:
         self.created = timestamp(created)
         self.edited = timestamp(edited)
 
-        self.text = None
-        with suppress(AttributeError):
-            self.text = unscramble_encoding(
-                html.unescape(elem.find('TEXT').text))
-
     def full(self):
         """Request the full dispatch (with text).
 
@@ -155,6 +147,25 @@ class Dispatch:
 
     def __hash__(self):
         return hash((self.id,))
+
+    def __repr__(self):
+        return f'<DispatchThumbnail id={self.id}>'
+
+
+class Dispatch(DispatchThumbnail):
+    """A full dispatch.
+
+    Includes all of the attributes of :class:`DispatchThumbnail`, as
+    well as:
+
+    Attributes
+    ----------
+    text : str
+        The dispatch text.
+    """
+    def __init__(self, elem):
+        self.text = unscramble_encoding(html.unescape(elem.find('TEXT').text))
+        super().__init__(elem)
 
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
@@ -186,14 +197,14 @@ class CensusScaleCurrent:
     score : float
         The absolute census score.  All the other scale values are
         calculated (by NationStates) from scale scores of multiple
-        nations.  Should always be there.
-    rank : int
+        nations.  Should always be present.
+    rank : int or None
         World rank by the scale.
-    prank : float
+    prank : float or None
         Percentage World rank by the scale.
-    rrank : int
+    rrank : int or None
         Regional rank by the scale.
-    prrank : float
+    prrank : float or None
         Percentage Regional rank by the scale.
     """
 
@@ -288,8 +299,7 @@ class Census:
     def censushistory(self, *scales):
         """Historical World Census data.
 
-        Was split into its own method for the sake of simplicity and
-        intuitiveness when combinind shards.
+        Was split into its own method for the sake of simplicity.
 
         By default returns data on today's featured World Census
         scale, use arguments to get results on specific scales.  In

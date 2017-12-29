@@ -8,7 +8,7 @@ from aionationstates.utils import (
     normalize, timestamp, unscramble_encoding, logger, banner_url, aobject,
     alist)
 from aionationstates.session import Session, api_query, api_command
-from aionationstates.shared import NationRegion, Dispatch
+from aionationstates.shared import NationRegion, DispatchThumbnail
 from aionationstates.ns_to_human import census_info
 import aionationstates
 
@@ -605,7 +605,7 @@ class Nation(NationRegion, Session):
         an :class:`ApiQuery` of a list of :class:`Dispatch`
         """
         return [
-            Dispatch(elem)
+            DispatchThumbnail(elem)
             for elem in root.find('DISPATCHLIST')
         ]
 
@@ -772,7 +772,7 @@ class IssueResult(aobject):
 
     Attributes
     ----------
-    effect_line : str
+    effect_line : str or None
         The issue effect line.  Not a sentence, mind you -- it's
         uncapitalized and does not end with a period.  ``None`` if the
         issue was dismissed.
@@ -782,13 +782,12 @@ class IssueResult(aobject):
         The banners unlocked by answering the issue.
     reclassifications : list of str
         All WA Category and Freedoms reclassifications listed, such as
-        `Civil Rights fell from Very Good to Good`, `Testlandia was
+        'Civil Rights fell from Very Good to Good', 'Testlandia was
         reclassified from Inoffensive Centrist Democracy to Democratic
-        Socialists`, etc..
+        Socialists', etc..
     headlines : list of str
         Newspaper headlines.
     """
-
     async def __init__(self, elem, expand_macros):
         with suppress(AttributeError):
             error = elem.find('ERROR').text
@@ -820,7 +819,8 @@ class IssueResult(aobject):
                               self.census, expand_macros)
         )
         self.headlines = [
-            sub_elem.text for sub_elem
+            # There are occasionally trailing spaces in headlines.
+            sub_elem.text.strip() for sub_elem
             in elem.find('HEADLINES') or ()
         ]
 

@@ -1,12 +1,10 @@
 """Compliance with NationStates' API and web rate limits."""
 
 import asyncio
-import logging
 from functools import partial
 from contextlib import suppress
 
-
-logger = logging.getLogger('aionationstates')
+from aionationstates.utils import logger
 
 
 async def _ratelimit_queue_consumer(queue, clean_every):
@@ -32,7 +30,14 @@ def _create_ratelimiter(requests_allowed, per):
     # requests because the consumers consume an extra item while
     # waiting for it to be added to the queue.
     queue = asyncio.Queue(maxsize=requests_allowed - 1)
-    asyncio.get_event_loop().create_task(_ratelimit_queue_consumer(queue, per))
+    task = asyncio.get_event_loop().create_task(
+        _ratelimit_queue_consumer(queue, per))
+    # Don't show the warning if the consumer task is killed.  This
+    # allows the user to manage the event loop somewhat looser without
+    # having useless warnings spammed all over the logs.  Not exactly
+    # the prettiest solution, but asyncio doesn't provide a standard way
+    # to achieve what we need.
+    task._log_destroy_pending = False
     return partial(queue.put, None)
 
 

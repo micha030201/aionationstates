@@ -219,6 +219,8 @@ Data Classes
 
 .. autoclass:: ScaleInfo()
 
+.. autoclass:: DispatchThumbnail()
+
 .. autoclass:: Dispatch()
 
 .. autoclass:: Poll()

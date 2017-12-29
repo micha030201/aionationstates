@@ -25,19 +25,47 @@ def set_user_agent(user_agent):
 # Exceptions:
 
 class RateLimitError(Exception):
-    pass
+    """Raised when the request is forcibly terminated by NationStates due
+    to a rate limit transgression.
+
+    (Or whenever the API returns with the HTTP status code 429.)
+
+    Generally, this should never happen under normal circumstances, as
+    this library ensures compliance with the rate limits by default.
+    However, there are factors the internal ratelimiter cannot account
+    for, such as requests made outside of the current interpreter
+    session, or just an exceptionally flaky network connection.
+    """
 
 
 class SessionConflictError(Exception):
-    pass
+    """Raised when an authenticated request from :class:`NationControl`
+    is attempted despite the nation having been successfully logged into
+    recently from elswhere.
+
+    (Or whenever the API returns with the HTTP status code 409.)
+
+    For any given nation, you should only ever maintain an authenticated
+    session from one place at a time.  Failure to do so will inevitably
+    result in weirdness and wonkiness across the board.  Not that you
+    won't get that anyway, but still.
+    """
 
 
 class AuthenticationError(Exception):
-    pass
+    """Raised when the credentials provided to :class:`NationControl`
+    are incorrect.
+
+    (Or whenever the API returns with the HTTP status code 403 or the
+    Web interface redirects to the login screen.)
+    """
 
 
 class NotFound(Exception):
-    pass
+    """Raised when the requested nation or region doesn't exist.
+
+    (Or whenever the API returns with the HTTP status code 404.)
+    """
 
 
 # API conviniences:

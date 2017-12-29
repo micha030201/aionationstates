@@ -1,9 +1,9 @@
 from contextlib import suppress
 from asyncio import sleep
 
-from aionationstates.session import Session, api_query
+from aionationstates.session import Session, api_query, NotFound
 from aionationstates.happenings import process_happening
-from aionationstates.shared import Census, Dispatch, Poll
+from aionationstates.shared import Census, DispatchThumbnail, Dispatch, Poll
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
 from aionationstates.utils import utc_seconds, normalize, banner_url, aobject
 import aionationstates
@@ -127,7 +127,7 @@ class World(Census, Session):
         return int(root.find('NUMREGIONS').text)
 
     def regionsbytag(self, *tags):
-        """All regions belonging to any of the named tags.
+        """All regions with any of the named tags.
 
         Parameters
         ----------
@@ -143,6 +143,7 @@ class World(Census, Session):
             raise ValueError('You can specify up to 10 tags')
         if not tags:
             raise ValueError('No tags specified')
+
         # We don't check for invalid tags here because the behaviour is
         # fairly intuitive - quering for a non-existent tag returns no
         # regions, excluding it returns all of them.
@@ -164,13 +165,17 @@ class World(Census, Session):
         Returns
         -------
         an :class:`ApiQuery` of :class:`Dispatch`
-            Full dispatch (with text).
+
+        Raises
+        ------
+        :class:`NotFound`
+            If a dispatch with the requested id doesn't exist.
         """
         @api_query('dispatch', dispatchid=str(id))
         async def result(_, root):
             elem = root.find('DISPATCH')
             if not elem:
-                raise ValueError(f'No dispatch found with id {id}')
+                raise NotFound(f'No dispatch found with id {id}')
             return Dispatch(elem)
         return result(self)
 
@@ -191,8 +196,7 @@ class World(Census, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of :class:`Dispatch`
-            Dispatch "thumbnails", missing text.
+        an :class:`ApiQuery` of a list of :class:`DispatchThumbnail`
         """
         params = {'sort': sort}
         if author:
@@ -215,7 +219,7 @@ class World(Census, Session):
         @api_query('dispatchlist', **params)
         async def result(_, root):
             return [
-                Dispatch(elem)
+                DispatchThumbnail(elem)
                 for elem in root.find('DISPATCHLIST')
             ]
         return result(self)
@@ -231,17 +235,24 @@ class World(Census, Session):
         Returns
         -------
         an :class:`ApiQuery` of :class:`Poll`
+
+        Raises
+        ------
+        :class:`NotFound`
+            If a poll with the requested id doesn't exist.
         """
         @api_query('poll', pollid=str(id))
         async def result(_, root):
             elem = root.find('POLL')
             if not elem:
-                raise ValueError(f'No poll found with id {id}')
+                raise NotFound(f'No poll found with id {id}')
             return Poll(elem)
         return result(self)
 
     def banner(self, *ids, _expand_macros=None):
         """Get data about banners by their ids.
+
+        Macros in banners' names and descriptions are not expanded.
 
         Parameters
         ----------
@@ -252,6 +263,10 @@ class World(Census, Session):
         -------
         an :class:`ApiQuery` of a list of :class:`Banner`
 
+        Raises
+        ------
+        :class:`NotFound`
+            If any of the provided ids is invalid.
         """
         async def noop(s):
             return s
@@ -260,8 +275,12 @@ class World(Census, Session):
 
         @api_query('banner', banner=','.join(ids))
         async def result(_, root):
-            return [await Banner(elem, _expand_macros)
-                    for elem in root.find('BANNERS')]
+            banners = [await Banner(elem, _expand_macros)
+                       for elem in root.find('BANNERS')]
+            if len(banners) == len(ids):
+                raise NotFound('one of the banner ids provided is invalid')
+            return banners
+        return result(self)
 
     @api_query('tgqueue')
     async def tgqueue(self, root):
@@ -313,7 +332,7 @@ class World(Census, Session):
             params['filter'] = '+'.join(filters)
 
         if nations and regions:
-            raise ValueError('You cannot specify both nation and region views')
+            raise ValueError('cannot specify both nations and regions')
         if nations:
             nations = ','.join(map(normalize, nations))
             params['view'] = f'nation.{nations}'
@@ -329,7 +348,8 @@ class World(Census, Session):
 
         @api_query('happenings', **params)
         async def result(_, root):
-            return [process_happening(elem) for elem in root.find('HAPPENINGS')]
+            return [process_happening(elem)
+                    for elem in root.find('HAPPENINGS')]
         return result(self)
 
     async def happenings(self, *, nations=None, regions=None, filters=None,
@@ -340,23 +360,25 @@ class World(Census, Session):
         ----------
         nations : iterable of str
             Nations happenings of which will be requested.  Cannot be
-            specified at the same time with `regions`.
+            specified at the same time with ``regions``.
         regions : iterable of str
-            Regions happenings of which will be requested.  Cannot be
-            specified at the same time with `nations`.
+            Regions happenings of nations residing in which will be
+            requested.  Cannot be specified at the same time with
+            ``nations``.
         filters : iterable of str
             Categories to request happenings by.  Available filters
-            are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
-            'admin', 'move', 'founding', 'cte', 'vote', 'resolution',
-            'member', and 'endo'.
+            are: ``law``, ``change``, ``dispatch``, ``rmb``,
+            ``embassy``, ``eject``, ``admin``, ``move``, ``founding``,
+            ``cte``, ``vote``, ``resolution``, ``member``, and ``endo``.
         beforeid : int
             Only request happenings before this id.
         beforetime : :class:`datetime.datetime`
-            Only request happenings that occured before this moment.
+            Only request happenings that were emitted before this
+            moment.
 
         Returns
         -------
-        an asynchronous generator that yields :class:`UnrecognizedHappening` \
+        an asynchronous iterator of :class:`UnrecognizedHappening` \
         or any of the classes that inherit from it
         """
         while True:
@@ -372,7 +394,7 @@ class World(Census, Session):
 
     async def new_happenings(self, poll_period=30, *, nations=None,
                              regions=None, filters=None):
-        """New happenings as they arrive::
+        """Iterate through new happenings as they arrive::
 
             async for happening in \\
                     world.new_happenings(region='the north pacific'):
@@ -389,31 +411,38 @@ class World(Census, Session):
         Parameters
         ----------
         poll_period : int
-            How long to wait between requesting the next bunch of
+            How long to wait between requesting the next portion of
             happenings, in seconds.  Note that this should only be
             tweaked for latency reasons, as the function gives a
-            guarantee that all happenings will be generated.  Also note
-            that, regardless of the ``poll_period`` you set, all of the
-            code in your loop body still has to execute (possibly
-            several times) before a new bunch of happenings can be
+            guarantee that all happenings will be generated.
+
+            Also note that, regardless of the ``poll_period`` set, all
+            of the code in your loop body still has to execute (likely
+            several times) before a new portion of happenings can be
             requested.  Consider wrapping your happening-processing code
             in a coroutine and launching it as a task from the loop body
-            if you suspect this might be an issue.
+            if you suspect this might become an issue.
+
+            Requests made by this generator are, of course, subject to
+            the API rate limit, and if the limiter has to temporarily
+            block new requests the time spent waiting will be added on
+            top of ``poll_period``.
         nations : iterable of str
             Nations happenings of which will be requested.  Cannot be
-            specified at the same time with `regions`.
+            specified at the same time with ``regions``.
         regions : iterable of str
-            Regions happenings of which will be requested.  Cannot be
-            specified at the same time with `nations`.
+            Regions happenings of nations residing in which will be
+            requested.  Cannot be specified at the same time with
+            ``nations``.
         filters : iterable of str
             Categories to request happenings by.  Available filters
-            are: 'law', 'change', 'dispatch', 'rmb', 'embassy', 'eject',
-            'admin', 'move', 'founding', 'cte', 'vote', 'resolution',
-            'member', and 'endo'.
+            are: ``law``, ``change``, ``dispatch``, ``rmb``,
+            ``embassy``, ``eject``, ``admin``, ``move``, ``founding``,
+            ``cte``, ``vote``, ``resolution``, ``member``, and ``endo``.
 
         Returns
         -------
-        an asynchronous generator that yields :class:`UnrecognizedHappening` \
+        an asynchronous iterator of :class:`UnrecognizedHappening` \
         or any of the classes that inherit from it
         """
         try:
