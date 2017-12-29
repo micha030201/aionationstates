@@ -267,11 +267,12 @@ class Census:
         Parameters
         ----------
         scales : int
-            World Census scales, integers between 0 and 80.
+            World Census scales, integers between 0 and 80 (84 if you
+            also count Z-Day scales), inclusive.
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of :class:`CensusScaleCurrent` objects
+        an :class:`ApiQuery` of a list of :class:`CensusScaleCurrent`
         """
         params = {'mode': 'score+rank+rrank+prank+prrank'}
         if scales:
@@ -301,11 +302,12 @@ class Census:
         Parameters
         ----------
         scales : int
-            World Census scales, integers between 0 and 80.
+            World Census scales, integers between 0 and 80 (84 if you
+            also count Z-Day scales), inclusive.
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of :class:`CensusScaleHistory` objects
+        an :class:`ApiQuery` of a list of :class:`CensusScaleHistory`
         """
         params = {'mode': 'history'}
         if scales:

@@ -4,9 +4,11 @@ I'd love to be able to request it from the API each time as opposed
 to storing it, but NS makes it extremely difficult with the awkward
 one-scale-at-a-time Census data interface.
 
-I claim no ownership over the NationStates content and really really
+I claim no ownership over the NationStates' content and really really
 hope my usage of it can be considered Fair Use.
 """
+
+from collections import namedtuple
 
 
 __all__ = ('census_info', 'ScaleInfo')
@@ -56,31 +58,32 @@ dispatch_categories = {
 }
 
 
-class ScaleInfo:
+_fields = ['id', 'title', 'ranked', 'measurement', 'image',
+           'nation_description', 'region_description']
+class ScaleInfo(namedtuple('ScaleInfo', _fields)):
     """Static information about a World Census scale.
 
     Attributes
     ----------
     id : int
-        The scale id, a number between 0 and 80.
+        The scale id, an integer between 0 and 80 (84 if you also count
+        Z-Day scales), inclusive.
     title : str
-        The scale title. For example, `Civil Rights.`
+        The scale title.  For example, 'Civil Rights'.
     ranked : str
-        A scale by which a nation or region is ranked, either in their
-        region or the world. For example, `Most Extensive Civil Rights.`
+        A scale on which a nation or region is ranked, either in their
+        region or the world.  For example, 'Most Extensive Civil
+        Rights'.
     measurement : str
-        The measurement scale. For example, `Martin Luther King, Jr. Units.`
+        The measurement scale.  For example, 'Martin Luther King, Jr.
+        Units'.
     image : str
-        An identifier NS uses for the Census tropy picture urls.
+        An identifier NS uses for the Census tropy picture URLs.
     nation_description : str
         Description for nations.
     region_description : str
         Description for regions.
     """
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
 
 
 census_info = [
@@ -1258,5 +1261,52 @@ census_info = [
         region_description=('Long-term World Census surveillance revealed '
                             'which regions have the most physically '
                             'grounded nations.'),
+    ),
+
+    # Z-Day scales:
+
+    ScaleInfo(
+        id=81,
+        title='Survivors',
+        ranked='Most Survivors',
+        measurement='Capita',
+        image='survivors',
+        nation_description=('The following nations have the greatest '
+                            'number of surviving citizens.'),
+        region_description=('The following regions have the most survivors '
+                            'per nation.'),
+    ),
+    ScaleInfo(
+        id=82,
+        title='Zombies',
+        ranked='Most Zombies',
+        measurement='Capita',
+        image='zombies',
+        nation_description=('The following nations have the greatest '
+                            'number of zombified citizens.'),
+        region_description=('The following regions have the most zombies '
+                            'per nation.'),
+    ),
+    ScaleInfo(
+        id=83,
+        title='Dead',
+        ranked='Most Dead',
+        measurement='Capita',
+        image='dead',
+        nation_description=('The following nations have the greatest '
+                            'number of dead citizens.'),
+        region_description=('The following regions have the most dead per '
+                            'nation.'),
+    ),
+    ScaleInfo(
+        id=84,
+        title='Percentage Zombies',
+        ranked='Most Zombified',
+        measurement='Romero-Brooks Index',
+        image='zratio',
+        nation_description=('The following nations have the highest '
+                            'fraction of zombies among the animate.'),
+        region_description=('The following regions have the most zombies '
+                            'per survivor per nation.'),
     ),
 ]
