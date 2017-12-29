@@ -5,7 +5,8 @@ from aionationstates.session import Session, api_query, NotFound
 from aionationstates.happenings import process_happening
 from aionationstates.shared import Census, DispatchThumbnail, Dispatch, Poll
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
-from aionationstates.utils import utc_seconds, normalize, banner_url, aobject
+from aionationstates.utils import (
+    utc_seconds, normalize, banner_url, aobject, DataClassWithId)
 import aionationstates
 
 
@@ -27,7 +28,7 @@ class TGQueue:
         self.api = int(elem.find('API').text)
 
 
-class Banner(aobject):
+class Banner(DataClassWithId, aobject):
     """A Rift banner.
 
     Attributes
@@ -49,15 +50,6 @@ class Banner(aobject):
     def url(self):
         """Link to the banner image."""
         return banner_url(self.id)
-
-    def __eq__(self, other):
-        return type(self) is type(other) and self.id == other.id
-
-    def __hash__(self):
-        return hash((self.id,))
-
-    def __repr__(self):
-        return f'<Banner #{self.id} "{self.name}">'
 
 
 class World(Census, Session):

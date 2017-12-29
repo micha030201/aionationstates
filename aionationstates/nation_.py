@@ -96,6 +96,12 @@ class Nation(NationRegion, Session):
     def __init__(self, name):
         self.id = normalize(name)
 
+    def __eq__(self, other):
+        # Nation('testlandia') == NationControl('testlandia, password='123')
+        return isinstance(other, Nation) and self.id == other.id
+
+    __hash__ = NationRegion.__hash__
+
     def _call_api(self, params, **kwargs):
         params['nation'] = self.id
         return super()._call_api(params, **kwargs)
@@ -859,7 +865,7 @@ class Issue:
 
     Attributes
     ----------
-    id : str
+    id : int
         The issue id.
     title : str
         The issue title.  May contain HTML elements and character references.
@@ -902,6 +908,16 @@ class Issue:
         an awaitable of :class:`IssueResult`
         """
         return self._nation._accept_issue(self.id, -1)
+
+    def __eq__(self, other):
+        return (
+            type(self) is type(other)
+            and self.id == other.id
+            and self._nation == other._nation
+        )
+
+    def __hash__(self):
+        return hash((self.id, self._nation))
 
     def __repr__(self):
         return f'<Issue #{self.id}>'

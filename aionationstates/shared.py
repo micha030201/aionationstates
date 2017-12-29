@@ -8,7 +8,8 @@ from contextlib import suppress
 
 from aionationstates.happenings import UnrecognizedHappening
 from aionationstates.session import api_query
-from aionationstates.utils import timestamp, unscramble_encoding
+from aionationstates.utils import (
+    timestamp, unscramble_encoding, DataClassWithId)
 from aionationstates.ns_to_human import census_info
 import aionationstates
 
@@ -44,7 +45,7 @@ class PollOption:
             self.voters = []
 
 
-class Poll:
+class Poll(DataClassWithId):
     """A regional poll.
 
     Attributes
@@ -82,17 +83,8 @@ class Poll:
         self.options = [PollOption(option_elem)
                         for option_elem in elem.find('OPTIONS')]
 
-    def __eq__(self, other):
-        return type(self) is type(other) and self.id == other.id
 
-    def __hash__(self):
-        return hash((self.id,))
-
-    def __repr__(self):
-        return f'<Poll id={self.id}>'
-
-
-class DispatchThumbnail:
+class DispatchThumbnail(DataClassWithId):
     """A dispatch `thumbnail`, missing text.
 
     Attributes
@@ -143,13 +135,10 @@ class DispatchThumbnail:
         return aionationstates.world.dispatch(self.id)
 
     def __eq__(self, other):
-        return type(self) is type(other) and self.id == other.id
+        # <DispatchThumbnail id=X> == <Dispatch id=X>
+        return isinstance(other, DispatchThumbnail) and self.id == other.id
 
-    def __hash__(self):
-        return hash((self.id,))
-
-    def __repr__(self):
-        return f'<DispatchThumbnail id={self.id}>'
+    __hash__ = DataClassWithId.__hash__
 
 
 class Dispatch(DispatchThumbnail):
@@ -357,7 +346,7 @@ class Zombie:
 
 # Shards shared by Nation & Region APIs:
 
-class NationRegion(Census):
+class NationRegion(DataClassWithId, Census):
     @api_query('happenings')
     async def happenings(self, root):
         """Happenings archived on the in-game page.  Newest to oldest.
@@ -386,10 +375,3 @@ class NationRegion(Census):
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.id}">'
-
-    def __eq__(self, other):
-        # TODO Nation('qwerty') != Region('qwerty')
-        return self.id == other.id
-
-    def __hash__(self):
-        return hash((self.id,))

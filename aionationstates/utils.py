@@ -9,6 +9,18 @@ __all__ = ('datetime_to_ns',)
 logger = logging.getLogger('aionationstates')
 
 
+class DataClassWithId:
+    def __eq__(self, other):
+        # Ids in NS are pretty much always not globally unique.
+        return type(self) is type(other) and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.id,))
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} id={self.id}>'
+
+
 def normalize(identifier):
     identifier = identifier.lower().replace(' ', '_')
     if not re.match('^[a-z0-9_-]+$', identifier):

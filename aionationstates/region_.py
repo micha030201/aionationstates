@@ -7,7 +7,8 @@ from contextlib import suppress
 from functools import reduce, total_ordering
 from operator import or_
 
-from aionationstates.utils import normalize, timestamp, unscramble_encoding
+from aionationstates.utils import (
+    normalize, timestamp, unscramble_encoding, DataClassWithId)
 from aionationstates.session import Session, api_query
 from aionationstates.shared import NationRegion, Poll
 import aionationstates
@@ -194,7 +195,7 @@ class PostStatus(enum.Enum):
         return self.value in (0, 1)
 
 
-class Post:
+class Post(DataClassWithId):
     """A post on a Regional Message Board.
 
     Attributes
@@ -253,15 +254,6 @@ class Post:
                               self.text, flags=re.DOTALL
                               ).strip('\n')
         return f'[quote={self.author.id};{self.id}]{text}[/quote]'
-
-    def __eq__(self, other):
-        return type(self) is type(other) and self.id == other.id
-
-    def __hash__(self):
-        return hash((self.id,))
-
-    def __repr__(self):
-        return f'<Post #{self.id}>'
 
 
 class Region(NationRegion, Session):
