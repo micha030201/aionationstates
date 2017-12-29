@@ -805,10 +805,16 @@ class IssueResult(aobject):
             CensusScaleChange(sub_elem) for sub_elem
             in elem.find('RANKINGS') or ()
         ]
-        self.banners = [
-            await aionationstates.world.banner(sub_elem.text, expand_macros)
-            for sub_elem in elem.find('UNLOCKS') or ()
-        ]
+
+        banners_elem = elem.find('UNLOCKS')
+        if banners_elem:
+            self.banners = await aionationstates.world.banner(
+                [sub_elem.text for sub_elem in banners_elem],
+                expand_macros
+            )
+        else:
+            self.banners = []
+
         self.reclassifications = await alist(
             reclassifications(elem.find('RECLASSIFICATIONS'),
                               self.census, expand_macros)
