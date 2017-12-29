@@ -285,4 +285,4 @@ async def test_banners(nation):
     ''')
     assert banners[0] == 'https://www.nationstates.net/images/banners/v1.jpg'
     assert banners[1] == 'https://www.nationstates.net/images/banners/o4.jpg'
-    assert banners[1] == 'https://www.nationstates.net/images/banners/m2.jpg'
+    assert banners[2] == 'https://www.nationstates.net/images/banners/m2.jpg'
