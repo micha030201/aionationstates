@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from aionationstates import happenings
+from aionationstates import Nation, Region
 
 
 def happening_elem(text):
@@ -15,7 +16,7 @@ def happening_elem(text):
 def test_move():
     t = '@@testlandia@@ relocated from %%the_east_pacific%% to %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.Move
+    assert type(h) is happenings.Move
     assert h.nation.id == 'testlandia'
     assert h.region_from.id == 'the_east_pacific'
     assert h.region_to.id == 'the_north_pacific'
@@ -24,7 +25,7 @@ def test_move():
 def test_founding():
     t = '@@testlandia@@ was founded in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.Founding
+    assert type(h) is happenings.Founding
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -32,7 +33,7 @@ def test_founding():
 def test_cte():
     t = '@@testlandia@@ ceased to exist in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.CTE
+    assert type(h) is happenings.CTE
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -40,30 +41,30 @@ def test_cte():
 def test_legislation():
     t = 'Following new legislation in @@testlandia@@, euthanasia is legal.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.Legislation
+    assert type(h) is happenings.Legislation
     assert h.nation.id == 'testlandia'
     assert h.effect_line == 'euthanasia is legal'
 
 
-#def test_legislation_html():
-#    t = 'Following new legislation in @@testlandia@@, all new &quot;spies&quot; are fifteen-year-old acne-ridden kids on computers.'
-#    h = happenings.process_happening(happening_elem(t))
-#    assert type(h) == happenings.Legislation
-#    assert h.nation.id == 'testlandia'
-#    assert h.effect_line == 'all new "spies" are fifteen-year-old acne-ridden kids on computers'
+def test_legislation_html():
+    t = 'Following new legislation in @@testlandia@@, all new &quot;spies&quot; are fifteen-year-old acne-ridden kids on <i>computers</i>.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.Legislation
+    assert h.nation.id == 'testlandia'
+    assert h.effect_line == 'all new &quot;spies&quot; are fifteen-year-old acne-ridden kids on <i>computers</i>'
 
 
 def test_flag():
     t = '@@testlandia@@ altered its national flag.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.FlagChange
+    assert type(h) is happenings.FlagChange
     assert h.nation.id == 'testlandia'
 
 
 def test_wa_category():
     t = '@@testlandia@@ was reclassified from "Left-Leaning College State" to "Inoffensive Centrist Democracy".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.CategoryChange
+    assert type(h) is happenings.CategoryChange
     assert h.nation.id == 'testlandia'
     assert h.category_before == 'Left-Leaning College State'
     assert h.category_after == 'Inoffensive Centrist Democracy'
@@ -72,7 +73,7 @@ def test_wa_category():
 def test_settings():
     t = '@@testlandia@@ changed its national motto to "Test arhgHsefv".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': 'Test arhgHsefv'}
 
@@ -80,7 +81,7 @@ def test_settings():
 def test_settings_comma():
     t = '@@testlandia@@ changed its national motto to "Test, arhgHsefv".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': 'Test, arhgHsefv'}
 
@@ -90,7 +91,7 @@ def test_settings_multiple():
          ' its demonym adjective to "qwdqsIO ni",'
          ' and its demonym plural to "ubuUuu ju".')
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {
         'currency': 'wef erkjf',
@@ -104,7 +105,7 @@ def test_settings_multiple_comma():
          ' its demonym adjective to "qwdqsIO ni",'
          ' and its demonym plural to "ubuUuu, ju".')
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {
         'currency': 'wef erkjf',
@@ -116,7 +117,7 @@ def test_settings_multiple_comma():
 def test_settings_multiple2():
     t = '@@testlandia@@ changed its national leader to "the First Grand Consul" and its nation type to "Imperial States".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {
         'leader': 'the First Grand Consul',
@@ -127,7 +128,7 @@ def test_settings_multiple2():
 def test_settings_encoding_issues():
     t = '@@testlandia@@ changed its national motto to "&#135;&#135;&#135;&#135;&#135;&#135;".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.SettingsChange
+    assert type(h) is happenings.SettingsChange
     assert h.nation.id == 'testlandia'
     assert h.changes == {'motto': '‡‡‡‡‡‡‡‡‡'}
 
@@ -135,14 +136,14 @@ def test_settings_encoding_issues():
 def test_banner_create():
     t = '@@testlandia@@ created a custom banner.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.BannerCreation
+    assert type(h) is happenings.BannerCreation
     assert h.nation.id == 'testlandia'
 
 
 def test_dispatch_publish():
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">Testington</a>" (Factbook: Military).'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.DispatchPublication
+    assert type(h) is happenings.DispatchPublication
     assert h.nation.id == 'testlandia'
     assert h.title == 'Testington'
     assert h.category == 'Factbook'
@@ -154,7 +155,7 @@ def test_dispatch_publish():
 def test_dispatch_publish_unicode():
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">&#135;&#135;&#135;&#135;&#135;&#135; &lt;&gt;& &#93;&#93;&gt;"&quot;</a>" (Factbook: Military).'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.DispatchPublication
+    assert type(h) is happenings.DispatchPublication
     assert h.nation.id == 'testlandia'
     assert h.title == '‡‡‡‡‡‡‡‡‡ <>& ]]>""'
     assert h.category == 'Factbook'
@@ -165,28 +166,28 @@ def test_dispatch_publish_unicode():
 def test_wa_apply():
     t = '@@testlandia@@ applied to join the World Assembly.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.WorldAssemblyApplication
+    assert type(h) is happenings.WorldAssemblyApplication
     assert h.nation.id == 'testlandia'
 
 
 def test_wa_admit():
     t = '@@testlandia@@ was admitted to the World Assembly.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.WorldAssemblyAdmission
+    assert type(h) is happenings.WorldAssemblyAdmission
     assert h.nation.id == 'testlandia'
 
 
 def test_wa_resign():
     t = '@@testlandia@@ resigned from the World Assembly.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.WorldAssemblyResignation
+    assert type(h) is happenings.WorldAssemblyResignation
     assert h.nation.id == 'testlandia'
 
 
 def test_delegate_remove():
     t = '@@testlandia@@ lost WA Delegate status in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.DelegateChange
+    assert type(h) is happenings.DelegateChange
     assert h.new_delegate is None
     assert h.old_delegate.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
@@ -195,7 +196,7 @@ def test_delegate_remove():
 def test_delegate_install():
     t = '@@testlandia@@ became WA Delegate of %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.DelegateChange
+    assert type(h) is happenings.DelegateChange
     assert h.new_delegate.id == 'testlandia'
     assert h.old_delegate is None
     assert h.region.id == 'the_east_pacific'
@@ -204,7 +205,7 @@ def test_delegate_install():
 def test_delegate_change():
     t = '@@testlandia@@ seized the position of %%the_east_pacific%% WA Delegate from @@aidnaltset@@.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.DelegateChange
+    assert type(h) is happenings.DelegateChange
     assert h.new_delegate.id == 'testlandia'
     assert h.old_delegate.id == 'aidnaltset'
     assert h.region.id == 'the_east_pacific'
@@ -213,7 +214,7 @@ def test_delegate_change():
 def test_embassy_propose():
     t = '@@testlandia@@ proposed constructing embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyConstructionRequest
+    assert type(h) is happenings.EmbassyConstructionRequest
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
@@ -222,7 +223,7 @@ def test_embassy_propose():
 def test_embassy_agree():
     t = '@@testlandia@@ agreed to construct embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyConstructionConfirmation
+    assert type(h) is happenings.EmbassyConstructionConfirmation
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
@@ -231,7 +232,7 @@ def test_embassy_agree():
 def test_embassy_order_closure():
     t = '@@testlandia@@ ordered the closure of embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyClosureOrder
+    assert type(h) is happenings.EmbassyClosureOrder
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
@@ -240,7 +241,7 @@ def test_embassy_order_closure():
 def test_embassy_request_withdraw():
     t = '@@testlandia@@ withdrew a request for embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyConstructionRequestWithdrawal
+    assert type(h) is happenings.EmbassyConstructionRequestWithdrawal
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
@@ -249,7 +250,7 @@ def test_embassy_request_withdraw():
 def test_embassy_abort_construction():
     t = '@@testlandia@@ aborted construction of embassies between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyConstructionAbortion
+    assert type(h) is happenings.EmbassyConstructionAbortion
     assert h.nation.id == 'testlandia'
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
@@ -258,7 +259,7 @@ def test_embassy_abort_construction():
 def test_embassy_established():
     t = 'Embassy established between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyEstablishment
+    assert type(h) is happenings.EmbassyEstablishment
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
 
@@ -266,7 +267,7 @@ def test_embassy_established():
 def test_embassy_cancelled():
     t = 'Embassy cancelled between %%the_east_pacific%% and %%the_north_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EmbassyCancellation
+    assert type(h) is happenings.EmbassyCancellation
     assert h.regions[0].id == 'the_east_pacific'
     assert h.regions[1].id == 'the_north_pacific'
 
@@ -274,7 +275,7 @@ def test_embassy_cancelled():
 def test_endorse():
     t = '@@testlandia@@ endorsed @@aidnaltset@@.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.Endorsement
+    assert type(h) is happenings.Endorsement
     assert h.endorser.id == 'testlandia'
     assert h.endorsee.id == 'aidnaltset'
 
@@ -282,7 +283,7 @@ def test_endorse():
 def test_unendorse():
     t = '@@testlandia@@ withdrew its endorsement from @@aidnaltset@@.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.EndorsementWithdrawal
+    assert type(h) is happenings.EndorsementWithdrawal
     assert h.endorser.id == 'testlandia'
     assert h.endorsee.id == 'aidnaltset'
 
@@ -290,7 +291,7 @@ def test_unendorse():
 def test_poll_create():
     t = '@@testlandia@@ created a new poll in %%the_east_pacific%%: "qwerty".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.PollCreation
+    assert type(h) is happenings.PollCreation
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
     assert h.title == 'qwerty'
@@ -299,7 +300,7 @@ def test_poll_create():
 def test_poll_create_html():
     t = '@@testlandia@@ created a new poll in %%the_east_pacific%%: "&lt;&gt;&amp; &gt; &quot;. &quot;. &amp;quot;.".'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.PollCreation
+    assert type(h) is happenings.PollCreation
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
     assert h.title == '<>& > ". ". &quot;.'
@@ -308,7 +309,7 @@ def test_poll_create_html():
 def test_poll_delete():
     t = '@@testlandia@@ deleted a regional poll in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.PollDeletion
+    assert type(h) is happenings.PollDeletion
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
 
@@ -316,7 +317,7 @@ def test_poll_delete():
 def test_zombie_cleanse():
     t = '@@testlandia@@ was cleansed by a Level 5 Invasion Tactical Zombie Elimination Squad from @@landtestia@@, killing 195 million zombies.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieKillAction
+    assert type(h) is happenings.ZombieKillAction
     assert h.recepient.id == 'testlandia'
     assert h.sender.id == 'landtestia'
     assert h.impact == 195
@@ -326,7 +327,7 @@ def test_zombie_cleanse():
 def test_zombie_ravage():
     t = '@@testlandia@@ was ravaged by a Zombie Thing Horde from @@landtestia@@, infecting 70 million survivors.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieInfectAction
+    assert type(h) is happenings.ZombieInfectAction
     assert h.recepient.id == 'testlandia'
     assert h.sender.id == 'landtestia'
     assert h.impact == 70
@@ -337,7 +338,7 @@ def test_zombie_ravage():
 def test_zombie_ravage_convert():
     t = '@@testlandia@@ was ravaged by a Zombie Thing Horde from @@landtestia@@, infecting 182 million survivors and converting to a zombie exporter! Oh no!'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieInfectAction
+    assert type(h) is happenings.ZombieInfectAction
     assert h.recepient.id == 'testlandia'
     assert h.sender.id == 'landtestia'
     assert h.impact == 182
@@ -348,7 +349,7 @@ def test_zombie_ravage_convert():
 def test_zombie_cure():
     t = '@@testlandia@@ was struck by a Mk I (Immunizer) Cure Missile from @@landtestia@@, curing 5 million infected.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieCureAction
+    assert type(h) is happenings.ZombieCureAction
     assert h.recepient.id == 'testlandia'
     assert h.sender.id == 'landtestia'
     assert h.impact == 5
@@ -358,7 +359,7 @@ def test_zombie_cure():
 def test_zombie_lockdown():
     t = '@@testlandia@@ instituted Lockdown Zombie Border Control in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieBorderControlActivation
+    assert type(h) is happenings.ZombieBorderControlActivation
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
     assert h.type == 'Lockdown'
@@ -367,15 +368,7 @@ def test_zombie_lockdown():
 def test_zombie_keycode():
     t = '@@testlandia@@ instituted Keycode Zombie Border Control in %%the_east_pacific%%.'
     h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieBorderControlActivation
+    assert type(h) is happenings.ZombieBorderControlActivation
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
     assert h.type == 'Keycode'
-
-
-def test_zombie_keycode():
-    t = '@@testlandia@@ removed Zombie Border Control in %%the_east_pacific%%.'
-    h = happenings.process_happening(happening_elem(t))
-    assert type(h) == happenings.ZombieBorderControlDeactivation
-    assert h.nation.id == 'testlandia'
-    assert h.region.id == 'the_east_pacific'
