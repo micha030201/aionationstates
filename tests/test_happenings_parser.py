@@ -426,3 +426,35 @@ def test_dismiss_oficer():
     assert h.dismissee == Nation('qwerty')
     assert h.title == 'asdf'
     assert h.region == Region('the pacific')
+
+
+def test_revoke_delegate_auth():
+    t = '@@parse_error@@ removed <i class="icon-flag-1"></i>Appearance and <i class="icon-shield"></i>Border Control authority from the WA Delegate in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.DelegateModification
+    assert h.nation == Nation('parse error')
+    assert h.authority_removed == (Authority.BORDER_CONTROL
+                                   | Authority.APPEARANCE)
+    assert h.authority_granted == Authority(0)
+    assert h.region == Region('try it and see')
+
+
+def test_grant_delegate_auth():
+    t = '@@parse_error@@ granted <i class="icon-flag-1"></i>Appearance and <i class="icon-mic"></i>Communications authority to the WA Delegate in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.DelegateModification
+    assert h.nation == Nation('parse error')
+    assert h.authority_granted == (Authority.COMMUNICATIONS
+                                   | Authority.APPEARANCE)
+    assert h.authority_removed == Authority(0)
+    assert h.region == Region('try it and see')
+
+
+def test_grant_remove_delegate_auth():
+    t = '@@parse_error@@ granted <i class="icon-align-left"></i>Polls authority and removed <i class="icon-flag-1"></i>Appearance authority from the WA Delegate in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.DelegateModification
+    assert h.nation == Nation('parse error')
+    assert h.authority_granted == Authority.POLLS
+    assert h.authority_removed == Authority.APPEARANCE
+    assert h.region == Region('try it and see')

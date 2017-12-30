@@ -372,8 +372,8 @@ class DelegateChange(UnrecognizedHappening):
 
     Attributes
     ----------
-    new_delegate : :class:`Nation`
-    old_delegate : :class:`Nation`
+    new_delegate : :class:`Nation` or None
+    old_delegate : :class:`Nation` or None
     region : :class:`Region`
     """
     def __init__(self, text, params):
@@ -475,21 +475,21 @@ class OfficerAppointment(UnrecognizedHappening):
     def __init__(self, text, params):
         match = re.match(
             # Officer titles can be blank if you confuse NS enough
-            '@@(.+?)@@ appointed @@(.+?)@@ as (.*?) with authority over .+? in %%(.+?)%%',
+            '@@(.+?)@@ appointed @@(.+?)@@ as (.*?) with authority over (.+?) in %%(.+?)%%',
             text
         )
         if not match:
             raise ValueError
-        self.authority = aionationstates.Authority._from_happening(text)
         self.appointer = aionationstates.Nation(match.group(1))
         self.appointee = aionationstates.Nation(match.group(2))
         self.title = match.group(3)
-        self.region = aionationstates.Region(match.group(4))
+        self.authority = aionationstates.Authority._from_happening(match.group(4))
+        self.region = aionationstates.Region(match.group(5))
         super().__init__(text, params)
 
 
 class OfficerDismissal(UnrecognizedHappening):
-    """A nation appointing a Regional Officer.
+    """A nation dismissing a Regional Officer.
 
     Attributes
     ----------
@@ -510,6 +510,40 @@ class OfficerDismissal(UnrecognizedHappening):
         self.dismisser = aionationstates.Nation(match.group(1))
         self.dismissee = aionationstates.Nation(match.group(2))
         self.title = match.group(3)
+        self.region = aionationstates.Region(match.group(4))
+        super().__init__(text, params)
+
+
+class DelegateModification(UnrecognizedHappening):
+    """A founder modifying the authority of the World Assembly Delegate.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+        Nation modifying the position.
+    title : str
+        Title the officer previously held.
+    authority_granted : :class:`Authority`
+    authority_removed : :class:`Authority`
+    region : :class:`Region`
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ '
+            # granted X authority and removed Y authority from
+            # granted X authority to
+            # removed Y authority from
+            '(?:granted (.+?) authority )?'
+            '(?:and |to )?'
+            '(?:removed (.+?) authority from )?'
+            'the WA Delegate in %%(.+?)%%', text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.authority_granted = aionationstates.Authority._from_happening(
+            match.group(2) or '')
+        self.authority_removed = aionationstates.Authority._from_happening(
+            match.group(3) or '')
         self.region = aionationstates.Region(match.group(4))
         super().__init__(text, params)
 
@@ -842,6 +876,7 @@ happening_classes = (
     PollDeletion,
     OfficerAppointment,
     OfficerDismissal,
+    DelegateModification,
     ZombieCureAction,
     ZombieKillAction,
     ZombieInfectAction,
