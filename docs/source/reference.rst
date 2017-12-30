@@ -273,6 +273,10 @@ Data Classes
 
     This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
 
+.. autoclass:: Refounding()
+
+    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
+
 .. autoclass:: CTE()
 
     This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.

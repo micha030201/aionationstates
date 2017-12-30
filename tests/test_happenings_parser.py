@@ -372,3 +372,11 @@ def test_zombie_keycode():
     assert h.nation.id == 'testlandia'
     assert h.region.id == 'the_east_pacific'
     assert h.type == 'Keycode'
+
+
+def test_refound():
+    t = '@@testlandia@@ was refounded in %%lazarus%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.Refounding
+    assert h.nation == Nation('testlandia')
+    assert h.region == Region('lazarus')

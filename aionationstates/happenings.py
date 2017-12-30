@@ -87,6 +87,24 @@ class Founding(UnrecognizedHappening):
         super().__init__(text, params)
 
 
+class Refounding(UnrecognizedHappening):
+    """A nation being refounded.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    region : :class:`Region`
+        The feeder region nation respawned in.
+    """
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ was refounded in %%(.+?)%%', text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.region = aionationstates.Region(match.group(2))
+        super().__init__(text, params)
+
+
 class CTE(UnrecognizedHappening):
     """A nation ceasing to exist.
 
@@ -169,7 +187,6 @@ class SettingsChange(UnrecognizedHappening):
             value = unscramble_encoding(html.unescape(match.group(2)))
             self.changes[match.group(1)] = value
             new_text = new_text[len(match.group(0)):]
-
 
         super().__init__(text, params)
 
@@ -743,6 +760,7 @@ class ZombieBorderControlDeactivation(UnrecognizedHappening):
 happening_classes = (
     Move,
     Founding,
+    Refounding,
     CTE,
     Legislation,
     FlagChange,
