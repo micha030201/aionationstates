@@ -6,7 +6,6 @@ import html
 from collections import namedtuple
 from contextlib import suppress
 
-from aionationstates.happenings import UnrecognizedHappening
 from aionationstates.session import api_query
 from aionationstates.utils import (
     timestamp, unscramble_encoding, DataClassWithId, normalize)
@@ -16,7 +15,7 @@ import aionationstates
 
 __all__ = ('PollOption', 'Poll', 'DispatchThumbnail', 'Dispatch',
            'CensusScaleCurrent', 'CensusPoint', 'CensusScaleHistory',
-           'Zombie')
+           'Zombie', 'ArchivedHappening')
 
 
 # Shared data classes:
@@ -322,6 +321,21 @@ class Census:
         return result(self)
 
 
+class ArchivedHappening:
+    """A happening from a national or regional archive.
+
+    Attributes
+    ----------
+    timestamp : naive UTC :class:`datetime.datetime`
+        When the happening occured.
+    text : str
+        The happening text.
+    """
+    def __init__(self, elem):
+        self.timestamp = timestamp(elem.find('TIMESTAMP').text)
+        self.text = elem.findtext('TEXT')
+
+
 class Zombie:
     """The situation in a nation/region during the annual Z-Day event.
 
@@ -356,17 +370,15 @@ class NationRegion(DataClassWithId, Census):
     async def happenings(self, root):
         """Happenings archived on the in-game page.  Newest to oldest.
 
-        Happenings are not parsed because they are different from
-        the ones in the normal feed and I see no practical use-cases
-        for having these parsed as well.
+        These happenings are not parsed because they are subtly
+        different from the ones in the normal feed and I see no
+        practical use-cases for having them parsed as well.
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of \
-        :class:`UnrecognizedHappening`
+        an :class:`ApiQuery` of a list of :class:`ArchivedHappening`
         """
-        return [UnrecognizedHappening(elem)
-                for elem in root.find('HAPPENINGS')]
+        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     @api_query('zombie')
     async def zombie(self, root):

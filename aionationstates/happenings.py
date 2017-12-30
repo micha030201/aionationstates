@@ -7,9 +7,8 @@ import re
 import html
 from contextlib import suppress
 
-from aionationstates.utils import timestamp, unscramble_encoding
+from aionationstates.utils import timestamp, unscramble_encoding, logger
 import aionationstates
-
 
 
 class UnrecognizedHappening:
@@ -28,34 +27,27 @@ class UnrecognizedHappening:
     Attributes
     ----------
     id : int
-        The happening id.  `None` if the happening is from a national or
-        regional archive.
+        The happening id.
     timestamp : naive UTC :class:`datetime.datetime`
         Time of the happening.
     text : str
         The happening text.
     """
-
     def __init__(self, text, params):
         self.id, self.timestamp = params
         self.text = text
 
     def __eq__(self, other):
-        if not isinstance(other, UnrecognizedHappening):
-            return False
-        if self.id is None or other.id is None:
-            raise TypeError('Cannot compare archived happening.')
-        return self.id == other.id
+        return isinstance(other, UnrecognizedHappening) and self.id == other.id
 
     def __hash__(self):
-        if self.id is None:
-            raise TypeError('Cannot hash archived happening.')
         return hash((self.id,))
 
     def __repr__(self):
         return f'<Happening #{self.id}>'
 
 
+# Nations doing things:
 
 class Move(UnrecognizedHappening):
     """A nation moving regions.
@@ -66,7 +58,6 @@ class Move(UnrecognizedHappening):
     region_from : :class:`Region`
     region_to : :class:`Region`
     """
-
     def __init__(self, text, params):
         match = re.match(
             r'@@(.+?)@@ relocated from %%(.+?)%% to %%(.+?)%%', text)
@@ -87,7 +78,6 @@ class Founding(UnrecognizedHappening):
     region : :class:`Region`
         The feeder region nation spawned in.
     """
-
     def __init__(self, text, params):
         match = re.match('@@(.+?)@@ was founded in %%(.+?)%%', text)
         if not match:
@@ -106,7 +96,6 @@ class CTE(UnrecognizedHappening):
     region : :class:`Region`
         Region the nation CTEd in.
     """
-
     def __init__(self, text, params):
         match = re.match('@@(.+?)@@ ceased to exist in %%(.+?)%%', text)
         if not match:
@@ -125,7 +114,6 @@ class Legislation(UnrecognizedHappening):
     effect_line : str
         May contain HTML elements and character references.
     """
-
     def __init__(self, text, params):
         match = re.match(
             r'Following new legislation in @@(.+?)@@, (.+)\.', text)
@@ -143,7 +131,6 @@ class FlagChange(UnrecognizedHappening):
     ----------
     nation : :class:`Nation`
     """
-
     def __init__(self, text, params):
         match = re.match('@@(.+?)@@ altered its national flag', text)
         if not match:
@@ -162,7 +149,6 @@ class SettingsChange(UnrecognizedHappening):
         A mapping of field names (such as "currency", "motto", etc.) to
         their new values.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ changed its national', text)
@@ -188,11 +174,11 @@ class SettingsChange(UnrecognizedHappening):
         super().__init__(text, params)
 
 
-
 class DispatchPublication(UnrecognizedHappening):
     """A dispatch being published.
 
-    In case you're wondering, deleting a dispatch doesn't produce a happening.
+    In case you're wondering, deleting a dispatch doesn't produce a
+    happening.
 
     Attributes
     ----------
@@ -202,7 +188,6 @@ class DispatchPublication(UnrecognizedHappening):
     category : str
     subcategory : str
     """
-
     def __init__(self, text, params):
         match = re.match(
             r'@@(.+?)@@ published "<a href="page=dispatch/id=(.+?)">(.+?)</a>" \((.+?): (.+?)\).',
@@ -223,9 +208,83 @@ class DispatchPublication(UnrecognizedHappening):
         Returns
         -------
         an :class:`ApiQuery` of :class:`Dispatch`
-            Full dispatch (with text).
         """
         return aionationstates.world.dispatch(self.dispatch_id)
+
+
+class CategoryChange(UnrecognizedHappening):
+    """A nation being reclassified to a different WA Category.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    category_before : str
+    category_after : str
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ was reclassified from "(.+?)" to "(.+?)".',
+            text
+        )
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        self.category_before = match.group(2)
+        self.category_after = match.group(3)
+        super().__init__(text, params)
+
+
+class BannerCreation(UnrecognizedHappening):
+    """A nation creating a custom banner.
+
+    Attributes
+    ----------
+    nation : :class:`Nation`
+    """
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ created a custom banner.', text)
+        if not match:
+            raise ValueError
+        self.nation = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
+
+
+# World Assembly:
+
+
+class Endorsement(UnrecognizedHappening):
+    """A nation endorsing another nation.
+
+    Attributes
+    ----------
+    endorser : :class:`Nation`
+    endorsee : :class:`Nation`
+    """
+    def __init__(self, text, params):
+        match = re.match('@@(.+?)@@ endorsed @@(.+?)@@', text)
+        if not match:
+            raise ValueError
+        self.endorser = aionationstates.Nation(match.group(1))
+        self.endorsee = aionationstates.Nation(match.group(2))
+        super().__init__(text, params)
+
+
+class EndorsementWithdrawal(UnrecognizedHappening):
+    """A nation withdrawing its endorsement of another nation.
+
+    Attributes
+    ----------
+    endorser : :class:`Nation`
+    endorsee : :class:`Nation`
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ withdrew its endorsement from @@(.+?)@@', text)
+        if not match:
+            raise ValueError
+        self.endorser = aionationstates.Nation(match.group(1))
+        self.endorsee = aionationstates.Nation(match.group(2))
+        super().__init__(text, params)
 
 
 class WorldAssemblyApplication(UnrecognizedHappening):
@@ -235,7 +294,6 @@ class WorldAssemblyApplication(UnrecognizedHappening):
     ----------
     nation : :class:`Nation`
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ applied to join the World Assembly.',
@@ -254,7 +312,6 @@ class WorldAssemblyAdmission(UnrecognizedHappening):
     ----------
     nation : :class:`Nation`
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was admitted to the World Assembly.',
@@ -273,7 +330,6 @@ class WorldAssemblyResignation(UnrecognizedHappening):
     ----------
     nation : :class:`Nation`
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ resigned from the World Assembly.',
@@ -303,7 +359,6 @@ class DelegateChange(UnrecognizedHappening):
     old_delegate : :class:`Nation`
     region : :class:`Region`
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ seized the position of %%(.+?)%% WA Delegate from @@(.+?)@@.',
@@ -338,45 +393,54 @@ class DelegateChange(UnrecognizedHappening):
         raise ValueError
 
 
+# Regions doing things:
 
-class CategoryChange(UnrecognizedHappening):
-    """A nation being reclassified to a different WA Category.
+class PollCreation(UnrecognizedHappening):
+    """A nation creating a new regional poll.
+
+    Note that the poll id is inaccessible from the happening, so the
+    created poll can't be linked directly.  The best you can do is
+    request the current poll of the region from the happening.
 
     Attributes
     ----------
     nation : :class:`Nation`
-    category_before : str
-    category_after : str
+    region : :class:`Region`
+    title : str
+        Poll title.  Don't rely on this being accurate, some characters
+        (such as brackets) are for whatever horror inducing reason
+        stripped from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
-            '@@(.+?)@@ was reclassified from "(.+?)" to "(.+?)".',
-            text
-        )
+            '@@(.+?)@@ created a new poll in %%(.+?)%%: "(.+?)".', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
-        self.category_before = match.group(2)
-        self.category_after = match.group(3)
+        self.region = aionationstates.Region(match.group(2))
+        self.title = html.unescape(match.group(3))
         super().__init__(text, params)
 
 
-class BannerCreation(UnrecognizedHappening):
-    """A nation creating a custom banner.
+class PollDeletion(UnrecognizedHappening):
+    """A nation deleting a regional poll.
 
     Attributes
     ----------
     nation : :class:`Nation`
+    region : :class:`Region`
     """
-
     def __init__(self, text, params):
-        match = re.match('@@(.+?)@@ created a custom banner.', text)
+        match = re.match(
+            '@@(.+?)@@ deleted a regional poll in %%(.+?)%%.', text)
         if not match:
             raise ValueError
         self.nation = aionationstates.Nation(match.group(1))
+        self.region = aionationstates.Region(match.group(2))
         super().__init__(text, params)
 
+
+# Embassies:
 
 class EmbassyConstructionRequest(UnrecognizedHappening):
     """A nation proposing construction of embassies between two regions.
@@ -390,7 +454,6 @@ class EmbassyConstructionRequest(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening, but the
         first one appears to be one the request was sent from.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ proposed constructing embassies between %%(.+?)%% and %%(.+?)%%.',
@@ -418,7 +481,6 @@ class EmbassyConstructionConfirmation(UnrecognizedHappening):
         guaranteed, as it mimics the one from the happening, but the
         first one appears to be one the request was accepted from.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ agreed to construct embassies between %%(.+?)%% and %%(.+?)%%.',
@@ -445,7 +507,6 @@ class EmbassyConstructionRequestWithdrawal(UnrecognizedHappening):
         Regions involved in the embassy request.  The order is not
         guaranteed, as it mimics the one from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ withdrew a request for embassies between %%(.+?)%% and %%(.+?)%%.',
@@ -472,7 +533,6 @@ class EmbassyConstructionAbortion(UnrecognizedHappening):
         Regions involved in the embassy request.  The order is not
         guaranteed, as it mimics the one from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ aborted construction of embassies between %%(.+?)%% and %%(.+?)%%.',
@@ -499,7 +559,6 @@ class EmbassyClosureOrder(UnrecognizedHappening):
         Regions involved in the embassy request.  The order is not
         guaranteed, as it mimics the one from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ ordered the closure of embassies between %%(.+?)%% and %%(.+?)%%.',
@@ -524,7 +583,6 @@ class EmbassyEstablishment(UnrecognizedHappening):
         Regions involved in the embassy request.  The order is not
         guaranteed, as it mimics the one from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
             'Embassy established between %%(.+?)%% and %%(.+?)%%.',
@@ -548,7 +606,6 @@ class EmbassyCancellation(UnrecognizedHappening):
         Regions involved in the embassy request.  The order is not
         guaranteed, as it mimics the one from the happening.
     """
-
     def __init__(self, text, params):
         match = re.match(
             'Embassy cancelled between %%(.+?)%% and %%(.+?)%%.',
@@ -563,89 +620,7 @@ class EmbassyCancellation(UnrecognizedHappening):
         super().__init__(text, params)
 
 
-class Endorsement(UnrecognizedHappening):
-    """A nation endorsing another nation.
-
-    Attributes
-    ----------
-    endorser : :class:`Nation`
-    endorsee : :class:`Nation`
-    """
-
-    def __init__(self, text, params):
-        match = re.match('@@(.+?)@@ endorsed @@(.+?)@@', text)
-        if not match:
-            raise ValueError
-        self.endorser = aionationstates.Nation(match.group(1))
-        self.endorsee = aionationstates.Nation(match.group(2))
-        super().__init__(text, params)
-
-
-class EndorsementWithdrawal(UnrecognizedHappening):
-    """A nation withdrawing its endorsement of another nation.
-
-    Attributes
-    ----------
-    endorser : :class:`Nation`
-    endorsee : :class:`Nation`
-    """
-
-    def __init__(self, text, params):
-        match = re.match(
-            '@@(.+?)@@ withdrew its endorsement from @@(.+?)@@', text)
-        if not match:
-            raise ValueError
-        self.endorser = aionationstates.Nation(match.group(1))
-        self.endorsee = aionationstates.Nation(match.group(2))
-        super().__init__(text, params)
-
-
-class PollCreation(UnrecognizedHappening):
-    """A nation creating a new regional poll.
-
-    Note that the poll id is inaccessible from the happening, so the
-    created poll can't be linked directly.  The best you can do is
-    request the current poll of the region from the happening.
-
-    Attributes
-    ----------
-    nation : :class:`Nation`
-    region : :class:`Region`
-    title : str
-        Poll title.  Don't rely on this being accurate, some characters
-        (such as brackets) are for whatever horror inducing reason
-        stripped from the happening.
-    """
-
-    def __init__(self, text, params):
-        match = re.match(
-            '@@(.+?)@@ created a new poll in %%(.+?)%%: "(.+?)".', text)
-        if not match:
-            raise ValueError
-        self.nation = aionationstates.Nation(match.group(1))
-        self.region = aionationstates.Region(match.group(2))
-        self.title = html.unescape(match.group(3))
-        super().__init__(text, params)
-
-
-class PollDeletion(UnrecognizedHappening):
-    """A nation deleting a regional poll.
-
-    Attributes
-    ----------
-    nation : :class:`Nation`
-    region : :class:`Region`
-    """
-
-    def __init__(self, text, params):
-        match = re.match(
-            '@@(.+?)@@ deleted a regional poll in %%(.+?)%%.', text)
-        if not match:
-            raise ValueError
-        self.nation = aionationstates.Nation(match.group(1))
-        self.region = aionationstates.Region(match.group(2))
-        super().__init__(text, params)
-
+# Z-Day:
 
 class ZombieAction(UnrecognizedHappening):
     def __init__(self, match, text, params):
@@ -668,7 +643,6 @@ class ZombieCureAction(ZombieAction):
     impact : int
         Citizens affected, in millions.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was struck by a (.+?) from @@(.+?)@@, curing ([0-9]+) million infected.',
@@ -692,7 +666,6 @@ class ZombieKillAction(ZombieAction):
     impact : int
         Citizens affected, in millions.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was cleansed by a (.+?) from @@(.+?)@@, killing ([0-9]+) million zombies.',
@@ -717,7 +690,6 @@ class ZombieInfectAction(ZombieAction):
     convert : bool
         Whether the nation is converted to a zombie exporter.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ was ravaged by a (.+?) from @@(.+?)@@, infecting ([0-9]+) million survivors.',
@@ -737,9 +709,8 @@ class ZombieBorderControlActivation(UnrecognizedHappening):
     nation : :class:`Nation`
     region : :class:`Region`
     type : str
-        Type of lockdown. Currenlty either "Lockdown" or "Keycode".
+        Type of lockdown.  Currenlty either 'Lockdown' or 'Keycode'.
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ instituted (.*?) Zombie Border Control in %%(.+?)%%', text)
@@ -759,7 +730,6 @@ class ZombieBorderControlDeactivation(UnrecognizedHappening):
     nation : :class:`Nation`
     region : :class:`Region`
     """
-
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ removed Zombie Border Control in %%(.+?)%%', text)
@@ -805,19 +775,17 @@ happening_classes = (
 __all__ = [cls.__name__ for cls in happening_classes + (UnrecognizedHappening,)]
 
 
-
-def process_happening(params):
+def process_happening(elem):
     # Call ElementTree methods only once, to get a bit of extra performance.
-    try:
-        params_id = int(params.get('id'))
-    except TypeError:
-        params_id = None
-    params_timestamp = timestamp(params.find('TIMESTAMP').text)
-    text = params.findtext('TEXT')
+    params_id = int(elem.get('id'))
+    params_timestamp = timestamp(elem.find('TIMESTAMP').text)
+    text = elem.findtext('TEXT')
     params = (text, (params_id, params_timestamp))
 
     for cls in happening_classes:
         with suppress(ValueError):
             return cls(*params)
-    # TODO logging
+
+    logger.error(f'could not process happening {params_id}')
+
     return UnrecognizedHappening(*params)
