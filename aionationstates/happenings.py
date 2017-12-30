@@ -457,6 +457,63 @@ class PollDeletion(UnrecognizedHappening):
         super().__init__(text, params)
 
 
+class OfficerAppointment(UnrecognizedHappening):
+    """A nation appointing a Regional Officer.
+
+    Attributes
+    ----------
+    appointer : :class:`Nation`
+        Nation appointing the officer.
+    appointee : :class:`Nation`
+        Nation being appointed.
+    title : str
+        Title of the new officer.
+    authority : :class:`Authority`
+        Authority of the new officer.
+    region : :class:`Region`
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            # Officer titles can be blank if you confuse NS enough
+            '@@(.+?)@@ appointed @@(.+?)@@ as (.*?) with authority over .+? in %%(.+?)%%',
+            text
+        )
+        if not match:
+            raise ValueError
+        self.authority = aionationstates.Authority._from_happening(text)
+        self.appointer = aionationstates.Nation(match.group(1))
+        self.appointee = aionationstates.Nation(match.group(2))
+        self.title = match.group(3)
+        self.region = aionationstates.Region(match.group(4))
+        super().__init__(text, params)
+
+
+class OfficerDismissal(UnrecognizedHappening):
+    """A nation appointing a Regional Officer.
+
+    Attributes
+    ----------
+    dismisser : :class:`Nation`
+        Nation dismissing the officer.
+    dismissee : :class:`Nation`
+        Nation being dismissed.
+    title : str
+        Title the officer previously held.
+    region : :class:`Region`
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            # Officer titles can be blank if you confuse NS enough
+            '@@(.+?)@@ dismissed @@(.+?)@@ as (.*?) of %%(.+?)%%', text)
+        if not match:
+            raise ValueError
+        self.dismisser = aionationstates.Nation(match.group(1))
+        self.dismissee = aionationstates.Nation(match.group(2))
+        self.title = match.group(3)
+        self.region = aionationstates.Region(match.group(4))
+        super().__init__(text, params)
+
+
 # Embassies:
 
 class EmbassyConstructionRequest(UnrecognizedHappening):
@@ -783,6 +840,8 @@ happening_classes = (
     EndorsementWithdrawal,
     PollCreation,
     PollDeletion,
+    OfficerAppointment,
+    OfficerDismissal,
     ZombieCureAction,
     ZombieKillAction,
     ZombieInfectAction,

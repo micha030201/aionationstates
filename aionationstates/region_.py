@@ -95,6 +95,12 @@ class Authority(enum.Flag):
         work with individual characters as flags."""
         return reduce(or_, (cls[char] for char in string))
 
+    @classmethod
+    def _from_happening(cls, text):
+        names = re.findall('<i .+?></i>(.+?)(?: and| in|,| authority)', text)
+        return reduce(or_, (cls[name.upper().replace(' ', '_')]
+                            for name in names))
+
     def __repr__(self):
         return f'<OfficerAuthority.{self.name}>'
 
