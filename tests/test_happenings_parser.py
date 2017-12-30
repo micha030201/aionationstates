@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from aionationstates import happenings
-from aionationstates import Nation, Region
+from aionationstates import Nation, Region, Authority
 
 
 def happening_elem(text):
@@ -380,3 +380,49 @@ def test_refound():
     assert type(h) is happenings.Refounding
     assert h.nation == Nation('testlandia')
     assert h.region == Region('lazarus')
+
+
+def test_appoint_oficer_one_auth():
+    t = '@@testlandia@@ appointed @@asdfg@@ as qwerty with authority over <i class="icon-mic"></i>Communications in %%the_north_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerAppointment
+    assert h.appointer == Nation('testlandia')
+    assert h.appointee == Nation('asdfg')
+    assert h.title == 'qwerty'
+    assert h.authority == Authority.COMMUNICATIONS
+    assert h.region == Region('the_north_pacific')
+
+
+def test_appoint_oficer_two_auth():
+    t = '@@testlandia@@ appointed @@asdfg@@ as qwerty with authority over <i class="icon-mic"></i>Communications and <i class="icon-building"></i>Embassies in %%the_north_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerAppointment
+    assert h.appointer == Nation('testlandia')
+    assert h.appointee == Nation('asdfg')
+    assert h.title == 'qwerty'
+    assert h.authority == Authority.COMMUNICATIONS | Authority.EMBASSIES
+    assert h.region == Region('the_north_pacific')
+
+
+def test_appoint_oficer_many_auth():
+    t = '@@testlandia@@ appointed @@asdfg@@ as qwerty with authority over <i class="icon-flag-1"></i>Appearance, <i class="icon-mic"></i>Border Control, <i class="icon-building"></i>Embassies, and <i class="icon-align-left"></i>Polls in %%the_north_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerAppointment
+    assert h.appointer == Nation('testlandia')
+    assert h.appointee == Nation('asdfg')
+    assert h.title == 'qwerty'
+    assert h.authority == (Authority.BORDER_CONTROL
+                           | Authority.EMBASSIES
+                           | Authority.APPEARANCE
+                           | Authority.POLLS)
+    assert h.region == Region('the_north_pacific')
+
+
+def test_dismiss_oficer():
+    t = '@@testlandia@@ dismissed @@qwerty@@ as asdf of %%the_pacific%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerDismissal
+    assert h.dismisser == Nation('testlandia')
+    assert h.dismissee == Nation('qwerty')
+    assert h.title == 'asdf'
+    assert h.region == Region('the pacific')
