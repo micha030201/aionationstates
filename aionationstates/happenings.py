@@ -548,6 +548,69 @@ class DelegateModification(UnrecognizedHappening):
         super().__init__(text, params)
 
 
+class OfficerModification(UnrecognizedHappening):
+    """A founder modifying one of the Regional Officers.
+
+    Attributes
+    ----------
+    agent : :class:`Nation`
+        Nation modifying the position.
+    patient : :class:`Nation`
+        Nation being modified.
+    title : str
+        Current title of the officer.
+    old_title : str or None
+        Title the officer previously held.  None if the office wasn't
+        renamed.
+    authority_granted : :class:`Authority`
+    authority_removed : :class:`Authority`
+    region : :class:`Region`
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ '
+            # granted X authority and removed Y authority from
+            # granted X authority to
+            # removed Y authority from
+            '(?:granted (.+?) authority )?'
+            '(?:and |to )?'
+            '(?:removed (.+?) authority from )?'
+            '@@(.+?)@@ '
+            '(?:and renamed the office from "(.*?)" to "(.*?)" )?'
+            '(?:as (.*?) )?'
+            'in %%(.+?)%%', text)
+        if match:
+            self.agent = aionationstates.Nation(match.group(1))
+            self.authority_granted = aionationstates.Authority._from_happening(
+                match.group(2) or '')
+            self.authority_removed = aionationstates.Authority._from_happening(
+                match.group(3) or '')
+            self.patient = aionationstates.Nation(match.group(4))
+            self.old_title = match.group(5)
+            self.title = match.group(6) or match.group(7)
+            self.region = aionationstates.Region(match.group(8))
+            super().__init__(text, params)
+            return
+
+        match = re.match(
+            '@@(.+?)@@ renamed the office'
+            ' held by @@(.*?)@@'
+            ' from "(.*?)" to "(.*?)"'
+            ' in %%(.+?)%%', text)
+        if match:
+            self.agent = aionationstates.Nation(match.group(1))
+            self.authority_granted = aionationstates.Authority(0)
+            self.authority_removed = aionationstates.Authority(0)
+            self.patient = aionationstates.Nation(match.group(2))
+            self.old_title = match.group(3)
+            self.title = match.group(4)
+            self.region = aionationstates.Region(match.group(5))
+            super().__init__(text, params)
+            return
+
+        raise ValueError
+
+
 # Embassies:
 
 class EmbassyConstructionRequest(UnrecognizedHappening):
@@ -877,6 +940,7 @@ happening_classes = (
     OfficerAppointment,
     OfficerDismissal,
     DelegateModification,
+    OfficerModification,
     ZombieCureAction,
     ZombieKillAction,
     ZombieInfectAction,

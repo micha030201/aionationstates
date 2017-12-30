@@ -458,3 +458,70 @@ def test_grant_remove_delegate_auth():
     assert h.authority_granted == Authority.POLLS
     assert h.authority_removed == Authority.APPEARANCE
     assert h.region == Region('try it and see')
+
+
+def test_modify_officer_grant_auth():
+    t = '@@parse_error@@ granted <i class="icon-mic"></i>Communications authority to @@bathyscaphe@@ as qwerty1 in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerModification
+    assert h.agent == Nation('parse error')
+    assert h.patient == Nation('bathyscaphe')
+    assert h.old_title is None
+    assert h.title == 'qwerty1'
+    assert h.authority_granted == Authority.COMMUNICATIONS
+    assert h.authority_removed == Authority(0)
+    assert h.region == Region('try it and see')
+
+
+def test_modify_officer_remove_auth():
+    t = '@@parse_error@@ removed <i class="icon-building"></i>Embassies authority from @@bathyscaphe@@ as qwerty1 in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerModification
+    assert h.agent == Nation('parse error')
+    assert h.patient == Nation('bathyscaphe')
+    assert h.old_title is None
+    assert h.title == 'qwerty1'
+    assert h.authority_granted == Authority(0)
+    assert h.authority_removed == Authority.EMBASSIES
+    assert h.region == Region('try it and see')
+
+
+def test_modify_officer_grant_remove_auth():
+    t = '@@parse_error@@ granted <i class="icon-mic"></i>Communications authority and removed <i class="icon-building"></i>Embassies authority from @@bathyscaphe@@ as qwerty1 in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerModification
+    assert h.agent == Nation('parse error')
+    assert h.patient == Nation('bathyscaphe')
+    assert h.old_title is None
+    assert h.title == 'qwerty1'
+    assert h.authority_granted == Authority.COMMUNICATIONS
+    assert h.authority_removed == Authority.EMBASSIES
+    assert h.region == Region('try it and see')
+
+
+def test_modify_officer_grant_remove_auth_rename():
+    t = '@@parse_error@@ granted <i class="icon-shield"></i>Border Control and <i class="icon-building"></i>Embassies authority and removed <i class="icon-flag-1"></i>Appearance and <i class="icon-mic"></i>Communications authority from @@bathyscaphe@@ and renamed the office from "qwerty" to "qwerty1" in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerModification
+    assert h.agent == Nation('parse error')
+    assert h.patient == Nation('bathyscaphe')
+    assert h.old_title == 'qwerty'
+    assert h.title == 'qwerty1'
+    assert h.authority_granted == (Authority.BORDER_CONTROL
+                                   | Authority.EMBASSIES)
+    assert h.authority_removed == (Authority.APPEARANCE
+                                   | Authority.COMMUNICATIONS)
+    assert h.region == Region('try it and see')
+
+
+def test_modify_officer_rename():
+    t = '@@parse_error@@ renamed the office held by @@bathyscaphe@@ from "qwerty1" to "qwerty2" in %%try_it_and_see%%.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.OfficerModification
+    assert h.agent == Nation('parse error')
+    assert h.patient == Nation('bathyscaphe')
+    assert h.old_title == 'qwerty1'
+    assert h.title == 'qwerty2'
+    assert h.authority_granted == Authority(0)
+    assert h.authority_removed == Authority(0)
+    assert h.region == Region('try it and see')
