@@ -604,10 +604,10 @@ class Nation(NationRegion, Session):
 
         Returns
         -------
-        an :class:`ApiQuery` of a list of :class:`Dispatch`
+        an :class:`ApiQuery` of a list of :class:`DispatchThumbnail`
         """
         return [
-            DispatchThumbnail(elem)
+            DispatchThumbnail._from_elem(elem)
             for elem in root.find('DISPATCHLIST')
         ]
 

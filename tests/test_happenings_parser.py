@@ -140,16 +140,18 @@ def test_banner_create():
     assert h.agent == Nation('testlandia')
 
 
-def test_dispatch_publish():  # TODO DispatchThumbnail instead of assorted attrs
+def test_dispatch_publish():
     t = '@@testlandia@@ published "<a href="page=dispatch/id=100000">Testington</a>" (Factbook: Military).'
     h = happenings.process_happening(happening_elem(t))
     assert type(h) is happenings.DispatchPublication
     assert h.agent == Nation('testlandia')
-    assert h.title == 'Testington'
-    assert h.category == 'Factbook'
-    assert h.subcategory == 'Military'
-    assert h.dispatch_id == 100000
-    #assert h.dispatch == TODO should be an ApiQuery
+    assert h.dispatch.title == 'Testington'
+    assert h.dispatch.category == 'Factbook'
+    assert h.dispatch.subcategory == 'Military'
+    assert h.dispatch.id == 100000
+    assert h.dispatch.score == 1
+    assert h.dispatch.views == 1
+    assert h.dispatch.edited == h.dispatch.created == h.timestamp
 
 
 def test_dispatch_publish_unicode():
@@ -157,10 +159,13 @@ def test_dispatch_publish_unicode():
     h = happenings.process_happening(happening_elem(t))
     assert type(h) is happenings.DispatchPublication
     assert h.agent == Nation('testlandia')
-    assert h.title == '‡‡‡‡‡‡‡‡‡ <>& ]]>""'
-    assert h.category == 'Factbook'
-    assert h.subcategory == 'Military'
-    assert h.dispatch_id == 100000
+    assert h.dispatch.title == '‡‡‡‡‡‡‡‡‡ <>& ]]>""'
+    assert h.dispatch.category == 'Factbook'
+    assert h.dispatch.subcategory == 'Military'
+    assert h.dispatch.id == 100000
+    assert h.dispatch.score == 1
+    assert h.dispatch.views == 1
+    assert h.dispatch.edited == h.dispatch.created == h.timestamp
 
 
 def test_wa_apply():

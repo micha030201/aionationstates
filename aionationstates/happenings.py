@@ -221,10 +221,7 @@ class DispatchPublication(Action):
 
     Attributes
     ----------
-    dispatch_id : int
-    title : str
-    category : str
-    subcategory : str
+    dispatch : :class:`~aionationstates.DispatchThumbnail`
     """
     def __init__(self, text, params):
         match = re.match(
@@ -234,20 +231,18 @@ class DispatchPublication(Action):
         if not match:
             raise _ParseError
         self.agent = aionationstates.Nation(match.group(1))
-        self.dispatch_id = int(match.group(2))
-        self.title = unscramble_encoding(html.unescape(match.group(3)))
-        self.category = match.group(4)
-        self.subcategory = match.group(5)
+        self.dispatch = aionationstates.DispatchThumbnail(
+            id=int(match.group(2)),
+            title=unscramble_encoding(html.unescape(match.group(3))),
+            category=match.group(4),
+            subcategory=match.group(5),
+            views=1,
+            score=1,
+            # The happening timestamp
+            created=params[1],
+            edited=params[1]
+        )
         super().__init__(text, params)
-
-    def dispatch(self):
-        """Request the full dispatch.
-
-        Returns
-        -------
-        an :class:`ApiQuery` of :class:`Dispatch`
-        """
-        return aionationstates.world.dispatch(self.dispatch_id)
 
 
 class CategoryChange(Consequence, Affecting):

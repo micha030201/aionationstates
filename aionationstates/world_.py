@@ -211,7 +211,7 @@ class World(Census, Session):
         @api_query('dispatchlist', **params)
         async def result(_, root):
             return [
-                DispatchThumbnail(elem)
+                DispatchThumbnail._from_elem(elem)
                 for elem in root.find('DISPATCHLIST')
             ]
         return result(self)

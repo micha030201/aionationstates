@@ -108,7 +108,11 @@ class DispatchThumbnail(DataClassWithId):
         When the dispatch last got edited.  Equal to ``created`` for
         dispatches that were never edited.
     """
-    def __init__(self, elem):
+    def __init__(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
+    def _update_from_elem(self, elem):
         self.id = int(elem.get('id'))
         self.title = unscramble_encoding(
             html.unescape(elem.find('TITLE').text))
@@ -123,6 +127,12 @@ class DispatchThumbnail(DataClassWithId):
         edited = int(elem.find('EDITED').text) or created
         self.created = timestamp(created)
         self.edited = timestamp(edited)
+
+    @classmethod
+    def _from_elem(cls, elem):
+        self = cls()
+        self._update_from_elem(elem)
+        return self
 
     def full(self):
         """Request the full dispatch (with text).
@@ -153,7 +163,7 @@ class Dispatch(DispatchThumbnail):
     """
     def __init__(self, elem):
         self.text = unscramble_encoding(html.unescape(elem.find('TEXT').text))
-        super().__init__(elem)
+        super()._update_from_elem(elem)
 
     def __repr__(self):
         return f'<Dispatch id={self.id}>'
