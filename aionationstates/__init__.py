@@ -7,4 +7,3 @@ from aionationstates.shared import *
 from aionationstates.utils import *
 from aionationstates.session import *
 from aionationstates.ns_to_human import *
-from aionationstates.happenings import *

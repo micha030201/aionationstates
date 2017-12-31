@@ -354,9 +354,8 @@ class World(Census, Session):
             Nations happenings of which will be requested.  Cannot be
             specified at the same time with ``regions``.
         regions : iterable of str
-            Regions happenings of nations residing in which will be
-            requested.  Cannot be specified at the same time with
-            ``nations``.
+            Regions happenings of which will be requested.  Cannot be
+            specified at the same time with ``nations``.
         filters : iterable of str
             Categories to request happenings by.  Available filters
             are: ``law``, ``change``, ``dispatch``, ``rmb``,
@@ -370,8 +369,8 @@ class World(Census, Session):
 
         Returns
         -------
-        an asynchronous iterator of :class:`UnrecognizedHappening` \
-        or any of the classes that inherit from it
+        an asynchronous iterator yielding any of the classes from \
+        the :mod:`~aionationstates.happenings` module
         """
         while True:
             happening_bunch = await self._get_happenings(
@@ -423,9 +422,8 @@ class World(Census, Session):
             Nations happenings of which will be requested.  Cannot be
             specified at the same time with ``regions``.
         regions : iterable of str
-            Regions happenings of nations residing in which will be
-            requested.  Cannot be specified at the same time with
-            ``nations``.
+            Regions happenings of which will be requested.  Cannot be
+            specified at the same time with ``nations``.
         filters : iterable of str
             Categories to request happenings by.  Available filters
             are: ``law``, ``change``, ``dispatch``, ``rmb``,
@@ -434,8 +432,8 @@ class World(Census, Session):
 
         Returns
         -------
-        an asynchronous iterator of :class:`UnrecognizedHappening` \
-        or any of the classes that inherit from it
+        an asynchronous iterator yielding any of the classes from \
+        the :mod:`~aionationstates.happenings` module
         """
         try:
             # We only need the happenings from this point forwards
