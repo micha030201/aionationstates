@@ -744,7 +744,9 @@ async def reclassifications(elem, census, expand_macros):
             else:
                 scale = census[int(reclassification_type)]
                 changed = 'rose' if scale.change > 0 else 'fell'
-                yield f'{scale.info.title} {changed} from {before} to {after}'
+                yield await expand_macros(
+                    f'@@NAME@@\'s {scale.info.title}'
+                    f' {changed} from {before} to {after}')
 
 
 class CensusScaleChange:
@@ -784,9 +786,9 @@ class IssueResult(aobject):
         The banners unlocked by answering the issue.
     reclassifications : list of str
         All WA Category and Freedoms reclassifications listed, such as
-        'Civil Rights fell from Very Good to Good', 'Testlandia was
-        reclassified from Inoffensive Centrist Democracy to Democratic
-        Socialists', etc..
+        'Testlandia's Civil Rights fell from Very Good to Good',
+        'Testlandia was reclassified from Inoffensive Centrist Democracy
+        to Democratic Socialists', etc..
     headlines : list of str
         Newspaper headlines.
     """

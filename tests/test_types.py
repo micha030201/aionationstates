@@ -197,8 +197,13 @@ def test_poll_notext():
     assert poll.text is None
 
 
-async def noop(s):
-    return s
+async def expand_macros(s):
+    return (
+        s
+        .replace('@@NAME@@', 'Testlandia')
+        .replace('@@FAITH@@', 'Neo-violetism')
+        .replace('@@DEMONYM@@', 'Testlandish')
+    )
 
 
 @pytest.mark.asyncio
@@ -208,7 +213,7 @@ async def test_issueresult_invalid_option():
         <ISSUE id="365" choice="42">
             <ERROR>Invalid choice.</ERROR>
         </ISSUE>
-        '''), noop)
+        '''), expand_macros)
 
 
 @pytest.mark.asyncio
@@ -218,7 +223,7 @@ async def test_issueresult_invalid_issue():
         <ISSUE id="365456" choice="42">
             <ERROR>Issue already processed!</ERROR>
         </ISSUE>
-        '''), noop)
+        '''), expand_macros)
 
 
 @pytest.mark.asyncio
@@ -255,7 +260,7 @@ async def test_issueresult():
           <HEADLINE>mniomnthnmith</HEADLINE>
         </HEADLINES>
       </ISSUE>
-    '''), noop)
+    '''), expand_macros)
     assert issueresult.effect_line == 'qwerty'
 
     assert issueresult.census[0].info.title == 'Civil Rights'
@@ -272,5 +277,102 @@ async def test_issueresult():
     assert issueresult.census[2].pchange == -5.985037
 
     assert issueresult.reclassifications == [
-        'Civil Rights rose from Good to Very Good']
+        'Testlandia\'s Civil Rights rose from Good to Very Good']
     assert issueresult.headlines == ['srrgbrgbrgb', 'mniomnthnmith']
+
+
+@pytest.mark.asyncio
+async def test_issueresult_no_reclassifications():
+    issueresult = await IssueResult(elem('''
+      <ISSUE id="365" choice="2">
+        <OK>1</OK>
+        <DESC>qwerty</DESC>
+        <RANKINGS>
+          <RANK id="0">
+            <SCORE>65.53</SCORE>
+            <CHANGE>4.46</CHANGE>
+            <PCHANGE>7.303095</PCHANGE>
+          </RANK>
+          <RANK id="36">
+            <SCORE>23.87</SCORE>
+            <CHANGE>0.93</CHANGE>
+            <PCHANGE>4.054054</PCHANGE>
+          </RANK>
+          <RANK id="37">
+            <SCORE>18.85</SCORE>
+            <CHANGE>-1.20</CHANGE>
+            <PCHANGE>-5.985037</PCHANGE>
+          </RANK>
+        </RANKINGS>
+        <HEADLINES>
+          <HEADLINE>srrgbrgbrgb</HEADLINE>
+          <HEADLINE>mniomnthnmith</HEADLINE>
+        </HEADLINES>
+      </ISSUE>
+    '''), expand_macros)
+    assert issueresult.reclassifications == []
+
+
+@pytest.mark.asyncio
+async def test_issueresult_reclassifications():
+    issueresult = await IssueResult(elem('''
+      <ISSUE id="365" choice="2">
+        <OK>1</OK>
+        <DESC>qwerty</DESC>
+        <RANKINGS>
+          <RANK id="0">
+            <SCORE>65.53</SCORE>
+            <CHANGE>4.46</CHANGE>
+            <PCHANGE>7.303095</PCHANGE>
+          </RANK>
+          <RANK id="1">
+            <SCORE>65.53</SCORE>
+            <CHANGE>-4.46</CHANGE>
+            <PCHANGE>-7.303095</PCHANGE>
+          </RANK>
+          <RANK id="2">
+            <SCORE>65.53</SCORE>
+            <CHANGE>-4.46</CHANGE>
+            <PCHANGE>-7.303095</PCHANGE>
+          </RANK>
+          <RANK id="36">
+            <SCORE>23.87</SCORE>
+            <CHANGE>0.93</CHANGE>
+            <PCHANGE>4.054054</PCHANGE>
+          </RANK>
+          <RANK id="37">
+            <SCORE>18.85</SCORE>
+            <CHANGE>-1.20</CHANGE>
+            <PCHANGE>-5.985037</PCHANGE>
+          </RANK>
+        </RANKINGS>
+        <RECLASSIFICATIONS>
+          <RECLASSIFY type="0">
+            <FROM>Good</FROM>
+            <TO>Very Good</TO>
+          </RECLASSIFY>
+          <RECLASSIFY type="1">
+            <FROM>Very Good</FROM>
+            <TO>Good</TO>
+          </RECLASSIFY>
+          <RECLASSIFY type="2">
+            <FROM>Excellent</FROM>
+            <TO>Below Average</TO>
+          </RECLASSIFY>
+          <RECLASSIFY type="govt">
+            <FROM>Inoffensive Centrist Democracy</FROM>
+            <TO>Democratic Socialists</TO>
+          </RECLASSIFY>
+        </RECLASSIFICATIONS>
+        <HEADLINES>
+          <HEADLINE>srrgbrgbrgb</HEADLINE>
+          <HEADLINE>mniomnthnmith</HEADLINE>
+        </HEADLINES>
+      </ISSUE>
+    '''), expand_macros)
+    assert issueresult.reclassifications == [
+        'Testlandia\'s Civil Rights rose from Good to Very Good',
+        'Testlandia\'s Economy fell from Very Good to Good',
+        'Testlandia\'s Political Freedom fell from Excellent to Below Average',
+        'Testlandia was reclassified from Inoffensive Centrist Democracy to Democratic Socialists'
+    ]
