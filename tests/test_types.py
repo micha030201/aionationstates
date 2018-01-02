@@ -376,3 +376,59 @@ async def test_issueresult_reclassifications():
         'Testlandia\'s Political Freedom fell from Excellent to Below Average',
         'Testlandia was reclassified from Inoffensive Centrist Democracy to Democratic Socialists'
     ]
+
+
+@pytest.mark.asyncio
+async def test_issueresult_policies():
+    issueresult = await IssueResult(elem('''
+      <ISSUE id="365" choice="2">
+        <OK>1</OK>
+        <DESC>qwerty</DESC>
+        <RANKINGS>
+          <RANK id="0">
+            <SCORE>65.53</SCORE>
+            <CHANGE>4.46</CHANGE>
+            <PCHANGE>7.303095</PCHANGE>
+          </RANK>
+          <RANK id="36">
+            <SCORE>23.87</SCORE>
+            <CHANGE>0.93</CHANGE>
+            <PCHANGE>4.054054</PCHANGE>
+          </RANK>
+          <RANK id="37">
+            <SCORE>18.85</SCORE>
+            <CHANGE>-1.20</CHANGE>
+            <PCHANGE>-5.985037</PCHANGE>
+          </RANK>
+        </RANKINGS>
+        <NEW_POLICIES>
+          <POLICY>
+            <NAME>Devolution</NAME>
+            <PIC>t64</PIC>
+            <CAT>Government</CAT>
+            <DESC>Government power is substantially delegated to local authorities.</DESC>
+          </POLICY>
+          <POLICY>
+            <NAME>Native Representation</NAME>
+            <PIC>t42</PIC>
+            <CAT>Government</CAT>
+            <DESC>Only native-born citizens may hold elected office.</DESC>
+          </POLICY>
+        </NEW_POLICIES>
+        <REMOVED_POLICIES>
+          <POLICY>
+            <NAME>Marriage Equality</NAME>
+            <PIC>p25</PIC>
+            <CAT>Society</CAT>
+            <DESC>Citizens of the same sex may marry.</DESC>
+          </POLICY>
+        </REMOVED_POLICIES>
+        <HEADLINES>
+          <HEADLINE>srrgbrgbrgb</HEADLINE>
+          <HEADLINE>mniomnthnmith</HEADLINE>
+        </HEADLINES>
+      </ISSUE>
+    '''), expand_macros)
+    assert issueresult.new_policies[0].name == 'Devolution'
+    assert issueresult.new_policies[1].name == 'Native Representation'
+    assert issueresult.removed_policies[0].name == 'Marriage Equality'

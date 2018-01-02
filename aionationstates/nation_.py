@@ -784,6 +784,10 @@ class IssueResult(aobject):
         Changes in census scores of the nation.
     banners : list of :class:`Banner`
         The banners unlocked by answering the issue.
+    new_policies : list of :class:`Policy`
+        Policies introduced.
+    removed_policies : list of :class:`Policy`
+        Policies removed.
     reclassifications : list of str
         All WA Category and Freedoms reclassifications listed, such as
         'Testlandia's Civil Rights fell from Very Good to Good',
@@ -817,6 +821,15 @@ class IssueResult(aobject):
             )
         else:
             self.banners = []
+
+        self.new_policies = [
+            Policy(sub_elem) for sub_elem
+            in elem.find('NEW_POLICIES') or ()
+        ]
+        self.removed_policies = [
+            Policy(sub_elem) for sub_elem
+            in elem.find('REMOVED_POLICIES') or ()
+        ]
 
         self.reclassifications = await alist(
             reclassifications(elem.find('RECLASSIFICATIONS'),
