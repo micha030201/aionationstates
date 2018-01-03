@@ -40,7 +40,6 @@ class Banner(DataClassWithId, aobject):
     validity : str
         A requirement the nation has to meet in order to get the banner.
     """
-
     async def __init__(self, elem, expand_macros):
         self.id = elem.get('id')
         self.name = await expand_macros(elem.find('NAME').text)
@@ -48,13 +47,16 @@ class Banner(DataClassWithId, aobject):
 
     @property
     def url(self):
-        """Link to the banner image."""
+        """str: Link to the banner image."""
         return banner_url(self.id)
 
 
 class World(Census, Session):
-    """Interface to the NationStates World API."""
+    """Interface to the NationStates World API.
 
+    You shouldn't build this object yourself, it is already provided to
+    you at ``aionationstates.world``.
+    """
     @api_query('featuredregion')
     async def featuredregion(self, root):
         """Today's featured region.
