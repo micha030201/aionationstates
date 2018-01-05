@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.world_ &#8212; aionationstates 0.2.0 documentation</title>
+    <title>aionationstates.world_ &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,18 +45,62 @@
 <span></span><span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">sleep</span>
 
-<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span><span class="p">,</span> <span class="n">NotFound</span>
 <span class="kn">from</span> <span class="nn">aionationstates.happenings</span> <span class="k">import</span> <span class="n">process_happening</span>
-<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">Census</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shared</span> <span class="k">import</span> <span class="n">Census</span><span class="p">,</span> <span class="n">DispatchThumbnail</span><span class="p">,</span> <span class="n">Dispatch</span><span class="p">,</span> <span class="n">Poll</span>
 <span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">dispatch_categories</span><span class="p">,</span> <span class="n">happening_filters</span>
-<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">utc_seconds</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">banner_url</span><span class="p">,</span> <span class="n">aobject</span><span class="p">,</span> <span class="n">DataClassWithId</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">aionationstates</span>
 
 
-<div class="viewcode-block" id="World"><a class="viewcode-back" href="../../reference.html#aionationstates.World">[docs]</a><span class="k">class</span> <span class="nc">World</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Interface to the NationStates World API.&quot;&quot;&quot;</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;TGQueue&#39;</span><span class="p">,</span> <span class="s1">&#39;Banner&#39;</span><span class="p">,</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;world&#39;</span><span class="p">)</span>
 
+
+<div class="viewcode-block" id="TGQueue"><a class="viewcode-back" href="../../reference.html#aionationstates.TGQueue">[docs]</a><span class="k">class</span> <span class="nc">TGQueue</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Current length of recruinment telegram queues.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    manual : int</span>
+<span class="sd">    stamp : int</span>
+<span class="sd">    api : int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manual</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MANUAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MASS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;API&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Banner"><a class="viewcode-back" href="../../reference.html#aionationstates.Banner">[docs]</a><span class="k">class</span> <span class="nc">Banner</span><span class="p">(</span><span class="n">DataClassWithId</span><span class="p">,</span> <span class="n">aobject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Rift banner.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The banner id.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The banner name.</span>
+<span class="sd">    validity : str</span>
+<span class="sd">        A requirement the nation has to meet in order to get the banner.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">expand_macros</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">expand_macros</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validity</span> <span class="o">=</span> <span class="k">await</span> <span class="n">expand_macros</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VALIDITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;str: Link to the banner image.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">banner_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="World"><a class="viewcode-back" href="../../reference.html#aionationstates.World">[docs]</a><span class="k">class</span> <span class="nc">World</span><span class="p">(</span><span class="n">Census</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interface to the NationStates World API.</span>
+
+<span class="sd">    You shouldn&#39;t build this object yourself, it is already provided to</span>
+<span class="sd">    you at ``aionationstates.world``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;featuredregion&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">featuredregion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Today&#39;s featured region.</span>
@@ -121,7 +165,7 @@
         <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NUMREGIONS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
 <div class="viewcode-block" id="World.regionsbytag"><a class="viewcode-back" href="../../reference.html#aionationstates.World.regionsbytag">[docs]</a>    <span class="k">def</span> <span class="nf">regionsbytag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tags</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;All regions belonging to any of the named tags.</span>
+        <span class="sd">&quot;&quot;&quot;All regions with any of the named tags.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -137,6 +181,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You can specify up to 10 tags&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tags</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No tags specified&#39;</span><span class="p">)</span>
+
         <span class="c1"># We don&#39;t check for invalid tags here because the behaviour is</span>
         <span class="c1"># fairly intuitive - quering for a non-existent tag returns no</span>
         <span class="c1"># regions, excluding it returns all of them.</span>
@@ -158,13 +203,17 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        an :class:`ApiQuery` of :class:`Dispatch`</span>
-<span class="sd">            Full dispatch (with text).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        :class:`NotFound`</span>
+<span class="sd">            If a dispatch with the requested id doesn&#39;t exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatch&#39;</span><span class="p">,</span> <span class="n">dispatchid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
             <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCH&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">elem</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No dispatch found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">NotFound</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No dispatch found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
@@ -185,8 +234,7 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of a list of :class:`Dispatch`</span>
-<span class="sd">            Dispatch &quot;thumbnails&quot;, missing text.</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`DispatchThumbnail`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sort&#39;</span><span class="p">:</span> <span class="n">sort</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">author</span><span class="p">:</span>
@@ -209,7 +257,7 @@
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[</span>
-                <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                <span class="n">DispatchThumbnail</span><span class="o">.</span><span class="n">_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCHLIST&#39;</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
@@ -225,14 +273,90 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        an :class:`ApiQuery` of :class:`Poll`</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        :class:`NotFound`</span>
+<span class="sd">            If a poll with the requested id doesn&#39;t exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;poll&#39;</span><span class="p">,</span> <span class="n">pollid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
             <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLL&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">elem</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No poll found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">NotFound</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;No poll found with id </span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Poll</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="World.banner"><a class="viewcode-back" href="../../reference.html#aionationstates.World.banner">[docs]</a>    <span class="k">def</span> <span class="nf">banner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ids</span><span class="p">,</span> <span class="n">_expand_macros</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get data about banners by their ids.</span>
+
+<span class="sd">        Macros in banners&#39; names and descriptions are not expanded.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *ids : str</span>
+<span class="sd">           Banner ids.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Banner`</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        :class:`NotFound`</span>
+<span class="sd">            If any of the provided ids is invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">noop</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+        <span class="n">_expand_macros</span> <span class="o">=</span> <span class="n">_expand_macros</span> <span class="ow">or</span> <span class="n">noop</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;banner&#39;</span><span class="p">,</span> <span class="n">banner</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="n">banners</span> <span class="o">=</span> <span class="p">[</span><span class="k">await</span> <span class="n">Banner</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">_expand_macros</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BANNERS&#39;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">banners</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">NotFound</span><span class="p">(</span><span class="s1">&#39;one of the banner ids provided is invalid&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">banners</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;tgqueue&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">tgqueue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Count of currently enqueued recruitment telegrams.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :class:`TGQueue`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TGQueue</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TGQUEUE&#39;</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">send_telegram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client_key</span><span class="p">,</span> <span class="n">telegram_id</span><span class="p">,</span>
+                            <span class="n">telegram_key</span><span class="p">,</span> <span class="n">recepient</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A basic interface to the Telegrams API.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        client_key : str</span>
+<span class="sd">            Telegrams API Client Key.</span>
+<span class="sd">        telegram_id : int or str</span>
+<span class="sd">            Telegram id.</span>
+<span class="sd">        telegram_key : str</span>
+<span class="sd">            Telegram key.</span>
+<span class="sd">        recepient : str</span>
+<span class="sd">            Name of the nation you want to telegram.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an awaitable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;sendTG&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;client&#39;</span><span class="p">:</span> <span class="n">client_key</span><span class="p">,</span>
+            <span class="s1">&#39;tgid&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">telegram_id</span><span class="p">),</span>
+            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="n">telegram_key</span><span class="p">,</span>
+            <span class="s1">&#39;to&#39;</span><span class="p">:</span> <span class="n">recepient</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_api</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
     <span class="c1"># Happenings interface:</span>
 
@@ -246,7 +370,7 @@
             <span class="n">params</span><span class="p">[</span><span class="s1">&#39;filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">nations</span> <span class="ow">and</span> <span class="n">regions</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You cannot specify both nation and region views&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cannot specify both nations and regions&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">nations</span><span class="p">:</span>
             <span class="n">nations</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">normalize</span><span class="p">,</span> <span class="n">nations</span><span class="p">))</span>
             <span class="n">params</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;nation.</span><span class="si">{nations}</span><span class="s1">&#39;</span>
@@ -254,14 +378,16 @@
             <span class="n">regions</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">normalize</span><span class="p">,</span> <span class="n">regions</span><span class="p">))</span>
             <span class="n">params</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;region.</span><span class="si">{regions}</span><span class="s1">&#39;</span>
 
-        <span class="k">if</span> <span class="n">beforetime</span><span class="p">:</span>
-            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;beforetime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">utc_seconds</span><span class="p">(</span><span class="n">beforetime</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">beforeid</span><span class="p">:</span>
+        <span class="c1"># Id has to be the default for the happenings generator to work.</span>
+        <span class="k">if</span> <span class="n">beforeid</span><span class="p">:</span>
             <span class="n">params</span><span class="p">[</span><span class="s1">&#39;beforeid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">beforeid</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">beforetime</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;beforetime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">utc_seconds</span><span class="p">(</span><span class="n">beforetime</span><span class="p">))</span>
 
         <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">process_happening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">process_happening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="World.happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">regions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -272,19 +398,25 @@
 <span class="sd">        ----------</span>
 <span class="sd">        nations : iterable of str</span>
 <span class="sd">            Nations happenings of which will be requested.  Cannot be</span>
-<span class="sd">            specified at the same time with region.</span>
+<span class="sd">            specified at the same time with ``regions``.</span>
 <span class="sd">        regions : iterable of str</span>
 <span class="sd">            Regions happenings of which will be requested.  Cannot be</span>
-<span class="sd">            specified at the same time with nation.</span>
+<span class="sd">            specified at the same time with ``nations``.</span>
 <span class="sd">        filters : iterable of str</span>
 <span class="sd">            Categories to request happenings by.  Available filters</span>
-<span class="sd">            are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;, &#39;embassy&#39;, &#39;eject&#39;,</span>
-<span class="sd">            &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;, &#39;vote&#39;, &#39;resolution&#39;,</span>
-<span class="sd">            &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">            are: ``law``, ``change``, ``dispatch``, ``rmb``,</span>
+<span class="sd">            ``embassy``, ``eject``, ``admin``, ``move``, ``founding``,</span>
+<span class="sd">            ``cte``, ``vote``, ``resolution``, ``member``, and ``endo``.</span>
 <span class="sd">        beforeid : int</span>
 <span class="sd">            Only request happenings before this id.</span>
 <span class="sd">        beforetime : :class:`datetime.datetime`</span>
-<span class="sd">            Only request happenings before this moment.</span>
+<span class="sd">            Only request happenings that were emitted before this</span>
+<span class="sd">            moment.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an asynchronous iterator yielding any of the classes from \</span>
+<span class="sd">        the :mod:`~aionationstates.happenings` module</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">happening_bunch</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_happenings</span><span class="p">(</span>
@@ -299,7 +431,7 @@
 
 <div class="viewcode-block" id="World.new_happenings"><a class="viewcode-back" href="../../reference.html#aionationstates.World.new_happenings">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">new_happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                              <span class="n">regions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;New happenings as they arrive::</span>
+        <span class="sd">&quot;&quot;&quot;Iterate through new happenings as they arrive::</span>
 
 <span class="sd">            async for happening in \\</span>
 <span class="sd">                    world.new_happenings(region=&#39;the north pacific&#39;):</span>
@@ -316,32 +448,38 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        poll_period : int</span>
-<span class="sd">            How long to wait between requesting the next bunch of</span>
+<span class="sd">            How long to wait between requesting the next portion of</span>
 <span class="sd">            happenings, in seconds.  Note that this should only be</span>
 <span class="sd">            tweaked for latency reasons, as the function gives a</span>
-<span class="sd">            guarantee that all happenings will be generated.  Also note</span>
-<span class="sd">            that, regardless of the ``poll_period`` you set, all of the</span>
-<span class="sd">            code in your loop body still has to execute (possibly</span>
-<span class="sd">            several times) before a new bunch of happenings can be</span>
+<span class="sd">            guarantee that all happenings will be generated.</span>
+
+<span class="sd">            Also note that, regardless of the ``poll_period`` set, all</span>
+<span class="sd">            of the code in your loop body still has to execute (likely</span>
+<span class="sd">            several times) before a new portion of happenings can be</span>
 <span class="sd">            requested.  Consider wrapping your happening-processing code</span>
 <span class="sd">            in a coroutine and launching it as a task from the loop body</span>
-<span class="sd">            if you suspect this might be an issue.</span>
+<span class="sd">            if you suspect this might become an issue.</span>
+
+<span class="sd">            Requests made by this generator are, of course, subject to</span>
+<span class="sd">            the API rate limit, and if the limiter has to temporarily</span>
+<span class="sd">            block new requests the time spent waiting will be added on</span>
+<span class="sd">            top of ``poll_period``.</span>
 <span class="sd">        nations : iterable of str</span>
 <span class="sd">            Nations happenings of which will be requested.  Cannot be</span>
-<span class="sd">            specified at the same time with region.</span>
+<span class="sd">            specified at the same time with ``regions``.</span>
 <span class="sd">        regions : iterable of str</span>
 <span class="sd">            Regions happenings of which will be requested.  Cannot be</span>
-<span class="sd">            specified at the same time with nation.</span>
+<span class="sd">            specified at the same time with ``nations``.</span>
 <span class="sd">        filters : iterable of str</span>
 <span class="sd">            Categories to request happenings by.  Available filters</span>
-<span class="sd">            are: &#39;law&#39;, &#39;change&#39;, &#39;dispatch&#39;, &#39;rmb&#39;, &#39;embassy&#39;, &#39;eject&#39;,</span>
-<span class="sd">            &#39;admin&#39;, &#39;move&#39;, &#39;founding&#39;, &#39;cte&#39;, &#39;vote&#39;, &#39;resolution&#39;,</span>
-<span class="sd">            &#39;member&#39;, and &#39;endo&#39;.</span>
+<span class="sd">            are: ``law``, ``change``, ``dispatch``, ``rmb``,</span>
+<span class="sd">            ``embassy``, ``eject``, ``admin``, ``move``, ``founding``,</span>
+<span class="sd">            ``cte``, ``vote``, ``resolution``, ``member``, and ``endo``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an asyncronous generator that yields :class:`UnrecognizedHappening` \</span>
-<span class="sd">        or any of the classes that inherit from it</span>
+<span class="sd">        an asynchronous iterator yielding any of the classes from \</span>
+<span class="sd">        the :mod:`~aionationstates.happenings` module</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># We only need the happenings from this point forwards</span>
@@ -369,6 +507,9 @@
 
             <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">happenings</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">happening</span></div></div>
+
+
+<span class="n">world</span> <span class="o">=</span> <span class="n">World</span><span class="p">()</span>
 </pre></div>
 
           </div>
@@ -380,6 +521,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
 </ul>
 
 

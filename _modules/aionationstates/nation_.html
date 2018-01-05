@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.nation_ &#8212; aionationstates 0.2.0 documentation</title>
+    <title>aionationstates.nation_ &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -44,14 +44,75 @@
   <h1>Source code for aionationstates.nation_</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
 
-<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span>
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">Freedom</span><span class="p">,</span> <span class="n">FreedomScores</span><span class="p">,</span> <span class="n">Govt</span><span class="p">,</span> <span class="n">Sectors</span><span class="p">,</span> <span class="n">Dispatch</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
-<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">NationRegion</span>
-<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">banner</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">normalize</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">banner_url</span><span class="p">,</span> <span class="n">aobject</span><span class="p">,</span>
+    <span class="n">alist</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span><span class="p">,</span> <span class="n">api_command</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shared</span> <span class="k">import</span> <span class="n">NationRegion</span><span class="p">,</span> <span class="n">DispatchThumbnail</span>
+<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">census_info</span>
 <span class="kn">import</span> <span class="nn">aionationstates</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Policy&#39;</span><span class="p">,</span> <span class="s1">&#39;Nation&#39;</span><span class="p">,</span> <span class="s1">&#39;CensusScaleChange&#39;</span><span class="p">,</span> <span class="s1">&#39;IssueResult&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;IssueOption&#39;</span><span class="p">,</span> <span class="s1">&#39;Issue&#39;</span><span class="p">,</span> <span class="s1">&#39;Nation&#39;</span><span class="p">,</span> <span class="s1">&#39;NationControl&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;WAMembership&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="WAMembership"><a class="viewcode-back" href="../../reference.html#aionationstates.WAMembership">[docs]</a><span class="k">class</span> <span class="nc">WAMembership</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Nation&#39;s World Assembly status.</span>
+
+<span class="sd">    Falsey when the nation doesn&#39;t hold membership.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    MEMBER : :class:`WAMembership`</span>
+<span class="sd">        The nation is a member of the World Assembly.</span>
+<span class="sd">    DELEGATE : :class:`WAMembership`</span>
+<span class="sd">        The nation is a World Assembly Delegate of one of the regions.</span>
+<span class="sd">    NONMEMBER : :class:`WAMembership`</span>
+<span class="sd">        The nation is not a member of the World Assembly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MEMBER</span> <span class="o">=</span> <span class="s1">&#39;WA Member&#39;</span>
+    <span class="n">DELEGATE</span> <span class="o">=</span> <span class="s1">&#39;WA Delegate&#39;</span>
+    <span class="n">NONMEMBER</span> <span class="o">=</span> <span class="s1">&#39;Non-member&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">NONMEMBER</span></div>
+
+
+<div class="viewcode-block" id="Policy"><a class="viewcode-back" href="../../reference.html#aionationstates.Policy">[docs]</a><span class="k">class</span> <span class="nc">Policy</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;One of nation&#39;s policies.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the policy.</span>
+<span class="sd">    category : str</span>
+<span class="sd">        Category of the policy.</span>
+<span class="sd">    description : str</span>
+<span class="sd">        Short description of the policy.</span>
+<span class="sd">    banner : str</span>
+<span class="sd">        URL of the policy picture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CAT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">banner</span> <span class="o">=</span> <span class="n">banner_url</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PIC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Policy &quot;</span><span class="si">{self.name}</span><span class="s1">&quot;&gt;&#39;</span></div>
 
 
 <div class="viewcode-block" id="Nation"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation">[docs]</a><span class="k">class</span> <span class="nc">Nation</span><span class="p">(</span><span class="n">NationRegion</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
@@ -61,12 +122,12 @@
 
 <span class="sd">    * **lastactivity** - There is no timestamp version, and the value</span>
 <span class="sd">      is kind of useless anyways.</span>
-<span class="sd">    * **govtpriority** - Use the govt shard.</span>
+<span class="sd">    * **govtpriority** - Use the :meth:`govt` shard.</span>
 <span class="sd">    * **factbooks**, **dispatches**, **factbooklist** - Use the</span>
-<span class="sd">      dispatchlist shard.</span>
-<span class="sd">    * **income**, **poorest**, **richest** - Use census scales 72, 73,</span>
-<span class="sd">      and 74 respectively.  The gdp shard has been kept, as it appears</span>
-<span class="sd">      to be slightly different from scale 76.</span>
+<span class="sd">      :meth:`dispatchlist` shard.</span>
+<span class="sd">    * **income**, **poorest**, **richest** - Use :meth:`census` scales</span>
+<span class="sd">      72, 73, and 74 respectively.  The :meth:`gdp` shard has been kept,</span>
+<span class="sd">      as it appears to be slightly different from scale 76.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -75,9 +136,11 @@
 <span class="sd">        No two nations share the same id, and no one id is shared by</span>
 <span class="sd">        multiple nations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="c1"># Nation(&#39;testlandia&#39;) == NationControl(&#39;testlandia, password=&#39;123&#39;)</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Nation</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">NationRegion</span><span class="o">.</span><span class="fm">__hash__</span>
 
     <span class="k">def</span> <span class="nf">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">params</span><span class="p">[</span><span class="s1">&#39;nation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
@@ -367,7 +430,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SENSIBILITIES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
 
-
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;population&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s population, in millions.</span>
@@ -429,9 +491,29 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`WAMembership`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">WAMembership</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNSTATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tgcanrecruit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Whether the nation will receive a recruitment telegram.</span>
+
+<span class="sd">        Useful in conjunction with the Telegrams API.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        region : str</span>
+<span class="sd">            Name of the region you are recruiting for.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
 <span class="sd">        an :class:`ApiQuery` of bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNSTATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;WA Member&#39;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;from&#39;</span><span class="p">:</span> <span class="n">normalize</span><span class="p">(</span><span class="n">region</span><span class="p">)}</span> <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;tgcanrecruit&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TGCANRECRUIT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedom&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">freedom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -441,9 +523,18 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of :class:`Freedom`</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \</span>
+<span class="sd">        keys and values of str</span>
+<span class="sd">            Keys being, in order: ``Civil Rights``, ``Economy``, and</span>
+<span class="sd">            ``Political Freedom``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Freedom</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOM&#39;</span><span class="p">))</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOM&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Civil Rights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Economy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Political Freedom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;freedomscores&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">freedomscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -452,9 +543,18 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of :class:`FreedomScores`</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \</span>
+<span class="sd">        keys of str and values of int</span>
+<span class="sd">            Keys being, in order: ``Civil Rights``, ``Economy``, and</span>
+<span class="sd">            ``Political Freedom``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">FreedomScores</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOMSCORES&#39;</span><span class="p">))</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FREEDOMSCORES&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Civil Rights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Economy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Political Freedom&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;govt&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">govt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -462,9 +562,49 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of :class:`Govt`</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \</span>
+<span class="sd">        keys of str and values of float</span>
+<span class="sd">            Keys being, in order: ``Administration``, ``Defense``,</span>
+<span class="sd">            ``Education``, ``Environment``, ``Healthcare``, ``Industry``,</span>
+<span class="sd">            ``International Aid``, ``Law &amp; Order``, ``Public Transport``,</span>
+<span class="sd">            ``Social Policy``, ``Spirituality``, and ``Welfare``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Govt</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVT&#39;</span><span class="p">))</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVT&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Administration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ADMINISTRATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Defense&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEFENCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># match the web UI</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Education&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EDUCATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Environment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ENVIRONMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Healthcare&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HEALTHCARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Industry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;COMMERCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># Don&#39;t ask</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;International Aid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INTERNATIONALAID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Law &amp; Order&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LAWANDORDER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Public Transport&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLICTRANSPORT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Social Policy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SOCIALEQUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># Shh</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Spirituality&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SPIRITUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Welfare&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;WELFARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sectors&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">sectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Components of the nation&#39;s economy, as percentages.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`collections.OrderedDict` with \</span>
+<span class="sd">        keys of str and values of float</span>
+<span class="sd">            Keys being, in order: ``Black Market (estimated)``, ``Government``,</span>
+<span class="sd">            ``Private Industry``, and ``State-Owned Industry``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SECTORS&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Black Market (estimated)&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BLACKMARKET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Government&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVERNMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Private Industry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INDUSTRY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;State-Owned Industry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLIC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;deaths&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">deaths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
@@ -481,7 +621,7 @@
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;endorsements&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">endorsements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Endorsements the nation has received.</span>
+        <span class="sd">&quot;&quot;&quot;Regional neighbours endorsing the nation.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -502,27 +642,30 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LEGISLATION&#39;</span><span class="p">)]</span>
 
-    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;sectors&#39;</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">sectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Components of the nation&#39;s economy, as percentages.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of :class:`Sectors`</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Sectors</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SECTORS&#39;</span><span class="p">))</span>
-
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;dispatchlist&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">dispatchlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Nation&#39;s published dispatches.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of a list of :class:`Dispatch`</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`DispatchThumbnail`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">Dispatch</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="n">DispatchThumbnail</span><span class="o">.</span><span class="n">_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DISPATCHLIST&#39;</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;policies&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">policies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Nation&#39;s policies.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Policy`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Policy</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLICIES&#39;</span><span class="p">)</span>
         <span class="p">]</span>
 
 <div class="viewcode-block" id="Nation.verify"><a class="viewcode-back" href="../../reference.html#aionationstates.Nation.verify">[docs]</a>    <span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checksum</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -538,6 +681,10 @@
 <span class="sd">            is successfully verified.</span>
 <span class="sd">        token : str</span>
 <span class="sd">            A token specific to your service and the nation being verified.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;verify&#39;</span><span class="p">,</span> <span class="s1">&#39;checksum&#39;</span><span class="p">:</span> <span class="n">checksum</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
@@ -558,6 +705,10 @@
 <span class="sd">        ----------</span>
 <span class="sd">        token : str</span>
 <span class="sd">            A token specific to your service and the nation being verified.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;https://www.nationstates.net/&#39;</span>
@@ -571,24 +722,17 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        an :class:`ApiQuery` of a list of :class:`Banner`</span>
+<span class="sd">        an :class:`ApiQuery` of a list of str</span>
+<span class="sd">            URLs of the banner pictures.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">expand_macros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_macros_expander</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="k">await</span> <span class="n">banner</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">_expand_macros</span><span class="p">(</span><span class="n">expand_macros</span><span class="p">)</span>
+            <span class="n">banner_url</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BANNERS&#39;</span><span class="p">)</span>
         <span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_get_macros_expander</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># The only macros present in the banner names are name,</span>
-        <span class="c1"># demonym, and faith.  If the NS admins ever choose to answer</span>
-        <span class="c1"># my request and fix the unexpanded macros in issue effect</span>
-        <span class="c1"># headlines, the rest should be removed as unnecessary.</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">demonym</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">demonym2</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">demonym2plural</span><span class="p">()</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">religion</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">animal</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">capital</span><span class="p">()</span>
-            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">leader</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">currency</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="c1"># The only three macros present in the banner names:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demonym</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">religion</span><span class="p">()</span>
         <span class="n">query_result</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">expand_macros</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
@@ -600,32 +744,8 @@
                 <span class="k">return</span> <span class="p">(</span>
                     <span class="n">line</span>
                     <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@DEMONYM@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@DEMONYM2@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                    <span class="c1"># Not documented, or even mentioned anywhere.</span>
-                    <span class="c1"># Discovered through experimentation.  No idea if</span>
-                    <span class="c1"># that&#39;s a pattern or not.</span>
-                    <span class="c1"># More experimentation will tell, I guess?</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@PL(DEMONYM2)@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-                    <span class="c1"># I feel filthy just looking at this.  Surely, NS</span>
-                    <span class="c1"># wouldn&#39;t put bits of Perl code to be executed</span>
-                    <span class="c1"># into macros?  Surely, their implementation can&#39;t</span>
-                    <span class="c1"># be that bad?</span>
-                    <span class="c1"># Yeah right.  Ha ha.  Ha.</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@uc($nation-&gt;query(&quot;name&quot;))@@&#39;</span><span class="p">,</span>
-                             <span class="n">query_result</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-                    <span class="c1"># I wasn&#39;t that nihilistic before starting to write</span>
-                    <span class="c1"># this library, was I?</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@NAME@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@FAITH@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@ANIMAL@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
-                    <span class="c1"># Am I surprised that even in their code they have</span>
-                    <span class="c1"># two ways to query data, used interchangeably?</span>
-                    <span class="c1"># At this point, not really, no.</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@$nation-&gt;query_capital()@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span>
-                    <span class="c1"># I just hope there aren&#39;t enough headlines with</span>
-                    <span class="c1"># macros to force me into using regex.</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@LEADER@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
-                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@CURRENCY@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@NAME@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;@@FAITH@@&#39;</span><span class="p">,</span> <span class="n">query_result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
                 <span class="p">)</span>
             <span class="k">return</span> <span class="n">line</span>
 
@@ -651,6 +771,281 @@
             <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&lt;p&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span></div></div>
+
+
+<span class="c1"># Issue outcome processing:</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">reclassifications</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">census</span><span class="p">,</span> <span class="n">expand_macros</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">elem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">census</span> <span class="o">=</span> <span class="p">{</span><span class="n">scale</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">scale</span> <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="n">census</span><span class="p">[:</span><span class="mi">3</span><span class="p">]}</span>
+        <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">:</span>
+            <span class="n">before</span> <span class="o">=</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;FROM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">after</span> <span class="o">=</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TO&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">reclassification_type</span> <span class="o">=</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reclassification_type</span> <span class="o">==</span> <span class="s1">&#39;govt&#39;</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="k">await</span> <span class="n">expand_macros</span><span class="p">(</span>
+                    <span class="n">f</span><span class="s1">&#39;@@NAME@@ was reclassified from </span><span class="si">{before}</span><span class="s1"> to </span><span class="si">{after}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">scale</span> <span class="o">=</span> <span class="n">census</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">reclassification_type</span><span class="p">)]</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="s1">&#39;rose&#39;</span> <span class="k">if</span> <span class="n">scale</span><span class="o">.</span><span class="n">change</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;fell&#39;</span>
+                <span class="k">yield</span> <span class="k">await</span> <span class="n">expand_macros</span><span class="p">(</span>
+                    <span class="n">f</span><span class="s1">&#39;@@NAME@@</span><span class="se">\&#39;</span><span class="s1">s </span><span class="si">{scale.info.title}</span><span class="s1">&#39;</span>
+                    <span class="n">f</span><span class="s1">&#39; </span><span class="si">{changed}</span><span class="s1"> from </span><span class="si">{before}</span><span class="s1"> to </span><span class="si">{after}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CensusScaleChange"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleChange">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleChange</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Change in one of the World Census scales of a nation</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ---------</span>
+<span class="sd">    info : :class:`ScaleInfo`</span>
+<span class="sd">        Static information about the scale.</span>
+<span class="sd">    score : float</span>
+<span class="sd">        The scale score, after the change.</span>
+<span class="sd">    change : float</span>
+<span class="sd">        Change of the score.</span>
+<span class="sd">    pchange : float</span>
+<span class="sd">        The semi-user-friendly percentage change NationStates shows by default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CHANGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pchange</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PCHANGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IssueResult"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueResult">[docs]</a><span class="k">class</span> <span class="nc">IssueResult</span><span class="p">(</span><span class="n">aobject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Outcome of an issue.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    effect_line : str or None</span>
+<span class="sd">        The issue effect line.  Not a sentence, mind you -- it&#39;s</span>
+<span class="sd">        uncapitalized and does not end with a period.  ``None`` if the</span>
+<span class="sd">        issue was dismissed.</span>
+<span class="sd">    census : list of :class:`CensusScaleChange`</span>
+<span class="sd">        Changes in census scores of the nation.</span>
+<span class="sd">    banners : list of :class:`Banner`</span>
+<span class="sd">        The banners unlocked by answering the issue.</span>
+<span class="sd">    new_policies : list of :class:`Policy`</span>
+<span class="sd">        Policies introduced.</span>
+<span class="sd">    removed_policies : list of :class:`Policy`</span>
+<span class="sd">        Policies removed.</span>
+<span class="sd">    reclassifications : list of str</span>
+<span class="sd">        All WA Category and Freedoms reclassifications listed, such as</span>
+<span class="sd">        &#39;Testlandia&#39;s Civil Rights fell from Very Good to Good&#39;,</span>
+<span class="sd">        &#39;Testlandia was reclassified from Inoffensive Centrist Democracy</span>
+<span class="sd">        to Democratic Socialists&#39;, etc..</span>
+<span class="sd">    headlines : list of str</span>
+<span class="sd">        Newspaper headlines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">expand_macros</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">if</span> <span class="n">error</span> <span class="o">==</span> <span class="s1">&#39;Invalid choice.&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid option&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">error</span> <span class="o">==</span> <span class="s1">&#39;Issue already processed!&#39;</span><span class="p">:</span>
+                <span class="c1"># I know it may not be obvious, but that&#39;s exactly</span>
+                <span class="c1"># what NS is trying to say here.</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid issue&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;OK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span>  <span class="c1"># honestly no idea</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">effect_line</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;DESC&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">census</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CensusScaleChange</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RANKINGS&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="n">banners_elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;UNLOCKS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">banners_elem</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="k">await</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">banners_elem</span><span class="p">],</span>
+                <span class="n">expand_macros</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_policies</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Policy</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NEW_POLICIES&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removed_policies</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Policy</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REMOVED_POLICIES&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">reclassifications</span> <span class="o">=</span> <span class="k">await</span> <span class="n">alist</span><span class="p">(</span>
+            <span class="n">reclassifications</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RECLASSIFICATIONS&#39;</span><span class="p">),</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">census</span><span class="p">,</span> <span class="n">expand_macros</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headlines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="c1"># There are occasionally trailing spaces in headlines.</span>
+            <span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">sub_elem</span>
+            <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HEADLINES&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">]</span></div>
+
+
+<span class="c1"># Unsolved issues:</span>
+
+<div class="viewcode-block" id="IssueOption"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueOption">[docs]</a><span class="k">class</span> <span class="nc">IssueOption</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An option of an issue.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The option text.  May contain HTML elements and character references.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">issue</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span> <span class="o">=</span> <span class="n">issue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IssueOption.accept"><a class="viewcode-back" href="../../reference.html#aionationstates.IssueOption.accept">[docs]</a>    <span class="k">def</span> <span class="nf">accept</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Accept the option.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an awaitable of :class:`IssueResult`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="o">.</span><span class="n">_nation</span><span class="o">.</span><span class="n">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_issue</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Option </span><span class="si">{self._id}</span><span class="s1"> of issue #</span><span class="si">{self._issue.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="Issue"><a class="viewcode-back" href="../../reference.html#aionationstates.Issue">[docs]</a><span class="k">class</span> <span class="nc">Issue</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An issue.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The issue id.</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The issue title.  May contain HTML elements and character references.</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The issue text.  May contain HTML elements and character references.</span>
+<span class="sd">    author : str</span>
+<span class="sd">        Author of the issue, usually the name of a nation.</span>
+<span class="sd">    editor : str</span>
+<span class="sd">        Author of the issue, usually the name of a nation.</span>
+<span class="sd">    options : list of :class:`IssueOption`</span>
+<span class="sd">        Issue options.</span>
+<span class="sd">    banners : str</span>
+<span class="sd">        URLs of issue banners.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">nation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span> <span class="o">=</span> <span class="n">nation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">editor</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;EDITOR&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">IssueOption</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;OPTION&#39;</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">def</span> <span class="nf">issue_banners</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>  <span class="c1"># Should be more than enough.</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">banner_url</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;PIC</span><span class="si">{x}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">break</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">banners</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">issue_banners</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Issue.dismiss"><a class="viewcode-back" href="../../reference.html#aionationstates.Issue.dismiss">[docs]</a>    <span class="k">def</span> <span class="nf">dismiss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dismiss the issue.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an awaitable of :class:`IssueResult`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span><span class="o">.</span><span class="n">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_nation</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nation</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Issue #</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="NationControl"><a class="viewcode-back" href="../../reference.html#aionationstates.NationControl">[docs]</a><span class="k">class</span> <span class="nc">NationControl</span><span class="p">(</span><span class="n">Nation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interface to the NationStates private Nation API.  Subclasses</span>
+<span class="sd">    :class:`Nation`.</span>
+
+<span class="sd">    Credentials are not checked upon initialization, you will only know</span>
+<span class="sd">    if you&#39;ve made a mistake after you try to make the first request.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">autologin</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">autologin</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No password or autologin supplied&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span> <span class="o">=</span> <span class="n">autologin</span>
+        <span class="c1"># Weird things happen if the supplied pin doesn&#39;t follow the format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="s1">&#39;0000000000&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_base_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;X-Password&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+            <span class="s1">&#39;X-Autologin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">,</span>
+            <span class="s1">&#39;X-Pin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin</span>
+        <span class="p">}</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_base_call_api</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-Pin&#39;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Updating pin for </span><span class="si">{self.id}</span><span class="s1"> from API header&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;X-Autologin&#39;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Setting autologin for </span><span class="si">{self.id}</span><span class="s1"> from API header&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_web</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">:</span>
+            <span class="c1"># Obtain autologin in case only password was provided</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_api</span><span class="p">({</span><span class="s1">&#39;nation&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="s1">&#39;nextissue&#39;</span><span class="p">})</span>
+        <span class="n">cookies</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># Will not work with unescaped equals sign</span>
+            <span class="s1">&#39;autologin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">+</span> <span class="s1">&#39;%3D&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">autologin</span><span class="p">,</span>
+            <span class="s1">&#39;pin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin</span>
+        <span class="p">}</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_call_web</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                       <span class="n">cookies</span><span class="o">=</span><span class="n">cookies</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pin</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s1">&#39;pin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Updating pin for </span><span class="si">{self.id}</span><span class="s1"> from web cookie&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_call_api_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;nation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_call_api</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># End of authenticated session handling</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;issues&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">issues</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Issues the nation currently faces.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`Issue`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Issue</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ISSUES&#39;</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">_accept_issue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">issue_id</span><span class="p">,</span> <span class="n">option_id</span><span class="p">):</span>
+        <span class="nd">@api_command</span><span class="p">(</span><span class="s1">&#39;issue&#39;</span><span class="p">,</span> <span class="n">issue</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">issue_id</span><span class="p">),</span> <span class="n">option</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">option_id</span><span class="p">))</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">IssueResult</span><span class="p">(</span>
+                <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ISSUE&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_macros_expander</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -662,6 +1057,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
 </ul>
 
 

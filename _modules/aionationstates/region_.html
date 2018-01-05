@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.region_ &#8212; aionationstates 0.2.0 documentation</title>
+    <title>aionationstates.region_ &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,14 +42,268 @@
           <div class="body" role="main">
             
   <h1>Source code for aionationstates.region_</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">html</span>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">count</span>
+<span class="kn">from</span> <span class="nn">asyncio</span> <span class="k">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span><span class="p">,</span> <span class="n">total_ordering</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">or_</span>
 
-<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">timestamp</span>
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">EmbassyPostingRights</span><span class="p">,</span> <span class="n">Officer</span><span class="p">,</span> <span class="n">Authority</span><span class="p">,</span> <span class="n">Embassies</span><span class="p">,</span> <span class="n">Poll</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span><span class="p">,</span> <span class="n">DataClassWithId</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">api_query</span>
-<span class="kn">from</span> <span class="nn">aionationstates.shards</span> <span class="k">import</span> <span class="n">NationRegion</span>
+<span class="kn">from</span> <span class="nn">aionationstates.shared</span> <span class="k">import</span> <span class="n">NationRegion</span><span class="p">,</span> <span class="n">Poll</span>
 <span class="kn">import</span> <span class="nn">aionationstates</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Embassies&#39;</span><span class="p">,</span> <span class="s1">&#39;Authority&#39;</span><span class="p">,</span> <span class="s1">&#39;Officer&#39;</span><span class="p">,</span> <span class="s1">&#39;EmbassyPostingRights&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;PostStatus&#39;</span><span class="p">,</span> <span class="s1">&#39;Post&#39;</span><span class="p">,</span> <span class="s1">&#39;Region&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Embassies"><a class="viewcode-back" href="../../reference.html#aionationstates.Embassies">[docs]</a><span class="k">class</span> <span class="nc">Embassies</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Embassies of a region.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    active : list of :class:`Region`</span>
+<span class="sd">        Normal, alive embassies.</span>
+<span class="sd">    closing : list of :class:`Region`</span>
+<span class="sd">        Embassies the demolition of which has been initiated, but did</span>
+<span class="sd">        not yet finish.</span>
+<span class="sd">    pending : list of :class:`Region`</span>
+<span class="sd">        Embassies the creation of which has been initiated, but did not</span>
+<span class="sd">        yet finish.</span>
+<span class="sd">    invited : list of :class:`Region`</span>
+<span class="sd">        Embassy invitations that have not yet been processed.</span>
+<span class="sd">    rejected : list of :class:`Region`</span>
+<span class="sd">        Embassy invitations that have been denied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># I know I&#39;m iterating through them five times; I don&#39;t care.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                       <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closing</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;closing&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;pending&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invited</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                        <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;invited&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rejected</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">sub_elem</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span>
+                         <span class="k">if</span> <span class="n">sub_elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;rejected&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Authority"><a class="viewcode-back" href="../../reference.html#aionationstates.Authority">[docs]</a><span class="k">class</span> <span class="nc">Authority</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Flag</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Authority of a Regional Officer, Delegate, or Founder.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X = EXECUTIVE : :class:`Authority`</span>
+<span class="sd">        Can appoint/dismiss Officers and set their authority.</span>
+<span class="sd">    W = WORLD_ASSEMBLY : :class:`Authority`</span>
+<span class="sd">        Can approve World Assembly proposals.</span>
+<span class="sd">    A = APPEARANCE : :class:`Authority`</span>
+<span class="sd">        Can modify the World Factbook Entry, Flag, and Tags, and pin</span>
+<span class="sd">        Dispatches.</span>
+<span class="sd">    B = BORDER_CONTROL : :class:`Authority`</span>
+<span class="sd">        Can eject/ban/unban nations and set/modify/remove the region</span>
+<span class="sd">        password.</span>
+<span class="sd">    C = COMMUNICATIONS : :class:`Authority`</span>
+<span class="sd">        Can send region-wide telegrams without stamps, compose Welcome</span>
+<span class="sd">        telegrams, suppress &amp; unsuppress posts on the Regional Message</span>
+<span class="sd">        Board, and control who can recruit for the region.</span>
+<span class="sd">    E = EMBASSIES : :class:`Authority`</span>
+<span class="sd">        Can open/close embassies with other regions and modify embassy</span>
+<span class="sd">        posting privileges.</span>
+<span class="sd">    P = POLLS : :class:`Authority`</span>
+<span class="sd">        Can create polls.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">EXECUTIVE</span>      <span class="o">=</span> <span class="n">X</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">WORLD_ASSEMBLY</span> <span class="o">=</span> <span class="n">W</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">APPEARANCE</span>     <span class="o">=</span> <span class="n">A</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">BORDER_CONTROL</span> <span class="o">=</span> <span class="n">B</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">COMMUNICATIONS</span> <span class="o">=</span> <span class="n">C</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">EMBASSIES</span>      <span class="o">=</span> <span class="n">E</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+    <span class="n">POLLS</span>          <span class="o">=</span> <span class="n">P</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_ns</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This is the only sane way I could find to make Flag enums</span>
+<span class="sd">        work with individual characters as flags.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">or_</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">string</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_happening</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;&lt;i .+?&gt;&lt;/i&gt;(.+?)(?: and|,|$)&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span>
+            <span class="n">or_</span><span class="p">,</span>
+            <span class="p">(</span><span class="bp">cls</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">),</span>
+            <span class="bp">cls</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Officer"><a class="viewcode-back" href="../../reference.html#aionationstates.Officer">[docs]</a><span class="k">class</span> <span class="nc">Officer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A Regional Officer.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nation : :class:`Nation`</span>
+<span class="sd">        Officer&#39;s nation.</span>
+<span class="sd">    office : str</span>
+<span class="sd">        The (user-specified) office held by the officer.</span>
+<span class="sd">    authority : :class:`Authority`</span>
+<span class="sd">        Officer&#39;s authority.</span>
+<span class="sd">    appointed_at : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the officer got appointed.</span>
+<span class="sd">    appointed_by : :class:`Nation`</span>
+<span class="sd">        The nation that appointed the officer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nation</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">office</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;OFFICE&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">Authority</span><span class="o">.</span><span class="n">_from_ns</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHORITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appointed_at</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">appointed_by</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyPostingRights"><a class="viewcode-back" href="../../reference.html#aionationstates.EmbassyPostingRights">[docs]</a><span class="nd">@total_ordering</span>
+<span class="k">class</span> <span class="nc">EmbassyPostingRights</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Who out of embassy regions&#39; residents can post on the Regional</span>
+<span class="sd">    Message Board.</span>
+
+<span class="sd">    Can be compared and ordered.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    NOBODY : :class:`EmbassyPostingRights`</span>
+<span class="sd">        No members of the embassy regions can post.</span>
+<span class="sd">    DELEGATES_AND_FOUNDERS : :class:`EmbassyPostingRights`</span>
+<span class="sd">        Only the Founders and WA Delegates of embassy regions can post.</span>
+<span class="sd">    COMMUNICATIONS_OFFICERS : :class:`EmbassyPostingRights`</span>
+<span class="sd">        Only Regional Officers of embassy regions with the</span>
+<span class="sd">        Communications authority can post.</span>
+<span class="sd">    OFFICERS : :class:`EmbassyPostingRights`</span>
+<span class="sd">        All Regional Officers of embassy regions can post.</span>
+<span class="sd">    EVERYBODY : :class:`EmbassyPostingRights`</span>
+<span class="sd">        All members of embassy regions can post.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NOBODY</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DELEGATES_AND_FOUNDERS</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">COMMUNICATIONS_OFFICERS</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">OFFICERS</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">EVERYBODY</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_ns</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># The reason I have to do all this nonsense.</span>
+            <span class="s1">&#39;con&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;com&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s1">&#39;off&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s1">&#39;all&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">string</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span></div>
+
+
+<div class="viewcode-block" id="PostStatus"><a class="viewcode-back" href="../../reference.html#aionationstates.PostStatus">[docs]</a><span class="k">class</span> <span class="nc">PostStatus</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Status of a post on a Regional Message Board.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    NORMAL : :class:`PostStatus`</span>
+<span class="sd">        A regular post.</span>
+<span class="sd">    SUPPRESSED : :class:`PostStatus`</span>
+<span class="sd">        The post got suppressed by a regional officer.</span>
+<span class="sd">    DELETED : :class:`PostStatus`</span>
+<span class="sd">        The post got deleted by its author.</span>
+<span class="sd">    MODERATED : :class:`PostStatus`</span>
+<span class="sd">        The post got suppressed by a game moderator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SUPPRESSED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DELETED</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">MODERATED</span> <span class="o">=</span> <span class="mi">9</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">viewable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;bool: Whether the post content can still be accessed.</span>
+<span class="sd">        Shortcut for ``PostStatus.NORMAL or PostStatus.SUPPRESSED``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Post"><a class="viewcode-back" href="../../reference.html#aionationstates.Post">[docs]</a><span class="k">class</span> <span class="nc">Post</span><span class="p">(</span><span class="n">DataClassWithId</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A post on a Regional Message Board.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The unique id of the post.</span>
+<span class="sd">    timestamp : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the post was put up.</span>
+<span class="sd">    author : :class:`Nation`</span>
+<span class="sd">        The author nation.</span>
+<span class="sd">    status : :class:`PostStatus`</span>
+<span class="sd">        Status of the post.</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The post text.</span>
+<span class="sd">    likers : list of :class:`Nation`</span>
+<span class="sd">        Nations that liked the post.</span>
+<span class="sd">    suppressor : :class:`Nation` of None</span>
+<span class="sd">        Nation that suppressed the post.  ``None`` if the post has not</span>
+<span class="sd">        been suppressed or has been suppressed by moderators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">PostStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;STATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MESSAGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+
+        <span class="n">likers</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;LIKERS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">likers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span>
+                           <span class="ow">in</span> <span class="n">likers</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">suppressor_str</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;SUPPRESSOR&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">suppressor_str</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;!mod&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">suppressor_str</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Post.quote"><a class="viewcode-back" href="../../reference.html#aionationstates.Post.quote">[docs]</a>    <span class="k">def</span> <span class="nf">quote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Quote this post.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        text : str</span>
+<span class="sd">            Text to quote.  Defaults to the whole text of the post.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            A NationStates bbCode quote of the post.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span> <span class="ow">or</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\[quote=.+?\[/quote\]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+                              <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;[quote=</span><span class="si">{self.author.id}</span><span class="s1">;</span><span class="si">{self.id}</span><span class="s1">]</span><span class="si">{text}</span><span class="s1">[/quote]&#39;</span></div></div>
 
 
 <div class="viewcode-block" id="Region"><a class="viewcode-back" href="../../reference.html#aionationstates.Region">[docs]</a><span class="k">class</span> <span class="nc">Region</span><span class="p">(</span><span class="n">NationRegion</span><span class="p">,</span> <span class="n">Session</span><span class="p">):</span>
@@ -62,14 +316,9 @@
 <span class="sd">        No two regions share the same id, and no one id is shared by</span>
 <span class="sd">        multiple regions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">_call_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">params</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_call_api</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -121,8 +370,10 @@
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;delegatevotes&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">delegatevotes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Number of the World Assembly votes the region&#39;s Delegate</span>
-<span class="sd">        has.</span>
+        <span class="sd">&quot;&quot;&quot;Number of the votes in the World Assembly the region&#39;s</span>
+<span class="sd">        Delegate has.</span>
+
+<span class="sd">        Equal to the number of endorsements they have received.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -238,7 +489,8 @@
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;officers&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">officers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Regional Officers.  Does not include the Founder or</span>
-<span class="sd">        the Delegate, unless they have additional litles as Officers.</span>
+<span class="sd">        the Delegate, unless they have additional titles as Officers.</span>
+
 <span class="sd">        In the correct order.</span>
 
 <span class="sd">        Returns</span>
@@ -264,16 +516,115 @@
 
     <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;poll&#39;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Current regional poll.</span>
+        <span class="sd">&quot;&quot;&quot;The poll currently running in the region.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        an :class:`ApiQuery` of :class:`Poll`</span>
+<span class="sd">        an :class:`ApiQuery` of None</span>
+<span class="sd">            If no poll is currently running.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">elem</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLL&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Poll</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span> <span class="k">else</span> <span class="kc">None</span></div>
+        <span class="k">return</span> <span class="n">Poll</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="c1"># TODO: history, messages</span>
+    <span class="c1"># Messages interface:</span>
+
+    <span class="k">def</span> <span class="nf">_get_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fromid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;limit&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">limit</span><span class="p">),</span> <span class="s1">&#39;offset&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">offset</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="n">fromid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;fromid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fromid</span><span class="p">)</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;messages&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Post</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MESSAGES&#39;</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">messages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate through RMB posts from newest to oldest.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an asynchronous generator that yields :class:`Post`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Messages may be posted on the RMB while the generator is running.</span>
+        <span class="n">oldest_id_seen</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">offset</span> <span class="ow">in</span> <span class="n">count</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">posts_bunch</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_messages</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">post</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">posts_bunch</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">post</span><span class="o">.</span><span class="n">id</span> <span class="o">&lt;</span> <span class="n">oldest_id_seen</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">post</span>
+            <span class="n">oldest_id_seen</span> <span class="o">=</span> <span class="n">posts_bunch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">posts_bunch</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">new_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">poll_period</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fromid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;New messages on the Regional Message Board::</span>
+
+<span class="sd">            tnp = region(&#39;The North Pacific&#39;)</span>
+<span class="sd">            async for post in tnp.new_messages():</span>
+<span class="sd">                # Your processing code here</span>
+<span class="sd">                print(post.text)  # As an example</span>
+
+<span class="sd">        Guarantees that:</span>
+
+<span class="sd">        * Every post is generated from the moment the generator is started;</span>
+<span class="sd">        * No post is generated more than once;</span>
+<span class="sd">        * Posts are generated in order from oldest to newest.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        poll_period : int</span>
+<span class="sd">            How long to wait between requesting the next bunch of</span>
+<span class="sd">            posts, in seconds.  Ignored while catching up to the end</span>
+<span class="sd">            of the Message Board, meaning that no matter how long of a</span>
+<span class="sd">            period you set you will never encounter a situation where</span>
+<span class="sd">            posts are made faster than the generator can deliver them.</span>
+
+<span class="sd">            Note that, regardless of the ``poll_period`` you set, all</span>
+<span class="sd">            of the code in your loop body still has to execute (possibly</span>
+<span class="sd">            several times) before a new bunch of posts can be</span>
+<span class="sd">            requested.  Consider wrapping your post-processing code</span>
+<span class="sd">            in a coroutine and launching it as a task from the loop body</span>
+<span class="sd">            if you suspect this might be an issue.</span>
+<span class="sd">        fromid : int</span>
+<span class="sd">            Request posts starting with the one with this id, as</span>
+<span class="sd">            as opposed to the last one at the time.  Useful if you</span>
+<span class="sd">            need to avoid losing posts between restarts.  Set to `1`</span>
+<span class="sd">            to request the entire RMB history chronologically.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an asynchronous generator that yields :class:`Post`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fromid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># fromid of 0 gets ignored by NS</span>
+            <span class="n">fromid</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">fromid</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">fromid</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># We only need the posts from this point forwards</span>
+                <span class="n">fromid</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_messages</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="c1"># Empty RMB</span>
+                <span class="n">fromid</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># Sleep before the loop body to avoid wasting the first request.</span>
+            <span class="c1"># We only want to apply this &quot;optimization&quot; if fromid was not</span>
+            <span class="c1"># specified, as only then we know for sure we&#39;re at the end of the</span>
+            <span class="c1"># RMB.</span>
+            <span class="k">await</span> <span class="n">sleep</span><span class="p">(</span><span class="n">poll_period</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">posts</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_messages</span><span class="p">(</span><span class="n">fromid</span><span class="o">=</span><span class="n">fromid</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">IndexError</span><span class="p">):</span>
+                <span class="n">fromid</span> <span class="o">=</span> <span class="n">posts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="k">for</span> <span class="n">post</span> <span class="ow">in</span> <span class="n">posts</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">post</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">posts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">sleep</span><span class="p">(</span><span class="n">poll_period</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: history</span>
 </pre></div>
 
           </div>
@@ -285,6 +636,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
 </ul>
 
 

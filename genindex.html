@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &#8212; aionationstates 0.2.0 documentation</title>
+    <title>Index &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -60,6 +60,7 @@
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -74,33 +75,39 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.IssueOption.accept">accept() (IssueOption method)</a>
 </li>
+      <li><a href="happenings.html#aionationstates.happenings.Action">Action (class in aionationstates.happenings)</a>
+</li>
       <li><a href="reference.html#aionationstates.Zombie.action">action (Zombie attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Embassies.active">active (Embassies attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.administration">administration (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.Nation.admirable">admirable() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.admirable">admirable() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.admirable">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.Affecting">Affecting (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Reclassification.after">after (Reclassification attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Action.agent">agent (Action attribute)</a>
 </li>
       <li><a href="reference.html#module-aionationstates">aionationstates (module)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.animal">animal() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.animal">[1]</a>
+      <li><a href="happenings.html#module-aionationstates.happenings">aionationstates.happenings (module)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.animaltrait">animaltrait() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.animaltrait">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.animal">animal() (Nation method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Nation.animaltrait">animaltrait() (Nation method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.TGQueue.api">api (TGQueue attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.ApiQuery">ApiQuery (class in aionationstates)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.ApiQuery">ApiQuery (class in aionationstates)</a>
-</li>
       <li><a href="reference.html#aionationstates.Officer.appointed_at">appointed_at (Officer attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Officer.appointed_by">appointed_by (Officer attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.AuthenticationError">AuthenticationError</a>
 </li>
-      <li><a href="reference.html#aionationstates.Dispatch.author">author (Dispatch attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.author">author (DispatchThumbnail attribute)</a>
 
       <ul>
         <li><a href="reference.html#aionationstates.Issue.author">(Issue attribute)</a>
@@ -113,7 +120,23 @@
       <li><a href="reference.html#aionationstates.Authority">Authority (class in aionationstates)</a>
 </li>
       <li><a href="reference.html#aionationstates.Officer.authority">authority (Officer attribute)</a>
+
+      <ul>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerAppointment.authority">(OfficerAppointment attribute)</a>
 </li>
+      </ul></li>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateModification.authority_granted">authority_granted (DelegateModification attribute)</a>
+
+      <ul>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerModification.authority_granted">(OfficerModification attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateModification.authority_removed">authority_removed (DelegateModification attribute)</a>
+
+      <ul>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerModification.authority_removed">(OfficerModification attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -122,7 +145,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.Banner">Banner (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.BannerCreation">BannerCreation (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Policy.banner">banner (Policy attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.World.banner">banner() (World method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="happenings.html#aionationstates.happenings.BannerCreation">BannerCreation (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.Issue.banners">banners (Issue attribute)</a>
 
@@ -130,13 +159,7 @@
         <li><a href="reference.html#aionationstates.IssueResult.banners">(IssueResult attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.banners">banners() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.banners">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.Reclassification.before">before (Reclassification attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Sectors.blackmarket">blackmarket (Sectors attribute)</a>
+      <li><a href="reference.html#aionationstates.Nation.banners">banners() (Nation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -144,21 +167,21 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.capital">capital() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.capital">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.capital">capital() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Dispatch.category">category (Dispatch attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.category">category (DispatchThumbnail attribute)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.DispatchPublication.category">(DispatchPublication attribute)</a>
+        <li><a href="reference.html#aionationstates.Policy.category">(Policy attribute)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.Nation.category">category() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.category">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.category">category() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CategoryChange.category_after">category_after (CategoryChange attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.CategoryChange.category_after">category_after (CategoryChange attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CategoryChange">CategoryChange (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.CategoryChange.category_before">category_before (CategoryChange attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CategoryChange.catogory_before">catogory_before (CategoryChange attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.CategoryChange">CategoryChange (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.IssueResult.census">census (IssueResult attribute)</a>
 </li>
@@ -178,10 +201,10 @@
         <li><a href="reference.html#aionationstates.World.censushistory">(World method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.CensusPoint">CensusPoint (class in aionationstates)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference.html#aionationstates.CensusPoint">CensusPoint (class in aionationstates)</a>
+</li>
       <li><a href="reference.html#aionationstates.CensusScaleChange">CensusScaleChange (class in aionationstates)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleCurrent">CensusScaleCurrent (class in aionationstates)</a>
@@ -190,29 +213,23 @@
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleChange.change">change (CensusScaleChange attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.SettingsChange.changes">changes (SettingsChange attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.SettingsChange.changes">changes (SettingsChange attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Freedom.civilrights">civilrights (Freedom attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.FreedomScores.civilrights">(FreedomScores attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Reclassifications.civilrights">(Reclassifications attribute)</a>
-</li>
-      </ul></li>
       <li><a href="reference.html#aionationstates.Embassies.closing">closing (Embassies attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.commerce">commerce (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.EmbassyPostingRights.COMMUNICATIONS_OFFICERS">COMMUNICATIONS_OFFICERS (EmbassyPostingRights attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieInfectAction.convert">convert (ZombieInfectAction attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Consequence">Consequence (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Dispatch.created">created (Dispatch attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieInfect.convert">convert (ZombieInfect attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.crime">crime() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.crime">[1]</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.created">created (DispatchThumbnail attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CTE">CTE (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Nation.crime">crime() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.currency">currency() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.currency">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.CTE">CTE (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Nation.currency">currency() (Nation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -222,49 +239,53 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.Zombie.dead">dead (Zombie attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.deaths">deaths() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.deaths">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.deaths">deaths() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.defence">defence (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.WAMembership.DELEGATE">DELEGATE (WAMembership attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.delegate">delegate() (Region method)</a>, <a href="reference.html#aionationstates.Region.delegate">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.delegate">delegate() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.delegateauth">delegateauth() (Region method)</a>, <a href="reference.html#aionationstates.Region.delegateauth">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.delegateauth">delegateauth() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.DelegateChange">DelegateChange (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateChange">DelegateChange (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.delegatevotes">delegatevotes() (Region method)</a>, <a href="reference.html#aionationstates.Region.delegatevotes">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateModification">DelegateModification (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="reference.html#aionationstates.EmbassyPostingRights.DELEGATES_AND_FOUNDERS">DELEGATES_AND_FOUNDERS (EmbassyPostingRights attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Region.delegatevotes">delegatevotes() (Region method)</a>
 </li>
       <li><a href="reference.html#aionationstates.PostStatus.DELETED">DELETED (PostStatus attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.demonym">demonym() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.demonym">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.Nation.demonym2">demonym2() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.demonym2">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.demonym">demonym() (Nation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.demonym2plural">demonym2plural() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.demonym2plural">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.demonym2">demonym2() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.description">description() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.description">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.demonym2plural">demonym2plural() (Nation method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Policy.description">description (Policy attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Nation.description">description() (Nation method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Issue.dismiss">dismiss() (Issue method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Dispatch">Dispatch (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.DispatchPublication.dispatch">dispatch() (DispatchPublication method)</a>
+      <li><a href="happenings.html#aionationstates.happenings.DispatchPublication.dispatch">dispatch (DispatchPublication attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.World.dispatch">dispatch() (World method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Nation.dispatchlist">dispatchlist() (Nation method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.World.dispatch">(World method)</a>, <a href="reference.html#aionationstates.World.dispatch">[1]</a>
+        <li><a href="reference.html#aionationstates.World.dispatchlist">(World method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.DispatchPublication.dispatch_id">dispatch_id (DispatchPublication attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.DispatchPublication">DispatchPublication (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.dispatchlist">dispatchlist() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.dispatchlist">[1]</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.World.dispatchlist">(World method)</a>, <a href="reference.html#aionationstates.World.dispatchlist">[1]</a>
-</li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.DispatchPublication">DispatchPublication (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail">DispatchThumbnail (class in aionationstates)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -272,65 +293,51 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Freedom.economy">economy (Freedom attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.FreedomScores.economy">(FreedomScores attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Reclassifications.economy">(Reclassifications attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.Dispatch.edited">edited (Dispatch attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.edited">edited (DispatchThumbnail attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Issue.editor">editor (Issue attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.education">education (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.IssueResult.effect_line">effect_line (IssueResult attribute)</a>
+
+      <ul>
+        <li><a href="happenings.html#aionationstates.happenings.Legislation.effect_line">(Legislation attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Legislation.effect_line">effect_line (Legislation attribute)</a>
-</li>
+      </ul></li>
       <li><a href="reference.html#aionationstates.Embassies">Embassies (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.embassies">embassies() (Region method)</a>, <a href="reference.html#aionationstates.Region.embassies">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.embassies">embassies() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyCancellation">EmbassyCancellation (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Embassy">Embassy (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyClosureOrder">EmbassyClosureOrder (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyCancellation">EmbassyCancellation (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyConstructionAbortion">EmbassyConstructionAbortion (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyClosureOrder">EmbassyClosureOrder (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyConstructionConfirmation">EmbassyConstructionConfirmation (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyConstructionAbortion">EmbassyConstructionAbortion (class in aionationstates.happenings)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.EmbassyConstructionRequest">EmbassyConstructionRequest (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyConstructionConfirmation">EmbassyConstructionConfirmation (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyConstructionRequestWithdrawal">EmbassyConstructionRequestWithdrawal (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyConstructionRequest">EmbassyConstructionRequest (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyEstablishment">EmbassyEstablishment (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyConstructionRequestWithdrawal">EmbassyConstructionRequestWithdrawal (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyEstablishment">EmbassyEstablishment (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyOrder">EmbassyOrder (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.EmbassyPostingRights">EmbassyPostingRights (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.embassyrmb">embassyrmb() (Region method)</a>, <a href="reference.html#aionationstates.Region.embassyrmb">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.embassyrmb">embassyrmb() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Endorsement.endorsee">endorsee (Endorsement attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.EndorsementWithdrawal.endorsee">(EndorsementWithdrawal attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Endorsement">Endorsement (class in aionationstates.happenings)</a>
 </li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.Endorsement">Endorsement (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Nation.endorsements">endorsements() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.endorsements">endorsements() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.endorsements">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.EndorsementWithdrawal">EndorsementWithdrawal (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EndorsementWithdrawal">EndorsementWithdrawal (class in aionationstates)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Endorsement.endorser">endorser (Endorsement attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.EndorsementWithdrawal.endorser">(EndorsementWithdrawal attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.Govt.environment">environment (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.EmbassyPostingRights.EVERYBODY">EVERYBODY (EmbassyPostingRights attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -338,45 +345,41 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Region.factbook">factbook() (Region method)</a>, <a href="reference.html#aionationstates.Region.factbook">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.factbook">factbook() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.World.featuredregion">featuredregion() (World method)</a>, <a href="reference.html#aionationstates.World.featuredregion">[1]</a>
+      <li><a href="reference.html#aionationstates.World.featuredregion">featuredregion() (World method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.firstlogin">firstlogin() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.firstlogin">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.firstlogin">firstlogin() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.flag">flag() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.flag">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.flag">flag() (Nation method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.Region.flag">(Region method)</a>, <a href="reference.html#aionationstates.Region.flag">[1]</a>
+        <li><a href="reference.html#aionationstates.Region.flag">(Region method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.FlagChange">FlagChange (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.FlagChange">FlagChange (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.founded">founded() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.founded">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.founded">founded() (Nation method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.Region.founded">(Region method)</a>, <a href="reference.html#aionationstates.Region.founded">[1]</a>
+        <li><a href="reference.html#aionationstates.Region.founded">(Region method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Region.founder">founder() (Region method)</a>, <a href="reference.html#aionationstates.Region.founder">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.founder">founder() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.founderauth">founderauth() (Region method)</a>, <a href="reference.html#aionationstates.Region.founderauth">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.founderauth">founderauth() (Region method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Founding">Founding (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Founding">Founding (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Freedom">Freedom (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Nation.freedom">freedom() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.freedom">freedom() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.freedom">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.freedomscores">freedomscores() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.FreedomScores">FreedomScores (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.full">full() (DispatchThumbnail method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.freedomscores">freedomscores() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.freedomscores">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.Dispatch.full">full() (Dispatch method)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Nation.fullname">fullname() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.fullname">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.fullname">fullname() (Nation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -384,19 +387,13 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.gdp">gdp() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.gdp">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.Sectors.government">government (Sectors attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Govt">Govt (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Nation.gdp">gdp() (Nation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Reclassifications.govt">govt (Reclassifications attribute)</a>
+      <li><a href="reference.html#aionationstates.Nation.govt">govt() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.govt">govt() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.govt">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.Nation.govtdesc">govtdesc() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.govtdesc">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.govtdesc">govtdesc() (Nation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -404,21 +401,17 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.IssueResult.happening">happening (IssueResult attribute)</a>
-</li>
       <li><a href="reference.html#aionationstates.Nation.happenings">happenings() (Nation method)</a>
 
       <ul>
         <li><a href="reference.html#aionationstates.Region.happenings">(Region method)</a>
 </li>
-        <li><a href="reference.html#aionationstates.World.happenings">(World method)</a>, <a href="reference.html#aionationstates.World.happenings">[1]</a>
+        <li><a href="reference.html#aionationstates.World.happenings">(World method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.IssueResult.headlines">headlines (IssueResult attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Govt.healthcare">healthcare (Govt attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleHistory.history">history (CensusScaleHistory attribute)</a>
 </li>
@@ -431,7 +424,7 @@
       <li><a href="reference.html#aionationstates.Banner.id">id (Banner attribute)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.Dispatch.id">(Dispatch attribute)</a>
+        <li><a href="reference.html#aionationstates.DispatchThumbnail.id">(DispatchThumbnail attribute)</a>
 </li>
         <li><a href="reference.html#aionationstates.Issue.id">(Issue attribute)</a>
 </li>
@@ -445,26 +438,18 @@
 </li>
         <li><a href="reference.html#aionationstates.ScaleInfo.id">(ScaleInfo attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.UnrecognizedHappening.id">(UnrecognizedHappening attribute)</a>
+        <li><a href="happenings.html#aionationstates.happenings.UnrecognizedHappening.id">(UnrecognizedHappening attribute)</a>
 </li>
       </ul></li>
       <li><a href="reference.html#aionationstates.ScaleInfo.image">image (ScaleInfo attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieCureAction.impact">impact (ZombieCureAction attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.ZombieInfectAction.impact">(ZombieInfectAction attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.ZombieKillAction.impact">(ZombieKillAction attribute)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Sectors.industry">industry (Sectors attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Zombie.impact">impact (Zombie attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.industrydesc">industrydesc() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.industrydesc">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.industrydesc">industrydesc() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.influence">influence() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.influence">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.influence">influence() (Nation method)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleChange.info">info (CensusScaleChange attribute)</a>
 
@@ -474,8 +459,6 @@
         <li><a href="reference.html#aionationstates.CensusScaleHistory.info">(CensusScaleHistory attribute)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.Govt.internationalaid">internationalaid (Govt attribute)</a>
-</li>
       <li><a href="reference.html#aionationstates.Embassies.invited">invited (Embassies attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Issue">Issue (class in aionationstates)</a>
@@ -484,7 +467,7 @@
 </li>
       <li><a href="reference.html#aionationstates.IssueResult">IssueResult (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.NationControl.issues">issues() (NationControl method)</a>, <a href="reference.html#aionationstates.NationControl.issues">[1]</a>
+      <li><a href="reference.html#aionationstates.NationControl.issues">issues() (NationControl method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -492,17 +475,15 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.lastlogin">lastlogin() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.lastlogin">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.lastlogin">lastlogin() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.lawandorder">lawandorder (Govt attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Nation.leader">leader() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.leader">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.leader">leader() (Nation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Legislation">Legislation (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Legislation">Legislation (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.legislation">legislation() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.legislation">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.legislation">legislation() (Nation method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Post.likers">likers (Post attribute)</a>
 </li>
@@ -512,17 +493,21 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.majorindustry">majorindustry() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.majorindustry">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.majorindustry">majorindustry() (Nation method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.TGQueue.manual">manual (TGQueue attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.ScaleInfo.measurement">measurement (ScaleInfo attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference.html#aionationstates.WAMembership.MEMBER">MEMBER (WAMembership attribute)</a>
+</li>
       <li><a href="reference.html#aionationstates.PostStatus.MODERATED">MODERATED (PostStatus attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.motto">motto() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.motto">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.motto">motto() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Move">Move (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Move">Move (class in aionationstates.happenings)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -531,92 +516,58 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.Banner.name">name (Banner attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Nation.name">name() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.name">[1]</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.Region.name">(Region method)</a>, <a href="reference.html#aionationstates.Region.name">[1]</a>
+        <li><a href="reference.html#aionationstates.Policy.name">(Policy attribute)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.BannerCreation.nation">nation (BannerCreation attribute)</a>
+      <li><a href="reference.html#aionationstates.Nation.name">name() (Nation method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.CategoryChange.nation">(CategoryChange attribute)</a>
+        <li><a href="reference.html#aionationstates.Region.name">(Region method)</a>
 </li>
       </ul></li>
       <li><a href="reference.html#aionationstates.Nation">Nation (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CTE.nation">nation (CTE attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.DispatchPublication.nation">(DispatchPublication attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyClosureOrder.nation">(EmbassyClosureOrder attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionAbortion.nation">(EmbassyConstructionAbortion attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionConfirmation.nation">(EmbassyConstructionConfirmation attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionRequest.nation">(EmbassyConstructionRequest attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionRequestWithdrawal.nation">(EmbassyConstructionRequestWithdrawal attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.FlagChange.nation">(FlagChange attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Founding.nation">(Founding attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Legislation.nation">(Legislation attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Move.nation">(Move attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Officer.nation">(Officer attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.PollCreation.nation">(PollCreation attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.PollDeletion.nation">(PollDeletion attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.SettingsChange.nation">(SettingsChange attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.WorldAssemblyAdmission.nation">(WorldAssemblyAdmission attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.WorldAssemblyApplication.nation">(WorldAssemblyApplication attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.WorldAssemblyResignation.nation">(WorldAssemblyResignation attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.nation">nation() (in module aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Officer.nation">nation (Officer attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.ScaleInfo.nation_description">nation_description (ScaleInfo attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.NationControl">NationControl (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.nations">nations() (Region method)</a>, <a href="reference.html#aionationstates.Region.nations">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.nations">nations() (Region method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.World.nations">(World method)</a>, <a href="reference.html#aionationstates.World.nations">[1]</a>
+        <li><a href="reference.html#aionationstates.World.nations">(World method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.DelegateChange.new_delegate">new_delegate (DelegateChange attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateChange.new_delegate">new_delegate (DelegateChange attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.World.new_happenings">new_happenings() (World method)</a>, <a href="reference.html#aionationstates.World.new_happenings">[1]</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference.html#aionationstates.World.new_happenings">new_happenings() (World method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.World.newnations">newnations() (World method)</a>, <a href="reference.html#aionationstates.World.newnations">[1]</a>
+      <li><a href="reference.html#aionationstates.IssueResult.new_policies">new_policies (IssueResult attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.World.newnations">newnations() (World method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.EmbassyPostingRights.NOBODY">NOBODY (EmbassyPostingRights attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.WAMembership.NONMEMBER">NONMEMBER (WAMembership attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.PostStatus.NORMAL">NORMAL (PostStatus attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.notable">notable() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.notable">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.notable">notable() (Nation method)</a>
 </li>
       <li><a href="reference.html#aionationstates.NotFound">NotFound</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.numnations">numnations() (Region method)</a>, <a href="reference.html#aionationstates.Region.numnations">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.numnations">numnations() (Region method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.World.numnations">(World method)</a>, <a href="reference.html#aionationstates.World.numnations">[1]</a>
+        <li><a href="reference.html#aionationstates.World.numnations">(World method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.World.numregions">numregions() (World method)</a>, <a href="reference.html#aionationstates.World.numregions">[1]</a>
+      <li><a href="reference.html#aionationstates.World.numregions">numregions() (World method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -628,11 +579,21 @@
 </li>
       <li><a href="reference.html#aionationstates.Officer">Officer (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.officers">officers() (Region method)</a>, <a href="reference.html#aionationstates.Region.officers">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.OfficerAppointment">OfficerAppointment (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.OfficerDismissal">OfficerDismissal (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.OfficerModification">OfficerModification (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="reference.html#aionationstates.EmbassyPostingRights.OFFICERS">OFFICERS (EmbassyPostingRights attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.DelegateChange.old_delegate">old_delegate (DelegateChange attribute)</a>
+      <li><a href="reference.html#aionationstates.Region.officers">officers() (Region method)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.DelegateChange.old_delegate">old_delegate (DelegateChange attribute)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.OfficerModification.old_title">old_title (OfficerModification attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Issue.options">options (Issue attribute)</a>
 
@@ -640,55 +601,59 @@
         <li><a href="reference.html#aionationstates.Poll.options">(Poll attribute)</a>
 </li>
       </ul></li>
+      <li><a href="happenings.html#aionationstates.happenings.EmbassyOrder.other_region">other_region (EmbassyOrder attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="happenings.html#aionationstates.happenings.Affecting.patient">patient (Affecting attribute)</a>
+</li>
       <li><a href="reference.html#aionationstates.CensusScaleChange.pchange">pchange (CensusScaleChange attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Embassies.pending">pending (Embassies attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Freedom.politicalfreedom">politicalfreedom (Freedom attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.FreedomScores.politicalfreedom">(FreedomScores attribute)</a>
+      <li><a href="reference.html#aionationstates.Nation.policies">policies() (Nation method)</a>
 </li>
-        <li><a href="reference.html#aionationstates.Reclassifications.politicalfreedom">(Reclassifications attribute)</a>
+      <li><a href="reference.html#aionationstates.Policy">Policy (class in aionationstates)</a>
 </li>
-      </ul></li>
       <li><a href="reference.html#aionationstates.Poll">Poll (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.poll">poll() (Region method)</a>, <a href="reference.html#aionationstates.Region.poll">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.poll">poll() (Region method)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.World.poll">(World method)</a>, <a href="reference.html#aionationstates.World.poll">[1]</a>
+        <li><a href="reference.html#aionationstates.World.poll">(World method)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.PollCreation">PollCreation (class in aionationstates)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.PollDeletion">PollDeletion (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.PollCreation">PollCreation (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.PollDeletion">PollDeletion (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.PollOption">PollOption (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.population">population() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.population">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.population">population() (Nation method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Post">Post (class in aionationstates)</a>
 </li>
       <li><a href="reference.html#aionationstates.PostStatus">PostStatus (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Region.power">power() (Region method)</a>, <a href="reference.html#aionationstates.Region.power">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.power">power() (Region method)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleCurrent.prank">prank (CensusScaleCurrent attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleCurrent.prrank">prrank (CensusScaleCurrent attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Sectors.public">public (Sectors attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Govt.publictransport">publictransport (Govt attribute)</a>
+  </ul></td>
+</tr></table>
+
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference.html#aionationstates.Post.quote">quote() (Post method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -702,73 +667,43 @@
 </li>
       <li><a href="reference.html#aionationstates.RateLimitError">RateLimitError</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieCureAction.recepient">recepient (ZombieCureAction attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.ZombieInfectAction.recepient">(ZombieInfectAction attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.ZombieKillAction.recepient">(ZombieKillAction attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.Reclassification">Reclassification (class in aionationstates)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Reclassifications">Reclassifications (class in aionationstates)</a>
-</li>
       <li><a href="reference.html#aionationstates.IssueResult.reclassifications">reclassifications (IssueResult attribute)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.Refounding">Refounding (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.Region">Region (class in aionationstates)</a>
 </li>
-      <li><a href="reference.html#aionationstates.CTE.region">region (CTE attribute)</a>
+      <li><a href="reference.html#aionationstates.Poll.region">region (Poll attribute)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.DelegateChange.region">(DelegateChange attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Founding.region">(Founding attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.Poll.region">(Poll attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.PollCreation.region">(PollCreation attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.PollDeletion.region">(PollDeletion attribute)</a>
+        <li><a href="happenings.html#aionationstates.happenings.Regional.region">(Regional attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.region">region() (in module aionationstates)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.Nation.region">(Nation method)</a>, <a href="reference.html#aionationstates.Nation.region">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.region">region() (Nation method)</a>
 </li>
-      </ul></li>
       <li><a href="reference.html#aionationstates.ScaleInfo.region_description">region_description (ScaleInfo attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Move.region_from">region_from (Move attribute)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="happenings.html#aionationstates.happenings.Move.region_from">region_from (Move attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Move.region_to">region_to (Move attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Move.region_to">region_to (Move attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.EmbassyCancellation.regions">regions (EmbassyCancellation attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.EmbassyClosureOrder.regions">(EmbassyClosureOrder attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Regional">Regional (class in aionationstates.happenings)</a>
 </li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionAbortion.regions">(EmbassyConstructionAbortion attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.RegionalAdministrative">RegionalAdministrative (class in aionationstates.happenings)</a>
 </li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionConfirmation.regions">(EmbassyConstructionConfirmation attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Embassy.regions">regions (Embassy attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionRequest.regions">(EmbassyConstructionRequest attribute)</a>
+      <li><a href="reference.html#aionationstates.World.regions">regions() (World method)</a>
 </li>
-        <li><a href="reference.html#aionationstates.EmbassyConstructionRequestWithdrawal.regions">(EmbassyConstructionRequestWithdrawal attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.EmbassyEstablishment.regions">(EmbassyEstablishment attribute)</a>
-</li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.World.regions">regions() (World method)</a>, <a href="reference.html#aionationstates.World.regions">[1]</a>
-</li>
-      <li><a href="reference.html#aionationstates.World.regionsbytag">regionsbytag() (World method)</a>, <a href="reference.html#aionationstates.World.regionsbytag">[1]</a>
+      <li><a href="reference.html#aionationstates.World.regionsbytag">regionsbytag() (World method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Embassies.rejected">rejected (Embassies attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.religion">religion() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.religion">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.religion">religion() (Nation method)</a>
+</li>
+      <li><a href="reference.html#aionationstates.IssueResult.removed_policies">removed_policies (IssueResult attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.CensusScaleCurrent.rrank">rrank (CensusScaleCurrent attribute)</a>
 </li>
@@ -787,41 +722,25 @@
 </li>
         <li><a href="reference.html#aionationstates.CensusScaleCurrent.score">(CensusScaleCurrent attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.Dispatch.score">(Dispatch attribute)</a>
+        <li><a href="reference.html#aionationstates.DispatchThumbnail.score">(DispatchThumbnail attribute)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.Sectors">Sectors (class in aionationstates)</a>
+      <li><a href="reference.html#aionationstates.Nation.sectors">sectors() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.sectors">sectors() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.sectors">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.sensibilities">sensibilities() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieCureAction.sender">sender (ZombieCureAction attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.ZombieInfectAction.sender">(ZombieInfectAction attribute)</a>
-</li>
-        <li><a href="reference.html#aionationstates.ZombieKillAction.sender">(ZombieKillAction attribute)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.sensibilities">sensibilities() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.sensibilities">[1]</a>
-</li>
       <li><a href="reference.html#aionationstates.SessionConflictError">SessionConflictError</a>
 </li>
-      <li><a href="reference.html#aionationstates.SettingsChange">SettingsChange (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.SettingsChange">SettingsChange (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Govt.socialequality">socialequality (Govt attribute)</a>
-</li>
-      <li><a href="reference.html#aionationstates.Govt.spirituality">spirituality (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.TGQueue.stamp">stamp (TGQueue attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Post.status">status (Post attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Dispatch.subcategory">subcategory (Dispatch attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.DispatchPublication.subcategory">(DispatchPublication attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.subcategory">subcategory (DispatchThumbnail attribute)</a>
 </li>
-      </ul></li>
       <li><a href="reference.html#aionationstates.PostStatus.SUPPRESSED">SUPPRESSED (PostStatus attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.Post.suppressor">suppressor (Post attribute)</a>
@@ -834,7 +753,7 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Region.tags">tags() (Region method)</a>, <a href="reference.html#aionationstates.Region.tags">[1]</a>
+      <li><a href="reference.html#aionationstates.Region.tags">tags() (Region method)</a>
 </li>
       <li><a href="reference.html#aionationstates.Dispatch.text">text (Dispatch attribute)</a>
 
@@ -849,34 +768,44 @@
 </li>
         <li><a href="reference.html#aionationstates.Post.text">(Post attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.UnrecognizedHappening.text">(UnrecognizedHappening attribute)</a>
+        <li><a href="happenings.html#aionationstates.happenings.UnrecognizedHappening.text">(UnrecognizedHappening attribute)</a>
 </li>
       </ul></li>
+      <li><a href="reference.html#aionationstates.TGQueue">TGQueue (class in aionationstates)</a>
+</li>
+      <li><a href="reference.html#aionationstates.World.tgqueue">tgqueue() (World method)</a>
+</li>
       <li><a href="reference.html#aionationstates.CensusPoint.timestamp">timestamp (CensusPoint attribute)</a>
 
       <ul>
         <li><a href="reference.html#aionationstates.Post.timestamp">(Post attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.UnrecognizedHappening.timestamp">(UnrecognizedHappening attribute)</a>
+        <li><a href="happenings.html#aionationstates.happenings.UnrecognizedHappening.timestamp">(UnrecognizedHappening attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Dispatch.title">title (Dispatch attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.title">title (DispatchThumbnail attribute)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.DispatchPublication.title">(DispatchPublication attribute)</a>
-</li>
         <li><a href="reference.html#aionationstates.Issue.title">(Issue attribute)</a>
+</li>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerAppointment.title">(OfficerAppointment attribute)</a>
+</li>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerDismissal.title">(OfficerDismissal attribute)</a>
+</li>
+        <li><a href="happenings.html#aionationstates.happenings.OfficerModification.title">(OfficerModification attribute)</a>
 </li>
         <li><a href="reference.html#aionationstates.Poll.title">(Poll attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.PollCreation.title">(PollCreation attribute)</a>
+        <li><a href="happenings.html#aionationstates.happenings.PollCreation.title">(PollCreation attribute)</a>
 </li>
         <li><a href="reference.html#aionationstates.ScaleInfo.title">(ScaleInfo attribute)</a>
 </li>
       </ul></li>
-      <li><a href="reference.html#aionationstates.Nation.type">type() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.type">[1]</a>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieBorderControlActivation.type">type (ZombieBorderControlActivation attribute)</a>
+</li>
+      <li><a href="reference.html#aionationstates.Nation.type">type() (Nation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -884,14 +813,14 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.UnrecognizedHappening">UnrecognizedHappening (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.UnrecognizedHappening">UnrecognizedHappening (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.Banner.url">url (Banner attribute)</a>
 
       <ul>
-        <li><a href="reference.html#aionationstates.Nation.url">(Nation attribute)</a>, <a href="reference.html#aionationstates.Nation.url">[1]</a>
+        <li><a href="reference.html#aionationstates.Nation.url">(Nation attribute)</a>
 </li>
-        <li><a href="reference.html#aionationstates.Region.url">(Region attribute)</a>, <a href="reference.html#aionationstates.Region.url">[1]</a>
+        <li><a href="reference.html#aionationstates.Region.url">(Region attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -902,15 +831,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.Banner.validity">validity (Banner attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.verification_url">verification_url() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.verification_url">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.verification_url">verification_url() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Nation.verify">verify() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.verify">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.verify">verify() (Nation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.PostStatus.viewable">viewable (PostStatus attribute)</a>
 </li>
-      <li><a href="reference.html#aionationstates.Dispatch.views">views (Dispatch attribute)</a>
+      <li><a href="reference.html#aionationstates.DispatchThumbnail.views">views (DispatchThumbnail attribute)</a>
 </li>
       <li><a href="reference.html#aionationstates.PollOption.voters">voters (PollOption attribute)</a>
 </li>
@@ -920,29 +849,23 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.Nation.wa">wa() (Nation method)</a>, <a href="reference.html#aionationstates.Nation.wa">[1]</a>
+      <li><a href="reference.html#aionationstates.Nation.wa">wa() (Nation method)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieCureAction.weapon">weapon (ZombieCureAction attribute)</a>
-
-      <ul>
-        <li><a href="reference.html#aionationstates.ZombieInfectAction.weapon">(ZombieInfectAction attribute)</a>
+      <li><a href="reference.html#aionationstates.WAMembership">WAMembership (class in aionationstates)</a>
 </li>
-        <li><a href="reference.html#aionationstates.ZombieKillAction.weapon">(ZombieKillAction attribute)</a>
+      <li><a href="happenings.html#aionationstates.happenings.Zombie.weapon">weapon (Zombie attribute)</a>
 </li>
-      </ul></li>
-      <li><a href="reference.html#aionationstates.Govt.welfare">welfare (Govt attribute)</a>
+      <li><a href="reference.html#aionationstates.World">World (class in aionationstates)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.World">World (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.WorldAssembly">WorldAssembly (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.world">world (in module aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.WorldAssemblyAdmission">WorldAssemblyAdmission (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.WorldAssemblyAdmission">WorldAssemblyAdmission (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.WorldAssemblyApplication">WorldAssemblyApplication (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.WorldAssemblyApplication">WorldAssemblyApplication (class in aionationstates)</a>
-</li>
-      <li><a href="reference.html#aionationstates.WorldAssemblyResignation">WorldAssemblyResignation (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.WorldAssemblyResignation">WorldAssemblyResignation (class in aionationstates.happenings)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -951,20 +874,28 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference.html#aionationstates.Zombie">Zombie (class in aionationstates)</a>
+
+      <ul>
+        <li><a href="happenings.html#aionationstates.happenings.Zombie">(class in aionationstates.happenings)</a>
 </li>
+      </ul></li>
       <li><a href="reference.html#aionationstates.Nation.zombie">zombie() (Nation method)</a>
 
       <ul>
         <li><a href="reference.html#aionationstates.Region.zombie">(Region method)</a>
 </li>
       </ul></li>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieBorderControlActivation">ZombieBorderControlActivation (class in aionationstates.happenings)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference.html#aionationstates.ZombieCureAction">ZombieCureAction (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieBorderControlDeactivation">ZombieBorderControlDeactivation (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieInfectAction">ZombieInfectAction (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieCure">ZombieCure (class in aionationstates.happenings)</a>
 </li>
-      <li><a href="reference.html#aionationstates.ZombieKillAction">ZombieKillAction (class in aionationstates)</a>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieInfect">ZombieInfect (class in aionationstates.happenings)</a>
+</li>
+      <li><a href="happenings.html#aionationstates.happenings.ZombieKill">ZombieKill (class in aionationstates.happenings)</a>
 </li>
       <li><a href="reference.html#aionationstates.Zombie.zombies">zombies (Zombie attribute)</a>
 </li>
@@ -982,6 +913,7 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">aionationstates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Sounds amazing, how do I sign up?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="happenings.html">Happenings</a></li>
 </ul>
 
 

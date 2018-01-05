@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aionationstates.session &#8212; aionationstates 0.2.0 documentation</title>
+    <title>aionationstates.session &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,8 +42,7 @@
           <div class="body" role="main">
             
   <h1>Source code for aionationstates.session</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="k">import</span> <span class="n">warn</span>
+<span></span><span class="kn">from</span> <span class="nn">warnings</span> <span class="k">import</span> <span class="n">warn</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
 
@@ -51,16 +50,69 @@
 
 <span class="kn">from</span> <span class="nn">aionationstates</span> <span class="k">import</span> <span class="n">__version__</span>
 <span class="kn">from</span> <span class="nn">aionationstates</span> <span class="k">import</span> <span class="n">ratelimit</span>
-<span class="kn">from</span> <span class="nn">aionationstates.types</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">RateLimitError</span><span class="p">,</span> <span class="n">SessionConflictError</span><span class="p">,</span> <span class="n">AuthenticationError</span><span class="p">,</span> <span class="n">NotFound</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">logger</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;set_user_agent&#39;</span><span class="p">,</span> <span class="s1">&#39;RateLimitError&#39;</span><span class="p">,</span> <span class="s1">&#39;SessionConflictError&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;AuthenticationError&#39;</span><span class="p">,</span> <span class="s1">&#39;NotFound&#39;</span><span class="p">,</span> <span class="s1">&#39;ApiQuery&#39;</span><span class="p">)</span>
 
 
 <span class="n">NS_URL</span> <span class="o">=</span> <span class="s1">&#39;https://www.nationstates.net/&#39;</span>
 <span class="n">API_PATH</span> <span class="o">=</span> <span class="s1">&#39;cgi-bin/api.cgi&#39;</span>
 <span class="n">API_URL</span> <span class="o">=</span> <span class="n">NS_URL</span> <span class="o">+</span> <span class="n">API_PATH</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;aionationstates&#39;</span><span class="p">)</span>
 
+<span class="k">def</span> <span class="nf">set_user_agent</span><span class="p">(</span><span class="n">user_agent</span><span class="p">):</span>
+    <span class="n">Session</span><span class="o">.</span><span class="n">_USER_AGENT</span> <span class="o">=</span> <span class="n">user_agent</span>
+
+
+<span class="c1"># Exceptions:</span>
+
+<div class="viewcode-block" id="RateLimitError"><a class="viewcode-back" href="../../reference.html#aionationstates.RateLimitError">[docs]</a><span class="k">class</span> <span class="nc">RateLimitError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raised when the request is forcibly terminated by NationStates due</span>
+<span class="sd">    to a rate limit transgression.</span>
+
+<span class="sd">    (Or whenever the API returns with the HTTP status code 429.)</span>
+
+<span class="sd">    Generally, this should never happen under normal circumstances, as</span>
+<span class="sd">    this library ensures compliance with the rate limits by default.</span>
+<span class="sd">    However, there are factors the internal ratelimiter cannot account</span>
+<span class="sd">    for, such as requests made outside of the current interpreter</span>
+<span class="sd">    session, or just an exceptionally flaky network connection.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SessionConflictError"><a class="viewcode-back" href="../../reference.html#aionationstates.SessionConflictError">[docs]</a><span class="k">class</span> <span class="nc">SessionConflictError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raised when an authenticated request from :class:`NationControl`</span>
+<span class="sd">    is attempted despite the nation having been successfully logged into</span>
+<span class="sd">    recently from elswhere.</span>
+
+<span class="sd">    (Or whenever the API returns with the HTTP status code 409.)</span>
+
+<span class="sd">    For any given nation, you should only ever maintain an authenticated</span>
+<span class="sd">    session from one place at a time.  Failure to do so will inevitably</span>
+<span class="sd">    result in weirdness and wonkiness across the board.  Not that you</span>
+<span class="sd">    won&#39;t get that anyway, but still.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="AuthenticationError"><a class="viewcode-back" href="../../reference.html#aionationstates.AuthenticationError">[docs]</a><span class="k">class</span> <span class="nc">AuthenticationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raised when the credentials provided to :class:`NationControl`</span>
+<span class="sd">    are incorrect.</span>
+
+<span class="sd">    (Or whenever the API returns with the HTTP status code 403 or the</span>
+<span class="sd">    Web interface redirects to the login screen.)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="NotFound"><a class="viewcode-back" href="../../reference.html#aionationstates.NotFound">[docs]</a><span class="k">class</span> <span class="nc">NotFound</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raised when the requested nation or region doesn&#39;t exist.</span>
+
+<span class="sd">    (Or whenever the API returns with the HTTP status code 404.)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># API conviniences:</span>
 
 <div class="viewcode-block" id="ApiQuery"><a class="viewcode-back" href="../../reference.html#aionationstates.ApiQuery">[docs]</a><span class="k">class</span> <span class="nc">ApiQuery</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;A request to the NationStates API.</span>
@@ -164,9 +216,7 @@
     <span class="k">return</span> <span class="n">decorator</span>
 
 
-<span class="k">def</span> <span class="nf">set_user_agent</span><span class="p">(</span><span class="n">user_agent</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">Session</span><span class="o">.</span><span class="n">_USER_AGENT</span> <span class="o">=</span> <span class="n">user_agent</span>
-
+<span class="c1"># Networking:</span>
 
 <span class="c1"># Needed because aiohttp&#39;s API is weird and every my attempt at making</span>
 <span class="c1"># a proper use of it has led to sadness and despair.</span>
@@ -207,8 +257,12 @@
         <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">403</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">AuthenticationError</span>
         <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">429</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">RateLimitError</span><span class="p">(</span>
-                <span class="n">f</span><span class="s1">&#39;ratelimited for </span><span class="si">{resp.headers[&quot;X-Retry-After&quot;]}</span><span class="s1"> seconds&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RateLimitError</span><span class="p">(</span>
+                    <span class="n">f</span><span class="s1">&#39;ratelimited for </span><span class="si">{resp.headers[&quot;X-Retry-After&quot;]}</span><span class="s1"> seconds&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="c1"># This can happen yes, Telegrams API is one of the cases</span>
+                <span class="k">raise</span> <span class="n">RateLimitError</span>
         <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">409</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">SessionConflictError</span><span class="p">(</span><span class="s1">&#39;previous login too recent&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
@@ -238,6 +292,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
 </ul>
 
 

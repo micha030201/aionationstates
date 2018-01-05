@@ -13,7 +13,7 @@ As you are probably aware, NationStates provides a way to request multiple shard
 
 .. automodule:: aionationstates
 
-.. autoclass:: ApiQuery
+.. autoclass:: ApiQuery()
 
 
 NationStates Interaction Objects
@@ -21,23 +21,8 @@ NationStates Interaction Objects
 
 Objects to interact with NationStates web interface and API.
 
-You should not build these objects yourself. Instead, use the following:
-
-.. data:: world
-
-    For the :class:`World` object;
-
-.. autofunction:: nation
-
-    To construct either a :class:`Nation` object, or :class:`NationControl` if `password` or `autologin` is provided; and
-
-.. function:: region(name)
-
-    To construct a :class:`Region` object.
-
-------
-
 .. autoclass:: Nation
+    :no-members:
 
     .. autoattribute:: url
 
@@ -117,6 +102,8 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: dispatchlist
 
+    .. automethod:: policies
+
     .. automethod:: zombie
 
     .. automethod:: banners
@@ -134,10 +121,12 @@ You should not build these objects yourself. Instead, use the following:
     .. automethod:: verify
 
 .. autoclass:: NationControl
+    :no-members:
 
     .. automethod:: issues
 
 .. autoclass:: Region
+    :no-members:
 
     .. autoattribute:: url
 
@@ -183,7 +172,8 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: happenings
 
-.. autoclass:: World
+.. autoclass:: World()
+    :no-members:
 
     .. automethod:: featuredregion
 
@@ -205,6 +195,10 @@ You should not build these objects yourself. Instead, use the following:
 
     .. automethod:: poll
 
+    .. automethod:: banner
+
+    .. automethod:: tgqueue
+
     .. automethod:: census
 
     .. automethod:: censushistory
@@ -225,19 +219,18 @@ Data Classes
 
 .. autoclass:: ScaleInfo()
 
+.. autoclass:: DispatchThumbnail()
+
 .. autoclass:: Dispatch()
 
 .. autoclass:: Poll()
 
 .. autoclass:: PollOption()
 
-.. autoclass:: Freedom()
+.. autoclass:: WAMembership()
+    :show-inheritance:
 
-.. autoclass:: FreedomScores()
-
-.. autoclass:: Govt()
-
-.. autoclass:: Sectors()
+.. autoclass:: Policy()
 
 .. autoclass:: Banner()
 
@@ -248,10 +241,6 @@ Data Classes
 .. autoclass:: IssueResult()
 
 .. autoclass:: CensusScaleChange()
-
-.. autoclass:: Reclassifications()
-
-.. autoclass:: Reclassification()
 
 .. autoclass:: Embassies()
 
@@ -270,118 +259,7 @@ Data Classes
 
 .. autoclass:: Zombie()
 
-
-
-.. autoclass:: UnrecognizedHappening()
-
-.. autoclass:: Move()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: Founding()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: CTE()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: Legislation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: FlagChange()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: SettingsChange()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: DispatchPublication()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: WorldAssemblyApplication()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: WorldAssemblyAdmission()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: WorldAssemblyResignation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: DelegateChange()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: CategoryChange()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: BannerCreation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyConstructionRequest()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyConstructionConfirmation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyConstructionRequestWithdrawal()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyConstructionAbortion()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyClosureOrder()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyEstablishment()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EmbassyCancellation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: Endorsement()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: EndorsementWithdrawal()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: PollCreation()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: PollDeletion()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: ZombieCureAction()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: ZombieKillAction()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
-.. autoclass:: ZombieInfectAction()
-
-    This is a subclass of :class:`UnrecognizedHappening`, meaning all of the standard happening attributes are present as well.
-
+.. autoclass:: TGQueue()
 
 Exceptions
 ----------

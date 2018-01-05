@@ -26,6 +26,7 @@ Navigation
    self
    Sounds amazing, how do I sign up? <intro>
    reference
+   happenings
 
 
 If you still can't find what you're looking for, try one of the following pages:

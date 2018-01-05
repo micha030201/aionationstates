@@ -45,10 +45,12 @@
 <span></span><span class="c1"># TODO slots</span>
 
 <span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Flag</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">reduce</span><span class="p">,</span> <span class="n">total_ordering</span>
 <span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">or_</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
 
 <span class="kn">import</span> <span class="nn">aionationstates</span>
 <span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">banner_url</span><span class="p">,</span> <span class="n">unscramble_encoding</span>
@@ -66,10 +68,6 @@
     <span class="s1">&#39;Dispatch&#39;</span><span class="p">,</span>
     <span class="s1">&#39;Poll&#39;</span><span class="p">,</span>
     <span class="s1">&#39;PollOption&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;Freedom&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;FreedomScores&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;Govt&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;Sectors&#39;</span><span class="p">,</span>
     <span class="s1">&#39;Issue&#39;</span><span class="p">,</span>
     <span class="s1">&#39;IssueOption&#39;</span><span class="p">,</span>
     <span class="s1">&#39;IssueResult&#39;</span><span class="p">,</span>
@@ -83,6 +81,8 @@
     <span class="s1">&#39;Post&#39;</span><span class="p">,</span>
     <span class="s1">&#39;PostStatus&#39;</span><span class="p">,</span>
     <span class="s1">&#39;Zombie&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;TGQueue&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Policy&#39;</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -154,8 +154,8 @@
         <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;CensusScaleCurrent #</span><span class="si">{self.info.id}</span><span class="s1"> </span><span class="si">{self.info.title}</span><span class="s1">&gt;&#39;</span></div>
 
 
-<div class="viewcode-block" id="CensusPoint"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusPoint">[docs]</a><span class="k">class</span> <span class="nc">CensusPoint</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;What the scale score was on a particular date.</span>
+<div class="viewcode-block" id="CensusPoint"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusPoint">[docs]</a><span class="k">class</span> <span class="nc">CensusPoint</span><span class="p">(</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;CensusPoint&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">])):</span>
+    <span class="sd">&quot;&quot;&quot;A namedtuple of what the scale score was on a particular date.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -164,10 +164,12 @@
 <span class="sd">    score : float</span>
 <span class="sd">        What it was.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="n">stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">CensusPoint</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">stamp</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CensusScaleHistory"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleHistory">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleHistory</span><span class="p">:</span>
@@ -265,9 +267,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># Troublesome characters are cut from option texts, so unscrambling is</span>
+        <span class="c1"># not necessary.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;OPTIONTEXT&#39;</span><span class="p">))</span>
-        <span class="n">voters</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VOTERS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="n">voters</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">voters</span> <span class="k">else</span> <span class="p">[]</span></div>
+
+        <span class="n">voters</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;VOTERS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">voters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">voter</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">voter</span> <span class="ow">in</span> <span class="n">voters</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="p">[]</span></div>
 
 
 <div class="viewcode-block" id="Poll"><a class="viewcode-back" href="../../reference.html#aionationstates.Poll">[docs]</a><span class="k">class</span> <span class="nc">Poll</span><span class="p">:</span>
@@ -279,7 +288,7 @@
 <span class="sd">        The poll id.</span>
 <span class="sd">    title : str</span>
 <span class="sd">        The poll title.</span>
-<span class="sd">    text : str</span>
+<span class="sd">    text : str or None</span>
 <span class="sd">        The poll text.</span>
 <span class="sd">    region : :class:`Region`</span>
 <span class="sd">        Region the poll was posted in.</span>
@@ -291,11 +300,16 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="c1"># Troublesome characters are cut from poll titles and texts, so</span>
+        <span class="c1"># unscrambling is not necessary.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">))</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+
+        <span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
@@ -308,113 +322,29 @@
 
 
 
-<div class="viewcode-block" id="Freedom"><a class="viewcode-back" href="../../reference.html#aionationstates.Freedom">[docs]</a><span class="k">class</span> <span class="nc">Freedom</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
-<span class="sd">    Civil Rights, Economy, and Political Freedom, as expressive</span>
-<span class="sd">    adjectives.</span>
+<div class="viewcode-block" id="Policy"><a class="viewcode-back" href="../../reference.html#aionationstates.Policy">[docs]</a><span class="k">class</span> <span class="nc">Policy</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;One of nation&#39;s policies.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    civilrights : str</span>
-<span class="sd">        Nation&#39;s Civil Rights.</span>
-<span class="sd">    economy : str</span>
-<span class="sd">        Nation&#39;s Economic Prosperity.</span>
-<span class="sd">    politicalfreedom : str</span>
-<span class="sd">        Nation&#39;s Political Freedom.</span>
+<span class="sd">    name : str</span>
+<span class="sd">    category : str</span>
+<span class="sd">    description : str</span>
+<span class="sd">    banner : str</span>
+<span class="sd">        URL of the policy picture.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">economy</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NAME&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CAT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DESC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">banner</span> <span class="o">=</span> <span class="n">banner_url</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PIC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">name</span>
 
-<div class="viewcode-block" id="FreedomScores"><a class="viewcode-back" href="../../reference.html#aionationstates.FreedomScores">[docs]</a><span class="k">class</span> <span class="nc">FreedomScores</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Nation&#39;s `Freedoms`: three basic indicators of the nation&#39;s</span>
-<span class="sd">    Civil Rights, Economy, and Political Freedom, as percentages.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    civilrights : str</span>
-<span class="sd">        Nation&#39;s Civil Rights.</span>
-<span class="sd">    economy : str</span>
-<span class="sd">        Nation&#39;s Economic Prosperity.</span>
-<span class="sd">    politicalfreedom : str</span>
-<span class="sd">        Nation&#39;s Political Freedom.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">civilrights</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CIVILRIGHTS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">economy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ECONOMY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">politicalfreedom</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;POLITICALFREEDOM&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="Govt"><a class="viewcode-back" href="../../reference.html#aionationstates.Govt">[docs]</a><span class="k">class</span> <span class="nc">Govt</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Nation&#39;s government expenditure, as percentages.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    administration : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Administration.</span>
-<span class="sd">    defence : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Defence.</span>
-<span class="sd">    education : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Public Education.</span>
-<span class="sd">    environment : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Enviromental Protection.</span>
-<span class="sd">    healthcare : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Public Healthcare.</span>
-<span class="sd">    commerce : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Industry.</span>
-<span class="sd">    internationalaid : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on International Aid.</span>
-<span class="sd">    lawandorder : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Law &amp; Order.</span>
-<span class="sd">    publictransport : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Public Transportation.</span>
-<span class="sd">    socialequality : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Social Policy.</span>
-<span class="sd">    spirituality : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Spirituality.</span>
-<span class="sd">    welfare : float</span>
-<span class="sd">        The percentage of nation&#39;s budget spent on Welfare.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">administration</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ADMINISTRATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">defence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEFENCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">education</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EDUCATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ENVIRONMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">healthcare</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HEALTHCARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">commerce</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;COMMERCE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">internationalaid</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INTERNATIONALAID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lawandorder</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LAWANDORDER&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">publictransport</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLICTRANSPORT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">socialequality</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SOCIALEQUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spirituality</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SPIRITUALITY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">welfare</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;WELFARE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="Sectors"><a class="viewcode-back" href="../../reference.html#aionationstates.Sectors">[docs]</a><span class="k">class</span> <span class="nc">Sectors</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Components of a nation&#39;s economy.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    blackmarket : float</span>
-<span class="sd">        Part of the economy taken up by Black Market.</span>
-<span class="sd">    government : float</span>
-<span class="sd">        Part of the economy taken up by Government.</span>
-<span class="sd">    industry : float</span>
-<span class="sd">        Part of the economy taken up by Private Industry.</span>
-<span class="sd">    public : float</span>
-<span class="sd">        Part of the economy taken up by State-Owned Industry.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">blackmarket</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;BLACKMARKET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">government</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;GOVERNMENT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">industry</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;INDUSTRY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PUBLIC&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,))</span></div>
 
 
 
@@ -477,7 +407,7 @@
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ---------</span>
-<span class="sd">    info : :class:`CensusInfo`</span>
+<span class="sd">    info : :class:`ScaleInfo`</span>
 <span class="sd">        Static information about the scale.</span>
 <span class="sd">    score : float</span>
 <span class="sd">        The scale score, after the change.</span>
@@ -784,18 +714,41 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;NATION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">PostStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;STATUS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MESSAGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>  <span class="c1"># TODO unescape?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MESSAGE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
 
-        <span class="n">likers_elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;LIKERS&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="n">likers_elem</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">likers_elem</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">likers</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;LIKERS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">likers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span>
+                           <span class="ow">in</span> <span class="n">likers</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likers</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">suppressor_str</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;SUPPRESSOR&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">suppressor_str</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;!mod&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">()</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">suppressor</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">suppressor_str</span><span class="p">)</span>
 
-    <span class="c1"># TODO repr</span>
+<div class="viewcode-block" id="Post.quote"><a class="viewcode-back" href="../../reference.html#aionationstates.Post.quote">[docs]</a>    <span class="k">def</span> <span class="nf">quote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Quote this post.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        text : str</span>
+<span class="sd">            Text to quote.  Defaults to the whole text of the post.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            A NationStates bbCode quote of the post.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span> <span class="ow">or</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\[quote=.+?\[/quote\]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+                              <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;[quote=</span><span class="si">{self.author.id}</span><span class="s1">;</span><span class="si">{self.id}</span><span class="s1">]</span><span class="si">{text}</span><span class="s1">[/quote]&#39;</span></div>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Post #</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
 
 
 
@@ -823,6 +776,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;ZACTION&#39;</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="TGQueue"><a class="viewcode-back" href="../../reference.html#aionationstates.TGQueue">[docs]</a><span class="k">class</span> <span class="nc">TGQueue</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Current length of recruinment telegram queues.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    manual : int</span>
+<span class="sd">    stamp : int</span>
+<span class="sd">    api : int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manual</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MANUAL&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stamp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;MASS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;API&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
 <span class="c1"># TODO gavote, scvote</span>
 </pre></div>
 

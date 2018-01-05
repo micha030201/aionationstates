@@ -26,7 +26,7 @@ Basic initialization::
 
 Nation API::
 
-    testlandia = aionationstates.nation('testlandia')
+    testlandia = aionationstates.Nation('testlandia')
 
     await testlandia.fullname()
     # 'The Hive Mind of Testlandia'
@@ -58,7 +58,7 @@ Nation API::
 
 The Region API is quite similar::
 
-    tnp = aionationstates.region('the north pacific')
+    tnp = aionationstates.Region('the north pacific')
 
     await tnp.numnations()
     # 8380

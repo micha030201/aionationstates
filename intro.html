@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Introduction &#8212; aionationstates 0.2.0 documentation</title>
+    <title>Introduction &#8212; aionationstates 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.0',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -62,7 +62,7 @@
 </pre></div>
 </div>
 <p>Nation API:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">testlandia</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">nation</span><span class="p">(</span><span class="s1">&#39;testlandia&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">testlandia</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="s1">&#39;testlandia&#39;</span><span class="p">)</span>
 
 <span class="k">await</span> <span class="n">testlandia</span><span class="o">.</span><span class="n">fullname</span><span class="p">()</span>
 <span class="c1"># &#39;The Hive Mind of Testlandia&#39;</span>
@@ -94,7 +94,7 @@
 </pre></div>
 </div>
 <p>The Region API is quite similar:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tnp</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">region</span><span class="p">(</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tnp</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="s1">&#39;the north pacific&#39;</span><span class="p">)</span>
 
 <span class="k">await</span> <span class="n">tnp</span><span class="o">.</span><span class="n">numnations</span><span class="p">()</span>
 <span class="c1"># 8380</span>
@@ -120,6 +120,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="happenings.html">Happenings</a></li>
 </ul>
 
 
