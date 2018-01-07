@@ -15,8 +15,15 @@ def _create_ratelimiter(requests, per):
         async def wrapper(*args, **kwargs):
             while True:
                 right_now = time.perf_counter()
-                since_portion_started = right_now - request_times[0]
+                portion_started = request_times[0]
+                since_portion_started = right_now - portion_started
+
                 if since_portion_started < portion_duration:
+                    # Ensure we never launch a timer on any but the
+                    # oldest request in a given portion.
+                    request_times.clear()
+                    request_times.append(portion_started)
+
                     to_sleep = portion_duration - since_portion_started
                     logger.debug(f'waiting {to_sleep} seconds on ratelimiter')
                     await asyncio.sleep(to_sleep)
