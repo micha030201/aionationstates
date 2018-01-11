@@ -523,3 +523,12 @@ def test_modify_officer_rename():
     assert h.authority_granted == Authority(0)
     assert h.authority_removed == Authority(0)
     assert h.region == Region('try it and see')
+
+
+def test_rmb_post():
+    t = '@@parse_error@@ lodged <a href="/region=try_it_and_see/page=display_region_rmb?postid=28930591#p28930591">a message</a> on the %%try_it_and_see%% Regional Message Board.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.MessageLodgement
+    assert h.agent == Nation('parse error')
+    assert h.region == Region('try it and see')
+    assert h._post_id == 28930591

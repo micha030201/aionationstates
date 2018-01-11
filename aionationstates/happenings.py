@@ -276,6 +276,35 @@ class BannerCreation(Action):
         super().__init__(text, params)
 
 
+class MessageLodgement(Action, Regional):
+    """A nation lodging a message on a regional message board."""
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ lodged '
+            '<a href="/region=.+?/page=display_region_rmb\?postid=(.+?)#p.+?">a message</a> '
+            'on the %%(.+?)%% Regional Message Board.',
+            text
+        )
+        if not match:
+            raise _ParseError
+        self.agent = aionationstates.Nation(match.group(1))
+        self._post_id = int(match.group(2))
+        self.region = aionationstates.Region(match.group(3))
+        super().__init__(text, params)
+
+    async def post(self):
+        """Get the message lodged.
+
+        Returns
+        -------
+        an :class:`aionationstates.ApiQuery` of :class:`aionationstates.Post`
+        """
+        post = (await self.region._get_messages(
+            fromid=self._post_id, limit=1))[0]
+        assert post.id == self._post_id
+        return post
+
+
 # World Assembly:
 
 

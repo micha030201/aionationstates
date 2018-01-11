@@ -217,6 +217,9 @@ The rest
 .. autoclass:: BannerCreation()
    :show-inheritance:
 
+.. autoclass:: MessageLodgement()
+   :show-inheritance:
+
 .. autoclass:: Endorsement()
    :show-inheritance:
 
