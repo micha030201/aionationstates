@@ -1,49 +1,23 @@
 """Compliance with NationStates' API and web rate limits."""
 
-# This is not the algorithm NationStates uses for ratelimiting; rather
-# it's the best compromise between usability and developer sanity.
+# This is not the exact algorithm NationStates uses for ratelimiting;
+# rather it's the best compromise between usability and developer
+# sanity.
 
 import asyncio
 
 
-class DelayedEvent(asyncio.Event):
-    def set_after(self, delay):
-        self._loop.call_later(delay, self.set)
-
-
-class EventBuffer:
-    def __init__(self, maxlen):
-        self.lock = asyncio.Lock()
-        self.event_futures = set()
-        for _ in range(maxlen):
-            event = DelayedEvent()
-            event.set()
-            event_future = asyncio.ensure_future(event.wait())
-            self.event_futures.add(event_future)
-
-    async def wait_oldest_get_new(self):
-        async with self.lock:
-            done, _ = await asyncio.wait(
-                self.event_futures,
-                return_when=asyncio.FIRST_COMPLETED
-            )
-            self.event_futures.remove(done.pop())
-
-        event = DelayedEvent()
-        event_future = asyncio.ensure_future(event.wait())
-        self.event_futures.add(event_future)
-        return event
-
-
 def _create_ratelimiter(requests, per):
-    buffer = EventBuffer(requests)
+    loop = asyncio.get_event_loop()
+
+    semaphore = asyncio.BoundedSemaphore(requests)
     portion_duration = per
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
-            event = await buffer.wait_oldest_get_new()
+            await semaphore.acquire()
             resp = await func(*args, **kwargs)
-            event.set_after(portion_duration)
+            loop.call_later(portion_duration, semaphore.release)
             return resp
         return wrapper
     return decorator
