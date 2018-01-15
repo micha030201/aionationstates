@@ -1,10 +1,9 @@
 """Compliance with NationStates' API and web rate limits."""
 
-import asyncio
-from collections import deque
-from operator import methodcaller
+# This is not the algorithm NationStates uses for ratelimiting; rather
+# it's the best compromise between usability and developer sanity.
 
-from aionationstates.utils import logger
+import asyncio
 
 
 class DelayedEvent(asyncio.Event):
@@ -12,34 +11,40 @@ class DelayedEvent(asyncio.Event):
         self._loop.call_later(delay, self.set)
 
 
+class EventBuffer:
+    def __init__(self, maxlen):
+        self.lock = asyncio.Lock()
+        self.event_futures = set()
+        for _ in range(maxlen):
+            event = DelayedEvent()
+            event.set()
+            event_future = asyncio.ensure_future(event.wait())
+            self.event_futures.add(event_future)
+
+    async def wait_oldest_get_new(self):
+        async with self.lock:
+            done, _ = await asyncio.wait(
+                self.event_futures,
+                return_when=asyncio.FIRST_COMPLETED
+            )
+            self.event_futures.remove(done.pop())
+
+        event = DelayedEvent()
+        event_future = asyncio.ensure_future(event.wait())
+        self.event_futures.add(event_future)
+        return event
+
 
 def _create_ratelimiter(requests, per):
-    _first_event = asyncio.Event()
-    _first_event.set()
-
-    request_events = deque([_first_event], maxlen=requests)
-    portion_duration = per * 1.05  # some wiggle room
+    buffer = EventBuffer(requests)
+    portion_duration = per
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
-            while True:
-                first_known_event = request_events[0]
-
-                if not first_known_event.is_set():
-                    logger.debug(f'waiting {args} {kwargs}')
-                    # Ensure we never launch a timer on any but the
-                    # oldest request in a given portion.
-                    # request_events.clear()
-                    # request_events.append(first_known_event)
-
-                    await first_known_event.wait()
-                else:
-                    logger.debug(f'calling {args} {kwargs}')
-                    event = DelayedEvent()
-                    request_events.append(event)
-                    resp = await func(*args, **kwargs)
-                    event.set_after(portion_duration)
-                    return resp
+            event = await buffer.wait_oldest_get_new()
+            resp = await func(*args, **kwargs)
+            event.set_after(portion_duration)
+            return resp
         return wrapper
     return decorator
 
