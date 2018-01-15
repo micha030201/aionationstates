@@ -1,35 +1,45 @@
 """Compliance with NationStates' API and web rate limits."""
 
-import time
 import asyncio
 from collections import deque
+from operator import methodcaller
 
 from aionationstates.utils import logger
 
 
+class DelayedEvent(asyncio.Event):
+    def set_after(self, delay):
+        self._loop.call_later(delay, self.set)
+
+
+
 def _create_ratelimiter(requests, per):
-    request_times = deque([0], maxlen=requests)
+    _first_event = asyncio.Event()
+    _first_event.set()
+
+    request_events = deque([_first_event], maxlen=requests)
     portion_duration = per * 1.05  # some wiggle room
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
             while True:
-                right_now = time.perf_counter()
-                portion_started = request_times[0]
-                since_portion_started = right_now - portion_started
+                first_known_event = request_events[0]
 
-                if since_portion_started < portion_duration:
+                if not first_known_event.is_set():
+                    logger.debug(f'waiting {args} {kwargs}')
                     # Ensure we never launch a timer on any but the
                     # oldest request in a given portion.
-                    request_times.clear()
-                    request_times.append(portion_started)
+                    # request_events.clear()
+                    # request_events.append(first_known_event)
 
-                    to_sleep = portion_duration - since_portion_started
-                    logger.debug(f'waiting {to_sleep} seconds on ratelimiter')
-                    await asyncio.sleep(to_sleep)
+                    await first_known_event.wait()
                 else:
-                    request_times.append(right_now)
-                    return await func(*args, **kwargs)
+                    logger.debug(f'calling {args} {kwargs}')
+                    event = DelayedEvent()
+                    request_events.append(event)
+                    resp = await func(*args, **kwargs)
+                    event.set_after(portion_duration)
+                    return resp
         return wrapper
     return decorator
 
