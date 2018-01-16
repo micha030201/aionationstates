@@ -16,8 +16,10 @@ def _create_ratelimiter(requests, per):
     def decorator(func):
         async def wrapper(*args, **kwargs):
             await semaphore.acquire()
-            resp = await func(*args, **kwargs)
-            loop.call_later(portion_duration, semaphore.release)
+            try:
+                resp = await func(*args, **kwargs)
+            finally:
+                loop.call_later(portion_duration, semaphore.release)
             return resp
         return wrapper
     return decorator
