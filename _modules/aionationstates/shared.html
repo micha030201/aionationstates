@@ -1,0 +1,481 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.shared &#8212; aionationstates 0.3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.shared</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared data classes and API shards.&quot;&quot;&quot;</span>
+
+<span class="c1"># TODO: censusranks, wabadges</span>
+
+<span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.session</span> <span class="k">import</span> <span class="n">api_query</span>
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span><span class="p">,</span> <span class="n">DataClassWithId</span><span class="p">,</span> <span class="n">normalize</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">aionationstates.ns_to_human</span> <span class="k">import</span> <span class="n">census_info</span>
+<span class="kn">import</span> <span class="nn">aionationstates</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;PollOption&#39;</span><span class="p">,</span> <span class="s1">&#39;Poll&#39;</span><span class="p">,</span> <span class="s1">&#39;DispatchThumbnail&#39;</span><span class="p">,</span> <span class="s1">&#39;Dispatch&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;CensusScaleCurrent&#39;</span><span class="p">,</span> <span class="s1">&#39;CensusPoint&#39;</span><span class="p">,</span> <span class="s1">&#39;CensusScaleHistory&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Zombie&#39;</span><span class="p">,</span> <span class="s1">&#39;ArchivedHappening&#39;</span><span class="p">)</span>
+
+
+<span class="c1"># Shared data classes:</span>
+
+<div class="viewcode-block" id="PollOption"><a class="viewcode-back" href="../../reference.html#aionationstates.PollOption">[docs]</a><span class="k">class</span> <span class="nc">PollOption</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An option in a poll.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    text : str</span>
+<span class="sd">        Text of the option.</span>
+<span class="sd">    voters : list of :class:`Nation`</span>
+<span class="sd">        Nations that picked this option.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="c1"># Troublesome characters are cut from option texts, so</span>
+        <span class="c1"># unscrambling is not necessary.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;OPTIONTEXT&#39;</span><span class="p">))</span>
+
+        <span class="n">voters</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;VOTERS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">voters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="p">[</span><span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">voter</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">voter</span> <span class="ow">in</span> <span class="n">voters</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">voters</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Poll"><a class="viewcode-back" href="../../reference.html#aionationstates.Poll">[docs]</a><span class="k">class</span> <span class="nc">Poll</span><span class="p">(</span><span class="n">DataClassWithId</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A regional poll.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The poll id.</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The poll title.</span>
+<span class="sd">    text : str or None</span>
+<span class="sd">        The poll text.</span>
+<span class="sd">    region : :class:`Region`</span>
+<span class="sd">        Region the poll was posted in.</span>
+<span class="sd">    author : :class:`Nation`</span>
+<span class="sd">        Nation that posted the poll.</span>
+<span class="sd">    options : list of :class:`PollOption`</span>
+<span class="sd">        The poll options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="c1"># Troublesome characters are cut from poll titles and texts, so</span>
+        <span class="c1"># unscrambling is not necessary.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">))</span>
+
+        <span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;REGION&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;START&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;STOP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[</span><span class="n">PollOption</span><span class="p">(</span><span class="n">option_elem</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">option_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;OPTIONS&#39;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="DispatchThumbnail"><a class="viewcode-back" href="../../reference.html#aionationstates.DispatchThumbnail">[docs]</a><span class="k">class</span> <span class="nc">DispatchThumbnail</span><span class="p">(</span><span class="n">DataClassWithId</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A dispatch `thumbnail`, missing text.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The dispatch id.</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The dispatch title.</span>
+<span class="sd">    author : :class:`Nation`</span>
+<span class="sd">        Nation that posted the dispatch.</span>
+<span class="sd">    category : str</span>
+<span class="sd">        The dispatch category.</span>
+<span class="sd">    subcategory : str</span>
+<span class="sd">        The dispatch subcategory.</span>
+<span class="sd">    views : int</span>
+<span class="sd">        Number of times the dispatch got viewed.</span>
+<span class="sd">    score : int</span>
+<span class="sd">        Number of votes the dispatch received.</span>
+<span class="sd">    created : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the dispatch was created.</span>
+<span class="sd">    edited : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the dispatch last got edited.  Equal to ``created`` for</span>
+<span class="sd">        dispatches that were never edited.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_from_elem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span>
+            <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TITLE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;AUTHOR&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subcategory</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SUBCATEGORY&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">views</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;VIEWS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">created</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CREATED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1"># Otherwise it&#39;s 0 for dispatches that were never edited</span>
+        <span class="n">edited</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;EDITED&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="n">created</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">created</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edited</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">edited</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_from_elem</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="DispatchThumbnail.full"><a class="viewcode-back" href="../../reference.html#aionationstates.DispatchThumbnail.full">[docs]</a>    <span class="k">def</span> <span class="nf">full</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Request the full dispatch (with text).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Dispatch`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="c1"># &lt;DispatchThumbnail id=X&gt; == &lt;Dispatch id=X&gt;</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DispatchThumbnail</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">DataClassWithId</span><span class="o">.</span><span class="fm">__hash__</span></div>
+
+
+<div class="viewcode-block" id="Dispatch"><a class="viewcode-back" href="../../reference.html#aionationstates.Dispatch">[docs]</a><span class="k">class</span> <span class="nc">Dispatch</span><span class="p">(</span><span class="n">DispatchThumbnail</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A full dispatch.</span>
+
+<span class="sd">    Includes all of the attributes of :class:`DispatchThumbnail`, as</span>
+<span class="sd">    well as:</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The dispatch text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_update_from_elem</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Dispatch id=</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<span class="c1"># Census data classes:</span>
+
+<div class="viewcode-block" id="CensusScaleCurrent"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleCurrent">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleCurrent</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Current World Census scale data.</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">        With the exception of score, you must not expect the fields</span>
+<span class="sd">        to update instantly.</span>
+
+<span class="sd">        For the exact same reason of NationStates&#39; excessive</span>
+<span class="sd">        quirkiness, those fields may be missing (set to ``None``) on</span>
+<span class="sd">        newly-founded nations (perhaps also in other cases, there is</span>
+<span class="sd">        not a way to reliably test).  You will need to account for</span>
+<span class="sd">        that in your code.</span>
+
+<span class="sd">    Obviously, regions lack :attr:`rrank` and :attr:`prrank`, and the</span>
+<span class="sd">    world only has :attr:`score`.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    info : :class:`ScaleInfo`</span>
+<span class="sd">        Static information about the scale.</span>
+<span class="sd">    score : float</span>
+<span class="sd">        The absolute census score.  All the other scale values are</span>
+<span class="sd">        calculated (by NationStates) from scale scores of multiple</span>
+<span class="sd">        nations.  Should always be present.</span>
+<span class="sd">    rank : int or None</span>
+<span class="sd">        World rank by the scale.</span>
+<span class="sd">    prank : float or None</span>
+<span class="sd">        Percentage World rank by the scale.</span>
+<span class="sd">    rrank : int or None</span>
+<span class="sd">        Regional rank by the scale.</span>
+<span class="sd">    prrank : float or None</span>
+<span class="sd">        Percentage Regional rank by the scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1"># For recently-founded nations (and maybe in other cases as well, who</span>
+        <span class="c1"># knows) the ranks &amp; percentages may not show up even if requested.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rrank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prrank</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prank</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rrank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;RRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prrank</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;PRRANK&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;CensusScaleCurrent #</span><span class="si">{self.info.id}</span><span class="s1"> </span><span class="si">{self.info.title}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="CensusPoint"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusPoint">[docs]</a><span class="k">class</span> <span class="nc">CensusPoint</span><span class="p">(</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;CensusPoint&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">])):</span>
+    <span class="sd">&quot;&quot;&quot;A namedtuple of what the scale score was on a particular date.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    timestamp : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the score was recorded.</span>
+<span class="sd">    score : float</span>
+<span class="sd">        What it was.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="n">stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SCORE&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">CensusPoint</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">stamp</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CensusScaleHistory"><a class="viewcode-back" href="../../reference.html#aionationstates.CensusScaleHistory">[docs]</a><span class="k">class</span> <span class="nc">CensusScaleHistory</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Change of a World Census scale score through time.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    info : :class:`ScaleInfo`</span>
+<span class="sd">        Static information about the scale.</span>
+<span class="sd">    history : list of :class:`CensusPoint`</span>
+<span class="sd">        The actual data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">census_info</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[</span><span class="n">CensusPoint</span><span class="p">(</span><span class="n">sub_elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub_elem</span> <span class="ow">in</span> <span class="n">elem</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;CensusScaleHistory #</span><span class="si">{self.info.id}</span><span class="s1"> </span><span class="si">{self.info.title}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<span class="c1"># Shared Census shards:</span>
+
+<span class="k">class</span> <span class="nc">Census</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">census</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Current World Census data.</span>
+
+<span class="sd">        By default returns data on today&#39;s featured World Census</span>
+<span class="sd">        scale, use arguments to get results on specific scales.  In</span>
+<span class="sd">        order to request data on all scales at once you can do</span>
+<span class="sd">        ``x.census(*range(81))``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scales : int</span>
+<span class="sd">            World Census scales, integers between 0 and 80 (84 if you</span>
+<span class="sd">            also count Z-Day scales), inclusive.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`CensusScaleCurrent`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;score+rank+rrank+prank+prrank&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">)</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;census&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">CensusScaleCurrent</span><span class="p">(</span><span class="n">scale_elem</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">scale_elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CENSUS&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">censushistory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Historical World Census data.</span>
+
+<span class="sd">        Was split into its own method for the sake of simplicity.</span>
+
+<span class="sd">        By default returns data on today&#39;s featured World Census</span>
+<span class="sd">        scale, use arguments to get results on specific scales.  In</span>
+<span class="sd">        order to request data on all scales at once you can do</span>
+<span class="sd">        ``x.censushistory(*range(81))``.</span>
+
+<span class="sd">        Returns data for the entire length of history NationStates</span>
+<span class="sd">        stores.  There is no way to override that.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scales : int</span>
+<span class="sd">            World Census scales, integers between 0 and 80 (84 if you</span>
+<span class="sd">            also count Z-Day scales), inclusive.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`CensusScaleHistory`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;history&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">scales</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;scale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">)</span>
+
+        <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;census&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">CensusScaleHistory</span><span class="p">(</span><span class="n">scale_elem</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">scale_elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;CENSUS&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ArchivedHappening</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A happening from a national or regional archive.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    timestamp : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        When the happening occured.</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The happening text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Zombie"><a class="viewcode-back" href="../../reference.html#aionationstates.Zombie">[docs]</a><span class="k">class</span> <span class="nc">Zombie</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The situation in a nation/region during the annual Z-Day event.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    survivors : int</span>
+<span class="sd">        The number of citizens surviving, in millions.</span>
+<span class="sd">    zombies : int</span>
+<span class="sd">        The number of undead citizens, in millions.</span>
+<span class="sd">    dead : int</span>
+<span class="sd">        The number of dead citizens, in millions.</span>
+<span class="sd">    action : str or None</span>
+<span class="sd">        The nation&#39;s strategy for dealing with the disaster.  Either</span>
+<span class="sd">        &quot;research&quot;, &quot;exterminate&quot;, or &quot;export&quot;.  ``None`` if the</span>
+<span class="sd">        instance represents regional situation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">survivors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;SURVIVORS&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zombies</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIES&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;DEAD&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;ZACTION&#39;</span><span class="p">)</span></div>
+
+
+<span class="c1"># Shards shared by Nation &amp; Region APIs:</span>
+
+<span class="k">class</span> <span class="nc">NationRegion</span><span class="p">(</span><span class="n">DataClassWithId</span><span class="p">,</span> <span class="n">Census</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;happenings&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">happenings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Happenings archived on the in-game page.  Newest to oldest.</span>
+
+<span class="sd">        These happenings are not parsed because they are subtly</span>
+<span class="sd">        different from the ones in the normal feed and I see no</span>
+<span class="sd">        practical use-cases for having them parsed as well.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of a list of :class:`ArchivedHappening`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ArchivedHappening</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;HAPPENINGS&#39;</span><span class="p">)]</span>
+
+    <span class="nd">@api_query</span><span class="p">(</span><span class="s1">&#39;zombie&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">zombie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;State during the annual Z-Day event.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        an :class:`ApiQuery` of :class:`Zombie`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Zombie</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ZOMBIE&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;{type(self).__name__} &quot;</span><span class="si">{self.id}</span><span class="s1">&quot;&gt;&#39;</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Михаил Лебедев.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

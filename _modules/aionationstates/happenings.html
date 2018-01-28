@@ -1,0 +1,925 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aionationstates.happenings &#8212; aionationstates 0.3.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for aionationstates.happenings</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Digest all NationStates happenings, extracting their type and useful data.</span>
+
+<span class="sd">A great undertaking to be sure.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">html</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">suppress</span>
+
+<span class="kn">from</span> <span class="nn">aionationstates.utils</span> <span class="k">import</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">unscramble_encoding</span><span class="p">,</span> <span class="n">logger</span>
+<span class="kn">import</span> <span class="nn">aionationstates</span>
+
+
+<span class="k">class</span> <span class="nc">_ParseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="UnrecognizedHappening"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.UnrecognizedHappening">[docs]</a><span class="k">class</span> <span class="nc">UnrecognizedHappening</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A happening that wasn&#39;t recognized by the system.</span>
+
+<span class="sd">    Most likely cause of this is the futility of this measly effort</span>
+<span class="sd">    against the inescapable and ever-growing chaos of our Universe.</span>
+
+<span class="sd">    Not necessarily an error in the parsing system, rather an indicator</span>
+<span class="sd">    of its incompleteness.</span>
+
+<span class="sd">    Note that all the other classes in the `happenings` module inherit</span>
+<span class="sd">    from this class, so all the attributes listed below are present on</span>
+<span class="sd">    them as well.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    id : int</span>
+<span class="sd">        The happening id.</span>
+<span class="sd">    timestamp : naive UTC :class:`datetime.datetime`</span>
+<span class="sd">        Time of the happening.</span>
+<span class="sd">    text : str</span>
+<span class="sd">        The happening text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">UnrecognizedHappening</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;&lt;Happening #</span><span class="si">{self.id}</span><span class="s1">&gt;&#39;</span></div>
+
+
+<span class="c1"># Main categories:</span>
+
+<div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A direct action taken by a player.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    agent : :class:`~aionationstates.Nation`</span>
+<span class="sd">        The player who took the action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;agent&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Consequence"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Consequence">[docs]</a><span class="k">class</span> <span class="nc">Consequence</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A result of previous actions.&quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># Traits:</span>
+
+<div class="viewcode-block" id="Regional"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Regional">[docs]</a><span class="k">class</span> <span class="nc">Regional</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An event taking place in a single region.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    region : :class:`~aionationstates.Region`</span>
+<span class="sd">        The region the event took place inside of.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;region&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Affecting"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Affecting">[docs]</a><span class="k">class</span> <span class="nc">Affecting</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An event passively involving a player.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patient : :class:`~aionationstates.Nation`</span>
+<span class="sd">        The player who was passively involved in the event.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;patient&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<span class="c1"># Nations doing things:</span>
+
+<div class="viewcode-block" id="Move"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Move">[docs]</a><span class="k">class</span> <span class="nc">Move</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation moving regions.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    region_from : :class:`~aionationstates.Region`</span>
+<span class="sd">    region_to : :class:`~aionationstates.Region`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;@@(.+?)@@ relocated from </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> to </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region_from</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region_to</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Founding"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Founding">[docs]</a><span class="k">class</span> <span class="nc">Founding</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Regional</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation being founded.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ was founded in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Refounding"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Refounding">[docs]</a><span class="k">class</span> <span class="nc">Refounding</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Regional</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation being refounded.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ was refounded in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CTE"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.CTE">[docs]</a><span class="k">class</span> <span class="nc">CTE</span><span class="p">(</span><span class="n">Consequence</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">,</span> <span class="n">Regional</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation ceasing to exist.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ ceased to exist in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Legislation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Legislation">[docs]</a><span class="k">class</span> <span class="nc">Legislation</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation answering an issue.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    effect_line : str</span>
+<span class="sd">        May contain HTML elements and character references.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;Following new legislation in @@(.+?)@@, (.+)\.&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">effect_line</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FlagChange"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.FlagChange">[docs]</a><span class="k">class</span> <span class="nc">FlagChange</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation altering its flag.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ altered its national flag&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SettingsChange"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.SettingsChange">[docs]</a><span class="k">class</span> <span class="nc">SettingsChange</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation modifying its customizeable fields.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    changes : dict with keys and values of str</span>
+<span class="sd">        A mapping of field names (such as &quot;currency&quot;, &quot;motto&quot;, etc.) to</span>
+<span class="sd">        their new values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ changed its national&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">changes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># If you harbor any sort of motivation to refactor this, feel free.</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;@@ changed its national&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">23</span>
+        <span class="n">new_text</span> <span class="o">=</span> <span class="s1">&#39;its&#39;</span> <span class="o">+</span> <span class="n">text</span><span class="p">[</span><span class="n">index</span><span class="p">:]</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># none of the fields are supposed to contain quotes</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;its (.+?) to &quot;(.+?)&quot;&#39;</span><span class="p">,</span> <span class="n">new_text</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">changes</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">new_text</span> <span class="o">=</span> <span class="n">new_text</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)):]</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DispatchPublication"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.DispatchPublication">[docs]</a><span class="k">class</span> <span class="nc">DispatchPublication</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A dispatch being published.</span>
+
+<span class="sd">    In case you&#39;re wondering, deleting a dispatch doesn&#39;t produce a</span>
+<span class="sd">    happening.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dispatch : :class:`~aionationstates.DispatchThumbnail`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;@@(.+?)@@ published &quot;&lt;a href=&quot;page=dispatch/id=(.+?)&quot;&gt;(.+?)&lt;/a&gt;&quot; \((.+?): (.+?)\).&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">DispatchThumbnail</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">unscramble_encoding</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))),</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+            <span class="n">subcategory</span><span class="o">=</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span>
+            <span class="n">views</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">score</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="c1"># The happening timestamp</span>
+            <span class="n">created</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">edited</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CategoryChange"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.CategoryChange">[docs]</a><span class="k">class</span> <span class="nc">CategoryChange</span><span class="p">(</span><span class="n">Consequence</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation being reclassified to a different WA Category.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    category_before : str</span>
+<span class="sd">    category_after : str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ was reclassified from &quot;(.+?)&quot; to &quot;(.+?)&quot;.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category_before</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category_after</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BannerCreation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.BannerCreation">[docs]</a><span class="k">class</span> <span class="nc">BannerCreation</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation creating a custom banner.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ created a custom banner.&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<span class="c1"># World Assembly:</span>
+
+
+<div class="viewcode-block" id="WorldAssembly"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.WorldAssembly">[docs]</a><span class="k">class</span> <span class="nc">WorldAssembly</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any event related to the World Assembly.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Endorsement"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Endorsement">[docs]</a><span class="k">class</span> <span class="nc">Endorsement</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation endorsing another nation.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;@@(.+?)@@ endorsed @@(.+?)@@&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EndorsementWithdrawal"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EndorsementWithdrawal">[docs]</a><span class="k">class</span> <span class="nc">EndorsementWithdrawal</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation withdrawing its endorsement of another nation.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ withdrew its endorsement from @@(.+?)@@&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorldAssemblyApplication"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.WorldAssemblyApplication">[docs]</a><span class="k">class</span> <span class="nc">WorldAssemblyApplication</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">WorldAssembly</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation applying to join the World Assembly.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ applied to join the World Assembly.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorldAssemblyAdmission"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.WorldAssemblyAdmission">[docs]</a><span class="k">class</span> <span class="nc">WorldAssemblyAdmission</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">WorldAssembly</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation being admitted to the World Assembly.</span>
+
+<span class="sd">    This is an :class:`Action`, not a :class:`Consequence`, as WA</span>
+<span class="sd">    admissions are a direct result of following an emailed link.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ was admitted to the World Assembly.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorldAssemblyResignation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.WorldAssemblyResignation">[docs]</a><span class="k">class</span> <span class="nc">WorldAssemblyResignation</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">WorldAssembly</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation resigning from World Assembly.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ resigned from the World Assembly.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<span class="c1"># Regions doing things:</span>
+
+<div class="viewcode-block" id="RegionalAdministrative"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.RegionalAdministrative">[docs]</a><span class="k">class</span> <span class="nc">RegionalAdministrative</span><span class="p">(</span><span class="n">Regional</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any action taken by regional administration, or a</span>
+<span class="sd">    change thereof.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DelegateChange"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.DelegateChange">[docs]</a><span class="k">class</span> <span class="nc">DelegateChange</span><span class="p">(</span><span class="n">Consequence</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A region changing World Assembly Delegates.</span>
+
+<span class="sd">    Note that NationStates spreads this out to three distinct happening</span>
+<span class="sd">    formats:</span>
+
+<span class="sd">    - delegates changing;</span>
+<span class="sd">    - a nation taking the free delegate position; and</span>
+<span class="sd">    - a delegate being removed, leaving the position empty.</span>
+
+<span class="sd">    As I believe this to be superfluous, this class represents all three.</span>
+<span class="sd">    In case either the old of new delegate is missing, the corresponding</span>
+<span class="sd">    attribute will be set to None.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    new_delegate : :class:`~aionationstates.Nation` or None</span>
+<span class="sd">    old_delegate : :class:`~aionationstates.Nation` or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ seized the position of </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> WA Delegate from @@(.+?)@@.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_delegate</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_delegate</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ became WA Delegate of </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_delegate</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_delegate</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ lost WA Delegate status in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_delegate</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_delegate</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="n">_ParseError</span></div>
+
+
+<div class="viewcode-block" id="PollCreation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.PollCreation">[docs]</a><span class="k">class</span> <span class="nc">PollCreation</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation creating a new regional poll.</span>
+
+<span class="sd">    Note that the poll id is inaccessible from the happening, so the</span>
+<span class="sd">    created poll can&#39;t be linked directly.  The best you can do is</span>
+<span class="sd">    request the current poll of the region from the happening.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str</span>
+<span class="sd">        Poll title.  Don&#39;t rely on this being accurate, some characters</span>
+<span class="sd">        (such as brackets) are for whatever horror inducing reason</span>
+<span class="sd">        stripped from the happening.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ created a new poll in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">: &quot;(.+?)&quot;.&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">unescape</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PollDeletion"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.PollDeletion">[docs]</a><span class="k">class</span> <span class="nc">PollDeletion</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation deleting the regional poll.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ deleted a regional poll in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OfficerAppointment"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.OfficerAppointment">[docs]</a><span class="k">class</span> <span class="nc">OfficerAppointment</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation appointing a Regional Officer.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str</span>
+<span class="sd">        Title of the new officer.</span>
+<span class="sd">    authority : :class:`~aionationstates.Authority`</span>
+<span class="sd">        Authority of the new officer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="c1"># Officer titles can be blank if you confuse NS enough</span>
+            <span class="s1">&#39;@@(.+?)@@ appointed @@(.+?)@@ as (.*?) with authority over (.+?) in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authority</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="o">.</span><span class="n">_from_happening</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OfficerDismissal"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.OfficerDismissal">[docs]</a><span class="k">class</span> <span class="nc">OfficerDismissal</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation dismissing a Regional Officer.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str</span>
+<span class="sd">        Title the officer previously held.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="c1"># Officer titles can be blank if you confuse NS enough</span>
+            <span class="s1">&#39;@@(.+?)@@ dismissed @@(.+?)@@ as (.*?) of </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DelegateModification"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.DelegateModification">[docs]</a><span class="k">class</span> <span class="nc">DelegateModification</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A founder modifying the authority of the World Assembly Delegate.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    authority_granted : :class:`~aionationstates.Authority`</span>
+<span class="sd">    authority_removed : :class:`~aionationstates.Authority`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ &#39;</span>
+            <span class="c1"># granted X authority and removed Y authority from</span>
+            <span class="c1"># granted X authority to</span>
+            <span class="c1"># removed Y authority from</span>
+            <span class="s1">&#39;(?:granted (.+?) authority )?&#39;</span>
+            <span class="s1">&#39;(?:and |to )?&#39;</span>
+            <span class="s1">&#39;(?:removed (.+?) authority from )?&#39;</span>
+            <span class="s1">&#39;the WA Delegate in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authority_granted</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="o">.</span><span class="n">_from_happening</span><span class="p">(</span>
+            <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authority_removed</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="o">.</span><span class="n">_from_happening</span><span class="p">(</span>
+            <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OfficerModification"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.OfficerModification">[docs]</a><span class="k">class</span> <span class="nc">OfficerModification</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A founder or Delegate modifying one of the Regional Officers.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str</span>
+<span class="sd">        Current title of the officer.</span>
+<span class="sd">    old_title : str or None</span>
+<span class="sd">        Title the officer previously held.  None if the office wasn&#39;t</span>
+<span class="sd">        renamed.</span>
+<span class="sd">    authority_granted : :class:`~aionationstates.Authority`</span>
+<span class="sd">    authority_removed : :class:`~aionationstates.Authority`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ &#39;</span>
+            <span class="c1"># granted X authority and removed Y authority from</span>
+            <span class="c1"># granted X authority to</span>
+            <span class="c1"># removed Y authority from</span>
+            <span class="s1">&#39;(?:granted (.+?) authority )?&#39;</span>
+            <span class="s1">&#39;(?:and |to )?&#39;</span>
+            <span class="s1">&#39;(?:removed (.+?) authority from )?&#39;</span>
+            <span class="s1">&#39;@@(.+?)@@ &#39;</span>
+            <span class="s1">&#39;(?:and renamed the office from &quot;(.*?)&quot; to &quot;(.*?)&quot; )?&#39;</span>
+            <span class="s1">&#39;(?:as (.*?) )?&#39;</span>
+            <span class="s1">&#39;in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authority_granted</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="o">.</span><span class="n">_from_happening</span><span class="p">(</span>
+                <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authority_removed</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="o">.</span><span class="n">_from_happening</span><span class="p">(</span>
+                <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="ow">or</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ renamed the office&#39;</span>
+            <span class="s1">&#39; held by @@(.*?)@@&#39;</span>
+            <span class="s1">&#39; from &quot;(.*?)&quot; to &quot;(.*?)&quot;&#39;</span>
+            <span class="s1">&#39; in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authority_granted</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authority_removed</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Authority</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">raise</span> <span class="n">_ParseError</span></div>
+
+
+<span class="c1"># Embassies:</span>
+
+<div class="viewcode-block" id="Embassy"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Embassy">[docs]</a><span class="k">class</span> <span class="nc">Embassy</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any event related to an embassy between two</span>
+<span class="sd">    regions.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    regions : a frozenset of two :class:`~aionationstates.Region`</span>
+<span class="sd">        Regions sharing an embassy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;regions&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyOrder"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyOrder">[docs]</a><span class="k">class</span> <span class="nc">EmbassyOrder</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">,</span> <span class="n">Embassy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any action affecting an embassy.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    other_region : :class:`~aionationstates.Region`</span>
+<span class="sd">        Region the embassy is with.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;other_region&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="EmbassyConstructionRequest"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyConstructionRequest">[docs]</a><span class="k">class</span> <span class="nc">EmbassyConstructionRequest</span><span class="p">(</span><span class="n">EmbassyOrder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation proposing construction of embassies between two regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ proposed constructing embassies between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyConstructionConfirmation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyConstructionConfirmation">[docs]</a><span class="k">class</span> <span class="nc">EmbassyConstructionConfirmation</span><span class="p">(</span><span class="n">EmbassyOrder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation accepting a request to construct embassies between two</span>
+<span class="sd">    regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ agreed to construct embassies between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyConstructionRequestWithdrawal"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyConstructionRequestWithdrawal">[docs]</a><span class="k">class</span> <span class="nc">EmbassyConstructionRequestWithdrawal</span><span class="p">(</span><span class="n">EmbassyOrder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation withdrawing a request to construct embassies between two</span>
+<span class="sd">    regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ withdrew a request for embassies between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyConstructionAbortion"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyConstructionAbortion">[docs]</a><span class="k">class</span> <span class="nc">EmbassyConstructionAbortion</span><span class="p">(</span><span class="n">EmbassyOrder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation aborting construction of embassies between two regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ aborted construction of embassies between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyClosureOrder"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyClosureOrder">[docs]</a><span class="k">class</span> <span class="nc">EmbassyClosureOrder</span><span class="p">(</span><span class="n">EmbassyOrder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation ordering closure of embassies between two regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ ordered the closure of embassies between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">other_region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyEstablishment"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyEstablishment">[docs]</a><span class="k">class</span> <span class="nc">EmbassyEstablishment</span><span class="p">(</span><span class="n">Consequence</span><span class="p">,</span> <span class="n">Embassy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An embassy being established between two regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;Embassy established between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span>
+            <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+            <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmbassyCancellation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.EmbassyCancellation">[docs]</a><span class="k">class</span> <span class="nc">EmbassyCancellation</span><span class="p">(</span><span class="n">Consequence</span><span class="p">,</span> <span class="n">Embassy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Embassy being cancelled between two regions.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;Embassy cancelled between </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1"> and </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">((</span>
+            <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+            <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<span class="c1"># Z-Day:</span>
+
+<div class="viewcode-block" id="Zombie"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.Zombie">[docs]</a><span class="k">class</span> <span class="nc">Zombie</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">Affecting</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any Z-Day strike.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weapon : str</span>
+<span class="sd">        Weapon type used, for example &quot;Mk II (Sterilizer) Cure Missile&quot;.</span>
+<span class="sd">    impact : int</span>
+<span class="sd">        Citizens affected, in millions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patient</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weapon</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">impact</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZombieCure"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.ZombieCure">[docs]</a><span class="k">class</span> <span class="nc">ZombieCure</span><span class="p">(</span><span class="n">Zombie</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation curing another nation during Z-Day.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ was struck by a (.+?) from @@(.+?)@@, curing ([0-9]+) million infected.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZombieKill"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.ZombieKill">[docs]</a><span class="k">class</span> <span class="nc">ZombieKill</span><span class="p">(</span><span class="n">Zombie</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation cleansing another nation during Z-Day.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ was cleansed by a (.+?) from @@(.+?)@@, killing ([0-9]+) million zombies.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZombieInfect"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.ZombieInfect">[docs]</a><span class="k">class</span> <span class="nc">ZombieInfect</span><span class="p">(</span><span class="n">Zombie</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation infecting another nation during Z-Day.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    convert : bool</span>
+<span class="sd">        Whether the nation is converted to a zombie exporter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ was ravaged by a (.+?) from @@(.+?)@@, infecting ([0-9]+) million survivors.&#39;</span><span class="p">,</span>
+            <span class="n">text</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convert</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;converting to a zombie exporter! Oh no!&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZombieBorderControlActivation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.ZombieBorderControlActivation">[docs]</a><span class="k">class</span> <span class="nc">ZombieBorderControlActivation</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation activating regional border control during Z-Day.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    type : str</span>
+<span class="sd">        Type of lockdown.  Currently either &#39;Lockdown&#39; or &#39;Keycode&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ instituted (.*?) Zombie Border Control in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agent</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZombieBorderControlDeactivation"><a class="viewcode-back" href="../../happenings.html#aionationstates.happenings.ZombieBorderControlDeactivation">[docs]</a><span class="k">class</span> <span class="nc">ZombieBorderControlDeactivation</span><span class="p">(</span><span class="n">Action</span><span class="p">,</span> <span class="n">RegionalAdministrative</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A nation removing regional border control during Z-Day.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="s1">&#39;@@(.+?)@@ removed Zombie Border Control in </span><span class="si">%%</span><span class="s1">(.+?)</span><span class="si">%%</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">_ParseError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nation</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Nation</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">Region</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_submost_classes</span><span class="p">(</span><span class="n">classes</span><span class="p">):</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+        <span class="n">subclasses</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subclasses</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">cls</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">_submost_classes</span><span class="p">(</span><span class="n">subclasses</span><span class="p">)</span>
+
+
+<span class="n">_happening_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+    <span class="n">_submost_classes</span><span class="p">(</span><span class="n">UnrecognizedHappening</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()))</span>
+
+
+<span class="k">def</span> <span class="nf">process_happening</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+    <span class="c1"># Call ElementTree methods only once, to get a bit of extra performance.</span>
+    <span class="n">params_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+    <span class="n">params_timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">findtext</span><span class="p">(</span><span class="s1">&#39;TEXT&#39;</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="p">(</span><span class="n">params_id</span><span class="p">,</span> <span class="n">params_timestamp</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">_happening_classes</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="n">_ParseError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;could not process happening </span><span class="si">{params_id}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">UnrecognizedHappening</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../happenings.html">Happenings</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Михаил Лебедев.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

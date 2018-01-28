@@ -1,0 +1,700 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Happenings &#8212; aionationstates 0.3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Reference" href="reference.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-aionationstates.happenings">
+<span id="happenings"></span><h1>Happenings<a class="headerlink" href="#module-aionationstates.happenings" title="Permalink to this headline">¶</a></h1>
+<p>This module contains a parser of NationStates’ Happenings, with the strong
+intention of being both complete and convenient.</p>
+<p>This page describes how happenings are parsed and processed; to subscribe to the
+happening feeds use the World methods <a class="reference internal" href="reference.html#aionationstates.World.happenings" title="aionationstates.World.happenings"><code class="xref py py-meth docutils literal"><span class="pre">happenings()</span></code></a>
+and <a class="reference internal" href="reference.html#aionationstates.World.new_happenings" title="aionationstates.World.new_happenings"><code class="xref py py-meth docutils literal"><span class="pre">new_happenings()</span></code></a>.</p>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Greet every nation that moves to a new region:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> \
+        <span class="n">aionationstates</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;move&#39;</span><span class="p">]):</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">happening</span><span class="p">)</span> <span class="ow">is</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">happenings</span><span class="o">.</span><span class="n">Move</span><span class="p">:</span>
+        <span class="n">region_name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">happening</span><span class="o">.</span><span class="n">new_region</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="n">nation_name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">happening</span><span class="o">.</span><span class="n">agent</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Welcome to </span><span class="si">{region_name}</span><span class="s1">, </span><span class="si">{nation_name}</span><span class="s1">!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Detect regional currency adoption:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">region_name</span> <span class="o">=</span> <span class="s1">&#39;the pacific&#39;</span>
+<span class="n">regional_currency</span> <span class="o">=</span> <span class="s1">&#39;Denarius&#39;</span>
+
+<span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span>
+        <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;change&#39;</span><span class="p">],</span> <span class="n">regions</span><span class="o">=</span><span class="p">[</span><span class="n">region_name</span><span class="p">]):</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">happening</span><span class="p">)</span> <span class="ow">is</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">happenings</span><span class="o">.</span><span class="n">SettingsChange</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">happening</span><span class="o">.</span><span class="n">changes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;currency&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">regional_currency</span><span class="p">:</span>
+            <span class="n">nation_name</span> <span class="o">=</span> <span class="k">await</span> <span class="n">happening</span><span class="o">.</span><span class="n">agent</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{nation_name}</span><span class="s1"> has adopted </span><span class="si">{regional_currency}</span><span class="s1">!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Detect embassies built and closed:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">happening</span> <span class="ow">in</span> \
+        <span class="n">aionationstates</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">new_happenings</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;embassy&#39;</span><span class="p">]):</span>
+    <span class="n">region_names</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span>
+        <span class="n">region</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">happening</span><span class="o">.</span><span class="n">regions</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">happening</span><span class="p">)</span> <span class="ow">is</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">happenings</span><span class="o">.</span><span class="n">EmbassyEstablishment</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> ❤️ </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">region_names</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">happening</span><span class="p">)</span> <span class="ow">is</span> <span class="n">aionationstates</span><span class="o">.</span><span class="n">happenings</span><span class="o">.</span><span class="n">EmbassyCancellation</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> 💔 </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">region_names</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="design-considerations">
+<h2>Design considerations<a class="headerlink" href="#design-considerations" title="Permalink to this headline">¶</a></h2>
+<p>Parsing happenings can serve a variety of use-cases. You may want to maintain an
+endorsement graph for your region, which would require very specific handling of
+a handful of happening types (notably <a class="reference internal" href="#aionationstates.happenings.Endorsement" title="aionationstates.happenings.Endorsement"><code class="xref py py-class docutils literal"><span class="pre">Endorsement</span></code></a>,
+<a class="reference internal" href="#aionationstates.happenings.EndorsementWithdrawal" title="aionationstates.happenings.EndorsementWithdrawal"><code class="xref py py-class docutils literal"><span class="pre">EndorsementWithdrawal</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Move" title="aionationstates.happenings.Move"><code class="xref py py-class docutils literal"><span class="pre">Move</span></code></a>, and <a class="reference internal" href="#aionationstates.happenings.CTE" title="aionationstates.happenings.CTE"><code class="xref py py-class docutils literal"><span class="pre">CTE</span></code></a>) or you might be
+after graphing game activity over time, and thus need to process a broad
+spectrum of happenings very generically. This module seeks to accomodate both
+the precise and broad use-cases.</p>
+</div>
+<div class="section" id="base-classes">
+<h2>Base classes<a class="headerlink" href="#base-classes" title="Permalink to this headline">¶</a></h2>
+<p>Starting with the cold hard truth–</p>
+<dl class="class">
+<dt id="aionationstates.happenings.UnrecognizedHappening">
+<em class="property">class </em><code class="descname">UnrecognizedHappening</code><a class="reference internal" href="_modules/aionationstates/happenings.html#UnrecognizedHappening"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.UnrecognizedHappening" title="Permalink to this definition">¶</a></dt>
+<dd><p>A happening that wasn’t recognized by the system.</p>
+<p>Most likely cause of this is the futility of this measly effort
+against the inescapable and ever-growing chaos of our Universe.</p>
+<p>Not necessarily an error in the parsing system, rather an indicator
+of its incompleteness.</p>
+<p>Note that all the other classes in the <cite>happenings</cite> module inherit
+from this class, so all the attributes listed below are present on
+them as well.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.UnrecognizedHappening.id">
+<code class="descname">id</code><a class="headerlink" href="#aionationstates.happenings.UnrecognizedHappening.id" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> – The happening id.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.UnrecognizedHappening.timestamp">
+<code class="descname">timestamp</code><a class="headerlink" href="#aionationstates.happenings.UnrecognizedHappening.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>naive UTC <a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> – Time of the happening.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.UnrecognizedHappening.text">
+<code class="descname">text</code><a class="headerlink" href="#aionationstates.happenings.UnrecognizedHappening.text" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – The happening text.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Now let’s look at how this module functions when it works as intended, shall we?</p>
+<p>On the most basic level, all happenings divide into two groups:</p>
+<dl class="class">
+<dt id="aionationstates.happenings.Action">
+<em class="property">class </em><code class="descname">Action</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>A direct action taken by a player.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Action.agent">
+<code class="descname">agent</code><a class="headerlink" href="#aionationstates.happenings.Action.agent" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Nation" title="aionationstates.Nation"><code class="xref py py-class docutils literal"><span class="pre">Nation</span></code></a> – The player who took the action.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Consequence">
+<em class="property">class </em><code class="descname">Consequence</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Consequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Consequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>A result of previous actions.</p>
+</dd></dl>
+
+<p>The rest of data classes in this module inherit from the classes above.</p>
+<p>Additionally, there are generalizable characteristics some happenings share,
+that can’t be separated well into categories:</p>
+<dl class="class">
+<dt id="aionationstates.happenings.Regional">
+<em class="property">class </em><code class="descname">Regional</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Regional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Regional" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>An event taking place in a single region.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Regional.region">
+<code class="descname">region</code><a class="headerlink" href="#aionationstates.happenings.Regional.region" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Region" title="aionationstates.Region"><code class="xref py py-class docutils literal"><span class="pre">Region</span></code></a> – The region the event took place inside of.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Affecting">
+<em class="property">class </em><code class="descname">Affecting</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Affecting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Affecting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>An event passively involving a player.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Affecting.patient">
+<code class="descname">patient</code><a class="headerlink" href="#aionationstates.happenings.Affecting.patient" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Nation" title="aionationstates.Nation"><code class="xref py py-class docutils literal"><span class="pre">Nation</span></code></a> – The player who was passively involved in the event.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Base classes unifying a set of caracteristics like these can be seen throughout
+the rest of the module.</p>
+</div>
+<div class="section" id="categories-of-happenings">
+<h2>Categories of happenings<a class="headerlink" href="#categories-of-happenings" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="embassies">
+<h3>Embassies<a class="headerlink" href="#embassies" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="aionationstates.happenings.Embassy">
+<em class="property">class </em><code class="descname">Embassy</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Embassy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Embassy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>Base class for any event related to an embassy between two
+regions.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Embassy.regions">
+<code class="descname">regions</code><a class="headerlink" href="#aionationstates.happenings.Embassy.regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>a frozenset of two <a class="reference internal" href="reference.html#aionationstates.Region" title="aionationstates.Region"><code class="xref py py-class docutils literal"><span class="pre">Region</span></code></a> – Regions sharing an embassy.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyEstablishment">
+<em class="property">class </em><code class="descname">EmbassyEstablishment</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyEstablishment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyEstablishment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Consequence</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Embassy" title="aionationstates.happenings.Embassy"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Embassy</span></code></a></p>
+<p>An embassy being established between two regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyCancellation">
+<em class="property">class </em><code class="descname">EmbassyCancellation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyCancellation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyCancellation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Consequence</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Embassy" title="aionationstates.happenings.Embassy"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Embassy</span></code></a></p>
+<p>Embassy being cancelled between two regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyOrder">
+<em class="property">class </em><code class="descname">EmbassyOrder</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyOrder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Embassy" title="aionationstates.happenings.Embassy"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Embassy</span></code></a></p>
+<p>Base class for any action affecting an embassy.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.EmbassyOrder.other_region">
+<code class="descname">other_region</code><a class="headerlink" href="#aionationstates.happenings.EmbassyOrder.other_region" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Region" title="aionationstates.Region"><code class="xref py py-class docutils literal"><span class="pre">Region</span></code></a> – Region the embassy is with.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyConstructionRequest">
+<em class="property">class </em><code class="descname">EmbassyConstructionRequest</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyConstructionRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyConstructionRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.EmbassyOrder" title="aionationstates.happenings.EmbassyOrder"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.EmbassyOrder</span></code></a></p>
+<p>A nation proposing construction of embassies between two regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyConstructionConfirmation">
+<em class="property">class </em><code class="descname">EmbassyConstructionConfirmation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyConstructionConfirmation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyConstructionConfirmation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.EmbassyOrder" title="aionationstates.happenings.EmbassyOrder"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.EmbassyOrder</span></code></a></p>
+<p>A nation accepting a request to construct embassies between two
+regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyConstructionRequestWithdrawal">
+<em class="property">class </em><code class="descname">EmbassyConstructionRequestWithdrawal</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyConstructionRequestWithdrawal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyConstructionRequestWithdrawal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.EmbassyOrder" title="aionationstates.happenings.EmbassyOrder"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.EmbassyOrder</span></code></a></p>
+<p>A nation withdrawing a request to construct embassies between two
+regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyConstructionAbortion">
+<em class="property">class </em><code class="descname">EmbassyConstructionAbortion</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyConstructionAbortion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyConstructionAbortion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.EmbassyOrder" title="aionationstates.happenings.EmbassyOrder"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.EmbassyOrder</span></code></a></p>
+<p>A nation aborting construction of embassies between two regions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EmbassyClosureOrder">
+<em class="property">class </em><code class="descname">EmbassyClosureOrder</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EmbassyClosureOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EmbassyClosureOrder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.EmbassyOrder" title="aionationstates.happenings.EmbassyOrder"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.EmbassyOrder</span></code></a></p>
+<p>A nation ordering closure of embassies between two regions.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="administration-of-a-region">
+<h3>Administration of a region<a class="headerlink" href="#administration-of-a-region" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="aionationstates.happenings.RegionalAdministrative">
+<em class="property">class </em><code class="descname">RegionalAdministrative</code><a class="reference internal" href="_modules/aionationstates/happenings.html#RegionalAdministrative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.RegionalAdministrative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Regional" title="aionationstates.happenings.Regional"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Regional</span></code></a></p>
+<p>Base class for any action taken by regional administration, or a
+change thereof.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.DelegateChange">
+<em class="property">class </em><code class="descname">DelegateChange</code><a class="reference internal" href="_modules/aionationstates/happenings.html#DelegateChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.DelegateChange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Consequence</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A region changing World Assembly Delegates.</p>
+<p>Note that NationStates spreads this out to three distinct happening
+formats:</p>
+<ul class="simple">
+<li>delegates changing;</li>
+<li>a nation taking the free delegate position; and</li>
+<li>a delegate being removed, leaving the position empty.</li>
+</ul>
+<p>As I believe this to be superfluous, this class represents all three.
+In case either the old of new delegate is missing, the corresponding
+attribute will be set to None.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.DelegateChange.new_delegate">
+<code class="descname">new_delegate</code><a class="headerlink" href="#aionationstates.happenings.DelegateChange.new_delegate" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Nation" title="aionationstates.Nation"><code class="xref py py-class docutils literal"><span class="pre">Nation</span></code></a> or None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.DelegateChange.old_delegate">
+<code class="descname">old_delegate</code><a class="headerlink" href="#aionationstates.happenings.DelegateChange.old_delegate" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Nation" title="aionationstates.Nation"><code class="xref py py-class docutils literal"><span class="pre">Nation</span></code></a> or None</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.OfficerAppointment">
+<em class="property">class </em><code class="descname">OfficerAppointment</code><a class="reference internal" href="_modules/aionationstates/happenings.html#OfficerAppointment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.OfficerAppointment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation appointing a Regional Officer.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerAppointment.title">
+<code class="descname">title</code><a class="headerlink" href="#aionationstates.happenings.OfficerAppointment.title" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Title of the new officer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerAppointment.authority">
+<code class="descname">authority</code><a class="headerlink" href="#aionationstates.happenings.OfficerAppointment.authority" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Authority" title="aionationstates.Authority"><code class="xref py py-class docutils literal"><span class="pre">Authority</span></code></a> – Authority of the new officer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.OfficerDismissal">
+<em class="property">class </em><code class="descname">OfficerDismissal</code><a class="reference internal" href="_modules/aionationstates/happenings.html#OfficerDismissal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.OfficerDismissal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation dismissing a Regional Officer.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerDismissal.title">
+<code class="descname">title</code><a class="headerlink" href="#aionationstates.happenings.OfficerDismissal.title" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Title the officer previously held.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.DelegateModification">
+<em class="property">class </em><code class="descname">DelegateModification</code><a class="reference internal" href="_modules/aionationstates/happenings.html#DelegateModification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.DelegateModification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A founder modifying the authority of the World Assembly Delegate.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.DelegateModification.authority_granted">
+<code class="descname">authority_granted</code><a class="headerlink" href="#aionationstates.happenings.DelegateModification.authority_granted" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Authority" title="aionationstates.Authority"><code class="xref py py-class docutils literal"><span class="pre">Authority</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.DelegateModification.authority_removed">
+<code class="descname">authority_removed</code><a class="headerlink" href="#aionationstates.happenings.DelegateModification.authority_removed" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Authority" title="aionationstates.Authority"><code class="xref py py-class docutils literal"><span class="pre">Authority</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.OfficerModification">
+<em class="property">class </em><code class="descname">OfficerModification</code><a class="reference internal" href="_modules/aionationstates/happenings.html#OfficerModification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.OfficerModification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A founder or Delegate modifying one of the Regional Officers.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerModification.title">
+<code class="descname">title</code><a class="headerlink" href="#aionationstates.happenings.OfficerModification.title" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Current title of the officer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerModification.old_title">
+<code class="descname">old_title</code><a class="headerlink" href="#aionationstates.happenings.OfficerModification.old_title" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str or None</em> – Title the officer previously held.  None if the office wasn’t
+renamed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerModification.authority_granted">
+<code class="descname">authority_granted</code><a class="headerlink" href="#aionationstates.happenings.OfficerModification.authority_granted" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Authority" title="aionationstates.Authority"><code class="xref py py-class docutils literal"><span class="pre">Authority</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.OfficerModification.authority_removed">
+<code class="descname">authority_removed</code><a class="headerlink" href="#aionationstates.happenings.OfficerModification.authority_removed" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Authority" title="aionationstates.Authority"><code class="xref py py-class docutils literal"><span class="pre">Authority</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.PollCreation">
+<em class="property">class </em><code class="descname">PollCreation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#PollCreation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.PollCreation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation creating a new regional poll.</p>
+<p>Note that the poll id is inaccessible from the happening, so the
+created poll can’t be linked directly.  The best you can do is
+request the current poll of the region from the happening.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.PollCreation.title">
+<code class="descname">title</code><a class="headerlink" href="#aionationstates.happenings.PollCreation.title" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Poll title.  Don’t rely on this being accurate, some characters
+(such as brackets) are for whatever horror inducing reason
+stripped from the happening.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.PollDeletion">
+<em class="property">class </em><code class="descname">PollDeletion</code><a class="reference internal" href="_modules/aionationstates/happenings.html#PollDeletion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.PollDeletion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation deleting the regional poll.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="z-day">
+<h3>Z-Day<a class="headerlink" href="#z-day" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="aionationstates.happenings.Zombie">
+<em class="property">class </em><code class="descname">Zombie</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Zombie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Zombie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a></p>
+<p>Base class for any Z-Day strike.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Zombie.weapon">
+<code class="descname">weapon</code><a class="headerlink" href="#aionationstates.happenings.Zombie.weapon" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Weapon type used, for example “Mk II (Sterilizer) Cure Missile”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.Zombie.impact">
+<code class="descname">impact</code><a class="headerlink" href="#aionationstates.happenings.Zombie.impact" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> – Citizens affected, in millions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.ZombieCure">
+<em class="property">class </em><code class="descname">ZombieCure</code><a class="reference internal" href="_modules/aionationstates/happenings.html#ZombieCure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.ZombieCure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Zombie" title="aionationstates.happenings.Zombie"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Zombie</span></code></a></p>
+<p>A nation curing another nation during Z-Day.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.ZombieKill">
+<em class="property">class </em><code class="descname">ZombieKill</code><a class="reference internal" href="_modules/aionationstates/happenings.html#ZombieKill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.ZombieKill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Zombie" title="aionationstates.happenings.Zombie"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Zombie</span></code></a></p>
+<p>A nation cleansing another nation during Z-Day.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.ZombieInfect">
+<em class="property">class </em><code class="descname">ZombieInfect</code><a class="reference internal" href="_modules/aionationstates/happenings.html#ZombieInfect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.ZombieInfect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Zombie" title="aionationstates.happenings.Zombie"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Zombie</span></code></a></p>
+<p>A nation infecting another nation during Z-Day.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.ZombieInfect.convert">
+<code class="descname">convert</code><a class="headerlink" href="#aionationstates.happenings.ZombieInfect.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>bool</em> – Whether the nation is converted to a zombie exporter.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.ZombieBorderControlActivation">
+<em class="property">class </em><code class="descname">ZombieBorderControlActivation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#ZombieBorderControlActivation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.ZombieBorderControlActivation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation activating regional border control during Z-Day.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.ZombieBorderControlActivation.type">
+<code class="descname">type</code><a class="headerlink" href="#aionationstates.happenings.ZombieBorderControlActivation.type" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – Type of lockdown.  Currently either ‘Lockdown’ or ‘Keycode’.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.ZombieBorderControlDeactivation">
+<em class="property">class </em><code class="descname">ZombieBorderControlDeactivation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#ZombieBorderControlDeactivation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.ZombieBorderControlDeactivation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.RegionalAdministrative" title="aionationstates.happenings.RegionalAdministrative"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.RegionalAdministrative</span></code></a></p>
+<p>A nation removing regional border control during Z-Day.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="world-assembly">
+<h3>World Assembly<a class="headerlink" href="#world-assembly" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="aionationstates.happenings.WorldAssembly">
+<em class="property">class </em><code class="descname">WorldAssembly</code><a class="reference internal" href="_modules/aionationstates/happenings.html#WorldAssembly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.WorldAssembly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.UnrecognizedHappening" title="aionationstates.happenings.UnrecognizedHappening"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.UnrecognizedHappening</span></code></a></p>
+<p>Base class for any event related to the World Assembly.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.WorldAssemblyApplication">
+<em class="property">class </em><code class="descname">WorldAssemblyApplication</code><a class="reference internal" href="_modules/aionationstates/happenings.html#WorldAssemblyApplication"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.WorldAssemblyApplication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.WorldAssembly" title="aionationstates.happenings.WorldAssembly"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.WorldAssembly</span></code></a></p>
+<p>A nation applying to join the World Assembly.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.WorldAssemblyAdmission">
+<em class="property">class </em><code class="descname">WorldAssemblyAdmission</code><a class="reference internal" href="_modules/aionationstates/happenings.html#WorldAssemblyAdmission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.WorldAssemblyAdmission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.WorldAssembly" title="aionationstates.happenings.WorldAssembly"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.WorldAssembly</span></code></a></p>
+<p>A nation being admitted to the World Assembly.</p>
+<p>This is an <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">Action</span></code></a>, not a <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">Consequence</span></code></a>, as WA
+admissions are a direct result of following an emailed link.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.WorldAssemblyResignation">
+<em class="property">class </em><code class="descname">WorldAssemblyResignation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#WorldAssemblyResignation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.WorldAssemblyResignation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.WorldAssembly" title="aionationstates.happenings.WorldAssembly"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.WorldAssembly</span></code></a></p>
+<p>A nation resigning from World Assembly.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="the-rest">
+<h3>The rest<a class="headerlink" href="#the-rest" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="aionationstates.happenings.Move">
+<em class="property">class </em><code class="descname">Move</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A nation moving regions.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Move.region_from">
+<code class="descname">region_from</code><a class="headerlink" href="#aionationstates.happenings.Move.region_from" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Region" title="aionationstates.Region"><code class="xref py py-class docutils literal"><span class="pre">Region</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.Move.region_to">
+<code class="descname">region_to</code><a class="headerlink" href="#aionationstates.happenings.Move.region_to" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.Region" title="aionationstates.Region"><code class="xref py py-class docutils literal"><span class="pre">Region</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Founding">
+<em class="property">class </em><code class="descname">Founding</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Founding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Founding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Regional" title="aionationstates.happenings.Regional"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Regional</span></code></a></p>
+<p>A nation being founded.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Refounding">
+<em class="property">class </em><code class="descname">Refounding</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Refounding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Refounding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Regional" title="aionationstates.happenings.Regional"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Regional</span></code></a></p>
+<p>A nation being refounded.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.CTE">
+<em class="property">class </em><code class="descname">CTE</code><a class="reference internal" href="_modules/aionationstates/happenings.html#CTE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.CTE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Consequence</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Regional" title="aionationstates.happenings.Regional"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Regional</span></code></a></p>
+<p>A nation ceasing to exist.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Legislation">
+<em class="property">class </em><code class="descname">Legislation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Legislation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Legislation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A nation answering an issue.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.Legislation.effect_line">
+<code class="descname">effect_line</code><a class="headerlink" href="#aionationstates.happenings.Legislation.effect_line" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – May contain HTML elements and character references.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.FlagChange">
+<em class="property">class </em><code class="descname">FlagChange</code><a class="reference internal" href="_modules/aionationstates/happenings.html#FlagChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.FlagChange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A nation altering its flag.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.SettingsChange">
+<em class="property">class </em><code class="descname">SettingsChange</code><a class="reference internal" href="_modules/aionationstates/happenings.html#SettingsChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.SettingsChange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A nation modifying its customizeable fields.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.SettingsChange.changes">
+<code class="descname">changes</code><a class="headerlink" href="#aionationstates.happenings.SettingsChange.changes" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict with keys and values of str</em> – A mapping of field names (such as “currency”, “motto”, etc.) to
+their new values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.DispatchPublication">
+<em class="property">class </em><code class="descname">DispatchPublication</code><a class="reference internal" href="_modules/aionationstates/happenings.html#DispatchPublication"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.DispatchPublication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A dispatch being published.</p>
+<p>In case you’re wondering, deleting a dispatch doesn’t produce a
+happening.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.DispatchPublication.dispatch">
+<code class="descname">dispatch</code><a class="headerlink" href="#aionationstates.happenings.DispatchPublication.dispatch" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="reference.html#aionationstates.DispatchThumbnail" title="aionationstates.DispatchThumbnail"><code class="xref py py-class docutils literal"><span class="pre">DispatchThumbnail</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.CategoryChange">
+<em class="property">class </em><code class="descname">CategoryChange</code><a class="reference internal" href="_modules/aionationstates/happenings.html#CategoryChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.CategoryChange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Consequence" title="aionationstates.happenings.Consequence"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Consequence</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a></p>
+<p>A nation being reclassified to a different WA Category.</p>
+<dl class="attribute">
+<dt id="aionationstates.happenings.CategoryChange.category_before">
+<code class="descname">category_before</code><a class="headerlink" href="#aionationstates.happenings.CategoryChange.category_before" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="aionationstates.happenings.CategoryChange.category_after">
+<code class="descname">category_after</code><a class="headerlink" href="#aionationstates.happenings.CategoryChange.category_after" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.BannerCreation">
+<em class="property">class </em><code class="descname">BannerCreation</code><a class="reference internal" href="_modules/aionationstates/happenings.html#BannerCreation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.BannerCreation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a></p>
+<p>A nation creating a custom banner.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.Endorsement">
+<em class="property">class </em><code class="descname">Endorsement</code><a class="reference internal" href="_modules/aionationstates/happenings.html#Endorsement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.Endorsement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a></p>
+<p>A nation endorsing another nation.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="aionationstates.happenings.EndorsementWithdrawal">
+<em class="property">class </em><code class="descname">EndorsementWithdrawal</code><a class="reference internal" href="_modules/aionationstates/happenings.html#EndorsementWithdrawal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aionationstates.happenings.EndorsementWithdrawal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#aionationstates.happenings.Action" title="aionationstates.happenings.Action"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Action</span></code></a>, <a class="reference internal" href="#aionationstates.happenings.Affecting" title="aionationstates.happenings.Affecting"><code class="xref py py-class docutils literal"><span class="pre">aionationstates.happenings.Affecting</span></code></a></p>
+<p>A nation withdrawing its endorsement of another nation.</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">aionationstates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Sounds amazing, how do I sign up?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Happenings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design-considerations">Design considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#base-classes">Base classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#categories-of-happenings">Categories of happenings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#embassies">Embassies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#administration-of-a-region">Administration of a region</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#z-day">Z-Day</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#world-assembly">World Assembly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-rest">The rest</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Михаил Лебедев.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/happenings.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
