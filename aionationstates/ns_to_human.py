@@ -864,7 +864,7 @@ census_info = [
         id=53,
         title='Authoritarianism',
         ranked='Most Authoritarian',
-        measurement='Stalins',
+        measurement='milliStalins',
         image='authoritarian',
         nation_description=('World Census staff loitered innocuously in '
                             'various public areas and recorded the length '
@@ -1308,5 +1308,16 @@ census_info = [
                             'fraction of zombies among the animate.'),
         region_description=('The following regions have the most zombies '
                             'per survivor per nation.'),
+    ),
+    ScaleInfo(
+        id=85,
+        title='Average Disposable Income',
+        ranked='Highest Disposable Incomes',
+        measurement='Standard Monetary Units',
+        image='dispincome',
+        nation_description=('The World Census calculated the average incomes '
+                            'of citizens after paying tax.'),
+        region_description=('The World Census calculated the average incomes '
+                            'of citizens after paying tax.'),
     ),
 ]
