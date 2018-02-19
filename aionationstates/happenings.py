@@ -42,7 +42,9 @@ class UnrecognizedHappening:
         self.text = text
 
     def __eq__(self, other):
-        return isinstance(other, UnrecognizedHappening) and self.id == other.id
+        if not isinstance(other, UnrecognizedHappening):
+            return NotImplemented
+        return self.id == other.id
 
     def __hash__(self):
         return hash((self.id,))

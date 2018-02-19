@@ -145,7 +145,9 @@ class DispatchThumbnail(DataClassWithId):
 
     def __eq__(self, other):
         # <DispatchThumbnail id=X> == <Dispatch id=X>
-        return isinstance(other, DispatchThumbnail) and self.id == other.id
+        if not isinstance(other, DispatchThumbnail):
+            return NotImplemented
+        return self.id == other.id
 
     __hash__ = DataClassWithId.__hash__
 

@@ -62,7 +62,9 @@ class Policy:
         self.banner = banner_url(elem.find('PIC').text)
 
     def __eq__(self, other):
-        return type(self) is type(other) and self.name == other.name
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.name == other.name
 
     def __hash__(self):
         return hash((self.name,))
@@ -94,7 +96,9 @@ class Nation(NationRegion, Session):
     """
     def __eq__(self, other):
         # Nation('testlandia') == NationControl('testlandia, password='123')
-        return isinstance(other, Nation) and self.id == other.id
+        if not isinstance(other, Nation):
+            return NotImplemented
+        return self.id == other.id
 
     __hash__ = NationRegion.__hash__
 
@@ -921,9 +925,10 @@ class Issue:
         return self._nation._accept_issue(self.id, -1)
 
     def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
         return (
-            type(self) is type(other)
-            and self.id == other.id
+            self.id == other.id
             and self._nation == other._nation
         )
 

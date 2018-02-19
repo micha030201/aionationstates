@@ -12,7 +12,9 @@ logger = logging.getLogger('aionationstates')
 class DataClassWithId:
     def __eq__(self, other):
         # Ids in NS are pretty much always not globally unique.
-        return type(self) is type(other) and self.id == other.id
+        if type(self) is not type(other):
+            return NotImplemented
+        return self.id == other.id
 
     def __hash__(self):
         return hash((self.id,))
