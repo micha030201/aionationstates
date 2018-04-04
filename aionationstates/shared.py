@@ -348,6 +348,24 @@ class ArchivedHappening:
         self.text = elem.findtext('TEXT')
 
 
+# Shared shard for archived happenings:
+
+class ArchivedHappenings:
+    @api_query('happenings')
+    async def happenings(self, root):
+        """Happenings archived on the in-game page.  Newest to oldest.
+
+        These happenings are not parsed because they are subtly
+        different from the ones in the normal feed and I see no
+        practical use-cases for having them parsed as well.
+
+        Returns
+        -------
+        an :class:`ApiQuery` of a list of :class:`ArchivedHappening`
+        """
+        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
+
+
 class Zombie:
     """The situation in a nation/region during the annual Z-Day event.
 
@@ -374,23 +392,9 @@ class Zombie:
 
 # Shards shared by Nation & Region APIs:
 
-class NationRegion(DataClassWithId, Census):
+class NationRegion(DataClassWithId, ArchivedHappenings, Census):
     def __init__(self, name):
         self.id = normalize(name)
-
-    @api_query('happenings')
-    async def happenings(self, root):
-        """Happenings archived on the in-game page.  Newest to oldest.
-
-        These happenings are not parsed because they are subtly
-        different from the ones in the normal feed and I see no
-        practical use-cases for having them parsed as well.
-
-        Returns
-        -------
-        an :class:`ApiQuery` of a list of :class:`ArchivedHappening`
-        """
-        return [ArchivedHappening(elem) for elem in root.find('HAPPENINGS')]
 
     @api_query('zombie')
     async def zombie(self, root):

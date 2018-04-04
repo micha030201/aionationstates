@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import datetime
+import datetime as dt
 
 import pytest
 
@@ -195,6 +196,313 @@ def test_poll_notext():
         </POLL>
     '''))
     assert poll.text is None
+
+
+def test_proposal():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Environmental</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[isn&#146;t]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Trees They Are Us</NAME>
+            <OPTION>All Businesses</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS/>
+        </PROPOSAL>
+    '''))
+    assert proposal.text == 'isn’t'
+    assert proposal.id == 'qwerty_1522432818'
+    assert proposal.category == 'Environmental'
+    assert proposal.name == 'Trees They Are Us'
+    assert proposal.option == 'All Businesses'
+    assert proposal.author == Nation('qwerty')
+    assert proposal.approved_by == []
+    assert proposal.council == 'General Assembly'
+    assert proposal.submitted == datetime.datetime(2018, 3, 30, 18, 0, 18)
+    assert proposal.url == 'https://www.nationstates.net/page=UN_view_proposal/id=qwerty_1522432818'
+
+
+def test_proposal_approved():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Environmental</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[isn&#146;t]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Trees They Are Us</NAME>
+            <OPTION>All Businesses</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.approved_by == [
+        Nation('some'), Nation('body'), Nation('once'), Nation('told'),
+        Nation('me')
+    ]
+
+
+def test_proposal_sc_liberate():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Liberation</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[haha yes]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Liberate Some Region Or Whatever</NAME>
+            <OPTION>R:Some Region Or Whatever</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+    assert proposal.target == Region('Some Region Or Whatever')
+
+
+def test_proposal_sc_commend():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Commendation</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[for being such a good boy]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Commend This Cute Dog</NAME>
+            <OPTION>N:This Cute Dog</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+    assert proposal.target == Nation('This Cute Dog')
+
+
+def test_proposal_sc_condemn():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Condemnation</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[raiders bad]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Condemn Some Raiders</NAME>
+            <OPTION>R:Some Raiders</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+    assert proposal.target == Region('Some raiders')
+
+
+def test_proposal_repeal():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Repeal</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[further research has lead us to conclude otherwise]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Repeal &quot;Trees They Are Us&quot;</NAME>
+            <OPTION>9999</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'General Assembly'
+
+
+def test_proposal_sc_repeal_liberate():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Repeal</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[what's the antonym for liberate? incarcerate? no reason, just curious]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Repeal &quot;Liberate Some Region Or Whatever&quot;</NAME>
+            <OPTION>9999</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+
+
+def test_proposal_sc_repeal_condemn():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Repeal</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[raiders good]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Repeal &quot;Condemn Some Raiders&quot;</NAME>
+            <OPTION>9999</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+
+
+def test_proposal_sc_repeal_commend():
+    proposal = Proposal(elem('''
+        <PROPOSAL id="qwerty_1522432818">
+            <CATEGORY>Repeal</CATEGORY>
+            <CREATED>1522432818</CREATED>
+            <DESC><![CDATA[heck u cats are better]]></DESC>
+            <ID>qwerty_1522432818</ID>
+            <NAME>Repeal &quot;Commend This Cute Dog&quot;</NAME>
+            <OPTION>9999</OPTION>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <APPROVALS>some:body:once:told:me</APPROVALS>
+        </PROPOSAL>
+    '''))
+    assert proposal.council == 'Security Council'
+
+
+def test_proposal_at_vote():
+    proposal = ResolutionAtVote(elem('''
+        <RESOLUTION>
+            <CATEGORY>Liberation</CATEGORY>
+            <CREATED>1521428163</CREATED>
+            <DELLOG>
+                <ENTRY>
+                    <TIMESTAMP>1522166492</TIMESTAMP>
+                    <NATION>qweqwr</NATION>
+                    <ACTION>FOR</ACTION>
+                    <VOTES>4</VOTES>
+                </ENTRY>
+                <ENTRY>
+                    <TIMESTAMP>1522166559</TIMESTAMP>
+                    <NATION>asd</NATION>
+                    <ACTION>FOR</ACTION>
+                    <VOTES>7</VOTES>
+                </ENTRY>
+                <ENTRY>
+                    <TIMESTAMP>1522166560</TIMESTAMP>
+                    <NATION>qweqwr</NATION>
+                    <ACTION>AGAINST</ACTION>
+                    <VOTES>4</VOTES>
+                </ENTRY>
+                <ENTRY>
+                    <TIMESTAMP>1522166585</TIMESTAMP>
+                    <NATION>bbbbb</NATION>
+                    <ACTION>AGAINST</ACTION>
+                    <VOTES>4</VOTES>
+                </ENTRY>
+                <ENTRY>
+                    <TIMESTAMP>1522166622</TIMESTAMP>
+                    <NATION>bbbbb</NATION>
+                    <ACTION>WITHDREW</ACTION>
+                    <VOTES>4</VOTES>
+                </ENTRY>
+            </DELLOG>
+            <DESC><![CDATA[text]]></DESC>
+            <ID>qwerty_1521428163</ID>
+            <NAME>name</NAME>
+            <OPTION>123</OPTION>
+            <PROMOTED>1522166403</PROMOTED>
+            <PROPOSED_BY>qwerty</PROPOSED_BY>
+            <TOTAL_NATIONS_AGAINST>2060</TOTAL_NATIONS_AGAINST>
+            <TOTAL_NATIONS_FOR>6202</TOTAL_NATIONS_FOR>
+            <TOTAL_VOTES_AGAINST>4236</TOTAL_VOTES_AGAINST>
+            <TOTAL_VOTES_FOR>13329</TOTAL_VOTES_FOR>
+            <VOTE_TRACK_AGAINST>
+                <N>0</N>
+                <N>571</N>
+                <N>772</N>
+                <N>907</N>
+            </VOTE_TRACK_AGAINST>
+            <VOTE_TRACK_FOR>
+                <N>0</N>
+                <N>3644</N>
+                <N>4735</N>
+                <N>5141</N>
+            </VOTE_TRACK_FOR>
+            <VOTES_AGAINST>
+                <N>zzzzzz</N>
+                <N>xxxxxxx</N>
+            </VOTES_AGAINST>
+            <VOTES_FOR>
+                <N>qqqqqqq</N>
+                <N>wwwwww</N>
+            </VOTES_FOR>
+        </RESOLUTION>
+    '''))
+    proposal._council_id = 1
+
+    assert proposal.text == 'text'
+    assert proposal.id == 'qwerty_1521428163'
+    assert proposal.category == 'Liberation'
+    assert proposal.name == 'name'
+    assert proposal.option == '123'
+    assert proposal.author == Nation('qwerty')
+    assert proposal.council == 'General Assembly'
+    assert proposal.submitted == datetime.datetime(2018, 3, 19, 2, 56, 3)
+    assert proposal.promoted == datetime.datetime(2018, 3, 27, 16, 0, 3)
+    assert proposal.url == 'https://www.nationstates.net/page=ga'
+
+    assert proposal.nation_votes_against == 2060
+    assert proposal.nation_votes_for == 6202
+    assert proposal.total_votes_against == 4236
+    assert proposal.total_votes_for == 13329
+
+    first_log_entry = proposal.delegate_vote_log[0]
+    assert first_log_entry.nation == Nation('qweqwr')
+    assert first_log_entry.votes == 4
+    assert first_log_entry.timestamp == datetime.datetime(2018, 3, 27, 16, 1, 32)
+
+    last_track_entry = proposal.vote_track[-1]
+    assert last_track_entry.for_ == 5141
+    assert last_track_entry.against == 907
+    assert last_track_entry.timestamp == proposal.promoted + dt.timedelta(hours=3)
+
+    assert proposal.nations_voting_for == [
+        Nation('qqqqqqq'),
+        Nation('wwwwww')
+    ]
+    assert proposal.nations_voting_against == [
+        Nation('zzzzzz'),
+        Nation('xxxxxxx')
+    ]
+
+    assert proposal.delegates_voting_for == [
+        (Nation('asd'), 7)
+    ]
+    assert proposal.delegates_voting_against == [
+        (Nation('qweqwr'), 4)
+    ]
+
+
+def test_resolution():
+    resolution = Resolution(elem('''
+    <RESOLUTION>
+        <CATEGORY>Condemnation</CATEGORY>
+        <COUNCIL>2</COUNCIL>
+        <COUNCILID>52</COUNCILID>
+        <CREATED>1301228591</CREATED>
+        <DESC><![CDATA[aaaa]]></DESC>
+        <IMPLEMENTED>1301932801</IMPLEMENTED>
+        <NAME>nameeee</NAME>
+        <OPTION>R:reeeeddfgidofbern</OPTION>
+        <PROPOSED_BY>qweqwrt</PROPOSED_BY>
+        <RESID>195</RESID>
+        <TOTAL_VOTES_AGAINST>4641</TOTAL_VOTES_AGAINST>
+        <TOTAL_VOTES_FOR>4960</TOTAL_VOTES_FOR>
+    </RESOLUTION>
+    '''))
+    assert resolution.text == 'aaaa'
+    assert resolution.id == 'qweqwrt_1301228591'
+    assert resolution.local_index == 52
+    assert resolution.global_index == 195
+    assert resolution.category == 'Condemnation'
+    assert resolution.name == 'nameeee'
+    assert resolution.target == Region('reeeeddfgidofbern')
+    assert resolution.author == Nation('qweqwrt')
+    assert resolution.council == 'Security Council'
+    assert resolution.submitted == datetime.datetime(2011, 3, 27, 12, 23, 11)
+    assert resolution.promoted == datetime.datetime(2011, 3, 30, 16, 0, 1)
+    assert resolution.implemented == datetime.datetime(2011, 4, 4, 16, 0, 1)
+    assert resolution.total_votes_for == 4960
+    assert resolution.total_votes_against == 4641
+    assert resolution.url == 'https://www.nationstates.net/page=WA_past_resolution/id=195'
 
 
 async def expand_macros(s):

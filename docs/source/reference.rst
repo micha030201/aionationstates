@@ -4,208 +4,227 @@ Reference
 Ratelimiting
 ------------
 
-Ratelimiting is handled automatically, with no (clean) way to override the ratelimiter's behavior. The latter part will change in later versions.
+Ratelimiting is handled automatically, with no (clean) way to override the
+ratelimiter's behavior. The latter part may change in later versions.
 
 Combining Shards
 ----------------
 
-As you are probably aware, NationStates provides a way to request multiple shards for the (ratelimit) cost of one. That is quite a useful feature, and this class has been designed specifically to take full advantage of it.
+As you are probably aware, NationStates provides a way to request multiple
+shards for the (ratelimit) cost of one. That is quite a useful feature, and this
+class has been designed specifically to take full advantage of it.
 
 .. automodule:: aionationstates
 
 .. autoclass:: ApiQuery()
 
 
-NationStates Interaction Objects
---------------------------------
+That's all well and good, but how do I actually request the shards I need?
+--------------------------------------------------------------------------
 
-Objects to interact with NationStates web interface and API.
+Nation shards
+^^^^^^^^^^^^^
 
 .. autoclass:: Nation
-    :no-members:
+   :no-members:
 
-    .. autoattribute:: url
+   .. autoattribute:: url
 
-    .. automethod:: name
+   .. automethod:: name
 
-    .. automethod:: type
+   .. automethod:: type
 
-    .. automethod:: fullname
+   .. automethod:: fullname
 
-    .. automethod:: motto
+   .. automethod:: motto
 
-    .. automethod:: category
+   .. automethod:: category
 
-    .. automethod:: region
+   .. automethod:: region
 
-    .. automethod:: animal
+   .. automethod:: animal
 
-    .. automethod:: currency
+   .. automethod:: currency
 
-    .. automethod:: demonym
+   .. automethod:: demonym
 
-    .. automethod:: demonym2
+   .. automethod:: demonym2
 
-    .. automethod:: demonym2plural
+   .. automethod:: demonym2plural
 
-    .. automethod:: flag
+   .. automethod:: flag
 
-    .. automethod:: majorindustry
+   .. automethod:: majorindustry
 
-    .. automethod:: influence
+   .. automethod:: influence
 
-    .. automethod:: leader
+   .. automethod:: leader
 
-    .. automethod:: capital
+   .. automethod:: capital
 
-    .. automethod:: religion
+   .. automethod:: religion
 
-    .. automethod:: admirable
+   .. automethod:: admirable
 
-    .. automethod:: animaltrait
+   .. automethod:: animaltrait
 
-    .. automethod:: crime
+   .. automethod:: crime
 
-    .. automethod:: govtdesc
+   .. automethod:: govtdesc
 
-    .. automethod:: industrydesc
+   .. automethod:: industrydesc
 
-    .. automethod:: notable
+   .. automethod:: notable
 
-    .. automethod:: sensibilities
+   .. automethod:: sensibilities
 
-    .. automethod:: population
+   .. automethod:: population
 
-    .. automethod:: gdp
+   .. automethod:: gdp
 
-    .. automethod:: founded
+   .. automethod:: founded
 
-    .. automethod:: firstlogin
+   .. automethod:: firstlogin
 
-    .. automethod:: lastlogin
+   .. automethod:: lastlogin
 
-    .. automethod:: wa
+   .. automethod:: wa
 
-    .. automethod:: freedom
+   .. automethod:: freedom
 
-    .. automethod:: freedomscores
+   .. automethod:: freedomscores
 
-    .. automethod:: govt
+   .. automethod:: govt
 
-    .. automethod:: deaths
+   .. automethod:: deaths
 
-    .. automethod:: endorsements
+   .. automethod:: endorsements
 
-    .. automethod:: legislation
+   .. automethod:: legislation
 
-    .. automethod:: sectors
+   .. automethod:: sectors
 
-    .. automethod:: dispatchlist
+   .. automethod:: dispatchlist
 
-    .. automethod:: policies
+   .. automethod:: policies
 
-    .. automethod:: zombie
+   .. automethod:: zombie
 
-    .. automethod:: banners
+   .. automethod:: banners
 
-    .. automethod:: census
+   .. automethod:: census
 
-    .. automethod:: censushistory
+   .. automethod:: censushistory
 
-    .. automethod:: happenings
+   .. automethod:: happenings
 
-    .. automethod:: description
+   .. automethod:: description
 
-    .. automethod:: verification_url
+   .. automethod:: verification_url
 
-    .. automethod:: verify
+   .. automethod:: verify
 
 .. autoclass:: NationControl
-    :no-members:
+   :no-members:
 
-    .. automethod:: issues
+   .. automethod:: issues
+
+Region shards
+^^^^^^^^^^^^^
 
 .. autoclass:: Region
-    :no-members:
+   :no-members:
 
-    .. autoattribute:: url
+   .. autoattribute:: url
 
-    .. automethod:: name
+   .. automethod:: name
 
-    .. automethod:: flag
+   .. automethod:: flag
 
-    .. automethod:: factbook
+   .. automethod:: factbook
 
-    .. automethod:: power
+   .. automethod:: power
 
-    .. automethod:: delegatevotes
+   .. automethod:: delegatevotes
 
-    .. automethod:: numnations
+   .. automethod:: numnations
 
-    .. automethod:: founded
+   .. automethod:: founded
 
-    .. automethod:: nations
+   .. automethod:: nations
 
-    .. automethod:: embassies
+   .. automethod:: embassies
 
-    .. automethod:: embassyrmb
+   .. automethod:: embassyrmb
 
-    .. automethod:: delegate
+   .. automethod:: delegate
 
-    .. automethod:: delegateauth
+   .. automethod:: delegateauth
 
-    .. automethod:: founder
+   .. automethod:: founder
 
-    .. automethod:: founderauth
+   .. automethod:: founderauth
 
-    .. automethod:: officers
+   .. automethod:: officers
 
-    .. automethod:: tags
+   .. automethod:: tags
 
-    .. automethod:: zombie
+   .. automethod:: zombie
 
-    .. automethod:: poll
+   .. automethod:: poll
 
-    .. automethod:: census
+   .. automethod:: census
 
-    .. automethod:: censushistory
+   .. automethod:: censushistory
 
-    .. automethod:: happenings
+   .. automethod:: happenings
 
-.. autoclass:: World()
-    :no-members:
+World shards
+^^^^^^^^^^^^
 
-    .. automethod:: featuredregion
+.. autoclass:: _World()
+   :no-members:
 
-    .. automethod:: newnations
+   .. automethod:: featuredregion
 
-    .. automethod:: nations
+   .. automethod:: newnations
 
-    .. automethod:: numnations
+   .. automethod:: nations
 
-    .. automethod:: regions
+   .. automethod:: numnations
 
-    .. automethod:: numregions
+   .. automethod:: regions
 
-    .. automethod:: regionsbytag
+   .. automethod:: numregions
 
-    .. automethod:: dispatch
+   .. automethod:: regionsbytag
 
-    .. automethod:: dispatchlist
+   .. automethod:: dispatch
 
-    .. automethod:: poll
+   .. automethod:: dispatchlist
 
-    .. automethod:: banner
+   .. automethod:: poll
 
-    .. automethod:: tgqueue
+   .. automethod:: banner
 
-    .. automethod:: census
+   .. automethod:: tgqueue
 
-    .. automethod:: censushistory
+   .. automethod:: census
 
-    .. automethod:: happenings
+   .. automethod:: censushistory
 
-    .. automethod:: new_happenings
+   .. automethod:: happenings
+
+   .. automethod:: new_happenings
+
+World Assembly shards
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: _WA()
+   :inherited-members:
+
+.. autoclass:: _WACouncil()
+   :inherited-members:
 
 
 Data Classes
@@ -228,7 +247,7 @@ Data Classes
 .. autoclass:: PollOption()
 
 .. autoclass:: WAMembership()
-    :show-inheritance:
+   :show-inheritance:
 
 .. autoclass:: Policy()
 
@@ -247,19 +266,37 @@ Data Classes
 .. autoclass:: Officer()
 
 .. autoclass:: Authority()
-    :show-inheritance:
+   :show-inheritance:
 
 .. autoclass:: EmbassyPostingRights()
-    :show-inheritance:
+   :show-inheritance:
 
 .. autoclass:: Post()
 
 .. autoclass:: PostStatus()
-    :show-inheritance:
+   :show-inheritance:
 
 .. autoclass:: Zombie()
 
 .. autoclass:: TGQueue()
+
+.. autoclass:: ArchivedHappening()
+
+.. autoclass:: Proposal()
+   :inherited-members:
+
+.. autoclass:: Resolution()
+   :inherited-members:
+
+.. autoclass:: VoteAction
+   :show-inheritance:
+
+.. autoclass:: DelegateVoteLogEntry
+
+.. autoclass:: VoteTrackEntry
+
+.. autoclass:: ResolutionAtVote()
+   :inherited-members:
 
 Exceptions
 ----------

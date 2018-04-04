@@ -10,7 +10,7 @@ from aionationstates.utils import (
 import aionationstates
 
 
-__all__ = ('TGQueue', 'Banner', 'World', 'world')
+__all__ = ('TGQueue', 'Banner', '_World', 'world')
 
 
 class TGQueue:
@@ -51,7 +51,7 @@ class Banner(DataClassWithId, aobject):
         return banner_url(self.id)
 
 
-class World(Census, Session):
+class _World(Census, Session):
     """Interface to the NationStates World API.
 
     You shouldn't build this object yourself, it is already provided to
@@ -465,4 +465,4 @@ class World(Census, Session):
                 yield happening
 
 
-world = World()
+world = _World()

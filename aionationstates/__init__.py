@@ -1,6 +1,7 @@
-__version__ = '0.3.1'
+__version__ = '0.4.0'
 
 from aionationstates.world_ import *
+from aionationstates.wa_ import *
 from aionationstates.nation_ import *
 from aionationstates.region_ import *
 from aionationstates.shared import *
