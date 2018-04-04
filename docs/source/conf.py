@@ -22,6 +22,44 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 
+# autodoc's doc comments don't work with napoleon. This fixes it,
+# however dodgily.
+import inspect
+import re
+from contextlib import suppress
+
+import aionationstates
+
+module_type = type(aionationstates)
+
+
+def walk_objects(module, _cache=set()):
+    for name in dir(module):
+        obj = getattr(module, name)
+        if type(obj) is module_type and obj not in _cache:
+            _cache.add(obj)
+            yield from walk_objects(obj)
+        else:
+            yield obj
+
+
+for obj in walk_objects(aionationstates):
+    with suppress(AttributeError, TypeError, OSError):
+        lines, _ = inspect.getsourcelines(obj.__init__)
+        buf = []
+        for line in lines:
+            line = line.strip()
+            if line.startswith('#:'):
+                buf.append(line[3:])
+            elif buf:
+                match = re.match('self.(.+?) = .*', line)
+                if match:
+                    name = match.group(1)
+                    doc = '\n'.join(buf)
+                    setattr(obj, name, property(doc=doc))
+                    buf = []
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -31,14 +69,12 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-#    'docs.source.hacks',  # Must go after napoleon
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages']
+    'sphinx.ext.githubpages'
+]
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
@@ -173,6 +209,3 @@ texinfo_documents = [
      author, 'aionationstates', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
