@@ -151,7 +151,9 @@ class Nation(NationRegion, Session):
         -------
         an :class:`ApiQuery` of str
         """
-        return unscramble_encoding(html.unescape(root.find('MOTTO').text))
+        # mottos can be empty, apparently
+        return unscramble_encoding(html.unescape(
+            root.find('MOTTO').text or ''))
 
     @api_query('category')
     async def category(self, root):
