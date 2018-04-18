@@ -3,7 +3,8 @@ from asyncio import sleep
 
 from aionationstates.session import Session, api_query, NotFound
 from aionationstates.happenings import process_happening
-from aionationstates.shared import Census, DispatchThumbnail, Dispatch, Poll
+from aionationstates.shared import (
+    Census, DispatchThumbnail, Dispatch, Poll, CensusRanks)
 from aionationstates.ns_to_human import dispatch_categories, happening_filters
 from aionationstates.utils import (
     utc_seconds, normalize, banner_url, aobject, DataClassWithId)
@@ -51,7 +52,7 @@ class Banner(DataClassWithId, aobject):
         return banner_url(self.id)
 
 
-class _World(Census, Session):
+class _World(CensusRanks, Census, Session):
     """Interface to the NationStates World API.
 
     You shouldn't build this object yourself, it is already provided to

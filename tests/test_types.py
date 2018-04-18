@@ -505,6 +505,19 @@ def test_resolution():
     assert resolution.url == 'https://www.nationstates.net/page=WA_past_resolution/id=195'
 
 
+def test_census_rank():
+    rank = CensusRank(elem('''
+    <NATION>
+        <NAME>qwerty</NAME>
+        <RANK>6</RANK>
+        <SCORE>99.82</SCORE>
+    </NATION>
+    '''))
+    assert rank.nation == Nation('qwerty')
+    assert rank.rank == 6
+    assert rank.score == 99.82
+
+
 async def expand_macros(s):
     return (
         s

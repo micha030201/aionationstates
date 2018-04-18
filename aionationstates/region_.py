@@ -10,7 +10,7 @@ from operator import or_
 from aionationstates.utils import (
     timestamp, unscramble_encoding, DataClassWithId)
 from aionationstates.session import Session, api_query
-from aionationstates.shared import NationRegion, Poll
+from aionationstates.shared import CensusRanks, NationRegion, Poll
 import aionationstates
 
 
@@ -243,6 +243,11 @@ class Post(DataClassWithId):
         else:
             self.suppressor = aionationstates.Nation(suppressor_str)
 
+    @property
+    def url(self):
+        """str: Link to the post."""
+        return f'https://www.nationstates.net/page=rmb/postid={self.id}'
+
     def quote(self, text=None):
         """Quote this post.
 
@@ -262,7 +267,7 @@ class Post(DataClassWithId):
         return f'[quote={self.author.id};{self.id}]{text}[/quote]'
 
 
-class Region(NationRegion, Session):
+class Region(CensusRanks, NationRegion, Session):
     """A class to interact with the NationStates Region API.
 
     Attributes

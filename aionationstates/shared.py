@@ -1,10 +1,11 @@
 """Shared data classes and API shards."""
 
-# TODO: censusranks, wabadges
+# TODO: wabadges
 
 import html
 from collections import namedtuple
 from contextlib import suppress
+from itertools import count
 
 from aionationstates.session import api_query
 from aionationstates.utils import (
@@ -15,7 +16,7 @@ import aionationstates
 
 __all__ = ('PollOption', 'Poll', 'DispatchThumbnail', 'Dispatch',
            'CensusScaleCurrent', 'CensusPoint', 'CensusScaleHistory',
-           'Zombie', 'ArchivedHappening')
+           'Zombie', 'ArchivedHappening', 'CensusRank')
 
 
 # Shared data classes:
@@ -278,8 +279,7 @@ class Census:
         Parameters
         ----------
         scales : int
-            World Census scales, integers between 0 and 80 (84 if you
-            also count Z-Day scales), inclusive.
+            World Census scales, integers between 0 and 85 inclusive.
 
         Returns
         -------
@@ -313,8 +313,7 @@ class Census:
         Parameters
         ----------
         scales : int
-            World Census scales, integers between 0 and 80 (84 if you
-            also count Z-Day scales), inclusive.
+            World Census scales, integers between 0 and 85 inclusive.
 
         Returns
         -------
@@ -408,3 +407,50 @@ class NationRegion(DataClassWithId, ArchivedHappenings, Census):
 
     def __repr__(self):
         return f'<{type(self).__name__} "{self.id}">'
+
+
+class CensusRank:
+    """A nation ranked on World Census scale."""
+    def __init__(self, elem):
+        #: :class:`Nation`: The nation ranked.
+        self.nation = aionationstates.Nation(elem.find('NAME').text)
+
+        #: int: The nation's rank.
+        self.rank = int(elem.find('RANK').text)
+
+        #: float: The nation's score on the scale.
+        self.score = float(elem.find('SCORE').text)
+
+
+class CensusRanks:
+    def _get_censusranks(self, scale, start):
+        @api_query('censusranks', scale=scale, start=start)
+        async def result(_, root):
+            return [CensusRank(elem) for elem
+                    in root.find('./CENSUSRANKS/NATIONS')]
+        return result(self)
+
+    async def censusranks(self, scale):
+        """Iterate through nations ranked on the World Census scale.
+
+        If the ranks change while you interate over them, they may be
+        inconsistent.
+
+        Parameters
+        ----------
+        scale : int
+            A World Census scale, an integer between 0 and 85 inclusive.
+
+        Returns
+        -------
+        asynchronous iterator of :class:`CensusRank`
+        """
+        order = count(1)
+        for offset in count(1, 20):
+            census_ranks = await self._get_censusranks(
+                scale=scale, start=offset)
+            for census_rank in census_ranks:
+                assert census_rank.rank == next(order)
+                yield census_rank
+            if len(census_ranks) < 20:
+                break
