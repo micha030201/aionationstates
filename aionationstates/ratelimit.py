@@ -11,7 +11,7 @@ def _create_ratelimiter(requests, per):
     loop = asyncio.get_event_loop()
 
     semaphore = asyncio.BoundedSemaphore(requests)
-    portion_duration = per
+    portion_duration = per * 1.1  # account for the Universe being imperfect
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
