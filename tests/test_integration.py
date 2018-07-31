@@ -14,6 +14,9 @@ class NationControl(utils.SessionTestMixin, aionationstates.NationControl):
     pass
 
 
+aionationstates.world_._World._base_call_api = utils.SessionTestMixin._base_call_api
+
+
 @pytest.mark.asyncio
 async def test_name():
     nation = Nation('testLandia')
@@ -74,10 +77,33 @@ async def test_issue():
                 <HEADLINE>headline1</HEADLINE>
                 <HEADLINE>headline2</HEADLINE>
             </HEADLINES>
+            <UNLOCKS>
+                <BANNER>t19</BANNER>
+                <BANNER>r8</BANNER>
+            </UNLOCKS>
         </ISSUE>
         </NATION>
-        ''')
+        '''),
     }
+
+    aionationstates.world._responses = {
+        utils.get({'q': 'banner', 'banner': 't19,r8'}):
+        utils.response('''
+        <WORLD>
+            <BANNERS>
+                <BANNER id="t19">
+                    <NAME>Father Knows Best</NAME>
+                    <VALIDITY>Become a Father Knows Best state</VALIDITY>
+                </BANNER>
+                <BANNER id="r8">
+                    <NAME>Icy Gaze</NAME>
+                    <VALIDITY>Address 250 issues</VALIDITY>
+                </BANNER>
+            </BANNERS>
+        </WORLD>
+        '''),
+    }
+
     issues = await nation.issues()
     assert issues[0].id == 111
     assert issues[0].title == 'Issue Title'
@@ -85,3 +111,5 @@ async def test_issue():
 
     issueresult = await issues[0].options[2].accept()
     assert issueresult.effect_line == 'qwerty'
+    assert issueresult.banners[0].name == 'Father Knows Best'
+    assert issueresult.banners[1].name == 'Icy Gaze'

@@ -822,8 +822,8 @@ class IssueResult(aobject):
         banners_elem = elem.find('UNLOCKS')
         if banners_elem:
             self.banners = await aionationstates.world.banner(
-                [sub_elem.text for sub_elem in banners_elem],
-                expand_macros
+                *[sub_elem.text for sub_elem in banners_elem],
+                _expand_macros=expand_macros
             )
         else:
             self.banners = []

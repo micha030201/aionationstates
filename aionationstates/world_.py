@@ -272,7 +272,7 @@ class _World(CensusRanks, Census, Session):
         async def result(_, root):
             banners = [await Banner(elem, _expand_macros)
                        for elem in root.find('BANNERS')]
-            if len(banners) == len(ids):
+            if not len(banners) == len(ids):
                 raise NotFound('one of the banner ids provided is invalid')
             return banners
         return result(self)
