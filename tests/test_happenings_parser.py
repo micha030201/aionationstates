@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from aionationstates import happenings
-from aionationstates import Nation, Region, Authority
+from aionationstates import Nation, Region, Authority, VoteAction
 
 
 def happening_elem(text):
@@ -532,3 +532,69 @@ def test_rmb_post():
     assert h.agent == Nation('parse error')
     assert h.region == Region('try it and see')
     assert h._post_id == 28930591
+
+
+def test_proposal_approve():
+    t = '@@parse_error@@ approved the World Assembly proposal "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalApproval
+    assert h.agent == Nation('parse error')
+    assert h.proposal_name == 'Haha Yes'
+    # TODO test await h.proposal()
+
+
+def test_proposal_promoted_ga():
+    t = 'The General Assembly proposal "Haha Yes" (by @@parse_error@@) entered the resolution voting floor.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalPromotion
+    assert h.proposal_author == Nation('parse error')
+    assert h.proposal_name == 'Haha Yes'
+    assert h.proposal_council == 'General Assembly'
+    # TODO test await h.proposal()
+
+
+def test_proposal_promoted_sc():
+    t = 'The Security Council proposal "Commend Whatever" (by @@parse_error@@) entered the resolution voting floor.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalPromotion
+    assert h.proposal_author == Nation('parse error')
+    assert h.proposal_name == 'Commend Whatever'
+    assert h.proposal_council == 'Security Council'
+    # TODO test await h.proposal()
+
+
+def test_proposal_defeated():
+    t = 'The Security Council resolution "<strong>Condemn Ever-Wandering Souls</strong>" was defeated 16,291 votes to 2,858.'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalDefeat
+    assert h.proposal_name == 'Condemn Ever-Wandering Souls'
+    assert h.proposal_council == 'Security Council'
+
+
+def test_proposal_withdraw():
+    t = '@@parse_error@@ withdrew a proposal from the WA General Assembly titled "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalWithdrawal
+    assert h.agent == Nation('parse error')
+    assert h.proposal_name == 'Haha Yes'
+
+
+def test_proposal_submit():
+    t = '@@parse_error@@ submitted a proposal to the General Assembly Environmental Board entitled "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ProposalSubmission
+    assert h.agent == Nation('parse error')
+    assert h.proposal_name == 'Haha Yes'
+    assert h.proposal_council == 'General Assembly'
+    assert h.proposal_category == 'Environmental'
+    # TODO test await h.proposal()
+
+
+def test_vote_for():
+    t = '@@parse_error@@ voted for the World Assembly Resolution "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ResolutionVote
+    assert h.agent == Nation('parse error')
+    assert h.proposal_name == 'Haha Yes'
+    assert h.action == VoteAction('FOR')
+    # TODO test await h.proposal()

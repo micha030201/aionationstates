@@ -125,7 +125,7 @@ class ApiQuery:
         return self._wrap().__await__()
 
     async def _wrap(self):
-        self.params['q'] = '+'.join(self.q)
+        self.params['q'] = '+'.join(sorted(self.q))
         resp = await self.session._call_api(self.params)
         root = ET.fromstring(resp.text)
         results = [
@@ -150,7 +150,7 @@ def api_query(*q, **params):
     def decorator(func):
         def wrapper(self):
             return ApiQuery(session=self, q=q,
-                            params=params, result=func)
+                            params=params, result=func)  # TODO type cast
         # Can't use @functools.wraps because it would preserve the signature,
         # meaning we would get nonsense arguments intended for the decorator.
         wrapper.__doc__ = func.__doc__

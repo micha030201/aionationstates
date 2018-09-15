@@ -35,7 +35,8 @@ class UnrecognizedHappening:
     timestamp : naive UTC :class:`datetime.datetime`
         Time of the happening.
     text : str
-        The happening text.
+        The unparsed happening text.  May contain HTML tags and
+        character references.  You generaly shouldn't have to use this.
     """
     def __init__(self, text, params):
         self.id, self.timestamp = params
@@ -377,6 +378,71 @@ class WorldAssemblyResignation(Action, WorldAssembly):
         if not match:
             raise _ParseError
         self.agent = aionationstates.Nation(match.group(1))
+        super().__init__(text, params)
+
+
+class _ProposalHappening:
+    async def proposal(self):
+        """Get the proposal submitted.
+
+        Actually just the first proposal with the same name, but the
+        chance of a collision is tiny.
+
+        Returns
+        -------
+        awaitable of :class:`aionationstates.Proposal`
+            The proposal submitted.
+
+        Raises
+        ------
+        aionationstates.NotFound
+            If the proposal has since been withdrawn or promoted.
+        """
+        proposals = await aionationstates.wa.proposals()
+        for proposal in proposals:
+            if (proposal.name == self.proposal_name):
+                return proposal
+        raise aionationstates.NotFound
+
+
+class ProposalSubmission(_ProposalHappening, Action, WorldAssembly):
+    """A nation submitting a World Assembly proposal."""
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ submitted a proposal to the '
+            '(General Assembly|Security Council) (.+?) Board entitled "(.+?)"',
+            text
+        )
+        if not match:
+            raise _ParseError
+        self.agent = aionationstates.Nation(match.group(1))
+
+        #: str: ``General Assembly`` or ``Security Couyncil``.
+        self.proposal_council = match.group(2)
+
+        #: str: The proposal category.
+        self.proposal_category = match.group(3)
+
+        #: str: Name of the proposal.
+        self.proposal_name = match.group(4)
+
+        super().__init__(text, params)
+
+
+class ProposalApproval(_ProposalHappening, Action, WorldAssembly):
+    """A delegate approving a World Assembly proposal."""
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ approved the World Assembly proposal "(.+?)".',
+            text
+        )
+        if not match:
+            raise _ParseError
+        self.agent = aionationstates.Nation(match.group(1))
+
+        #: str: Name of the proposal.
+        self.proposal_name = match.group(2)
+
         super().__init__(text, params)
 
 

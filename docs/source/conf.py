@@ -44,15 +44,15 @@ def walk_objects(module, _cache=set()):
 
 
 for obj in walk_objects(aionationstates):
-    with suppress(AttributeError, TypeError, OSError):
-        lines, _ = inspect.getsourcelines(obj.__init__)
+    with suppress(TypeError, OSError):
+        lines, _ = inspect.getsourcelines(obj)
         buf = []
         for line in lines:
             line = line.strip()
             if line.startswith('#:'):
                 buf.append(line[3:])
             elif buf:
-                match = re.match('self.(.+?) = .*', line)
+                match = re.match('(?:self\.)?(.+?) = .*', line)
                 if match:
                     name = match.group(1)
                     doc = '\n'.join(buf)

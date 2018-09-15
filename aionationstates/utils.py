@@ -123,6 +123,18 @@ class aobject:
         pass
 
 
+def actually_synchronous(async_function):
+    def wrapper(*args, **kwargs):
+        coro_object = async_function(*args, **kwargs)
+        try:
+            coro_object.send(None)
+        except StopIteration as e:
+            return e.value
+        else:
+            raise TypeError("the function supplied isn't actually synchronous")
+    return wrapper
+
+
 async def alist(asyncgen):
     return [item async for item in asyncgen]
 

@@ -80,7 +80,7 @@ class _ProposalResolution(DataClassWithId):
         """
         if not self.category == 'Repeal':
             raise TypeError("This resolution doesn't repeal anything")
-        return wa.resolution(int(self.option))
+        return wa.resolution(int(self.option) + 1)
 
 
 class Proposal(_ProposalResolution):

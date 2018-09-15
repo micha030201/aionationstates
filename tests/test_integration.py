@@ -84,6 +84,15 @@ async def test_issue():
         </ISSUE>
         </NATION>
         '''),
+
+        utils.get({'nation': 'testlandia', 'q': 'demonym+name+religion'}):
+        utils.response('''
+        <NATION id="testlandia">
+            <NAME>Testlandia</NAME>
+            <DEMONYM>Testlandian</DEMONYM>
+            <RELIGION>Neo-Violetism</RELIGION>
+        </NATION>
+        '''),
     }
 
     aionationstates.world._responses = {
@@ -97,7 +106,7 @@ async def test_issue():
                 </BANNER>
                 <BANNER id="r8">
                     <NAME>Icy Gaze</NAME>
-                    <VALIDITY>Address 250 issues</VALIDITY>
+                    <VALIDITY>test @@NAME@@ qwerty</VALIDITY>
                 </BANNER>
             </BANNERS>
         </WORLD>
@@ -113,3 +122,4 @@ async def test_issue():
     assert issueresult.effect_line == 'qwerty'
     assert issueresult.banners[0].name == 'Father Knows Best'
     assert issueresult.banners[1].name == 'Icy Gaze'
+    assert issueresult.banners[1].validity == 'test Testlandia qwerty'
