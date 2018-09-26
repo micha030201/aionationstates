@@ -5,6 +5,7 @@ A great undertaking to be sure.
 
 import re
 import html
+import asyncio
 from contextlib import suppress
 
 from aionationstates.utils import timestamp, unscramble_encoding, logger
@@ -284,7 +285,7 @@ class MessageLodgement(Action, Regional):
     def __init__(self, text, params):
         match = re.match(
             '@@(.+?)@@ lodged '
-            '<a href="/region=.+?/page=display_region_rmb\?postid=(.+?)#p.+?">a message</a> '
+            '<a href="/region=.+?/page=display_region_rmb\\?postid=(.+?)#p.+?">a message</a> '
             'on the %%(.+?)%% Regional Message Board.',
             text
         )
@@ -338,6 +339,57 @@ class EndorsementWithdrawal(Action, Affecting):
         super().__init__(text, params)
 
 
+class ResolutionVote(Action, WorldAssembly):
+    """A nation voting on a WA resolution.
+
+    Attributes
+    ----------
+    action : :class:`aionationstates.VoteAction`
+    resolution_name : str
+    """
+    def __init__(self, text, params):
+        match = re.match(
+            '@@(.+?)@@ (.+?) the World Assembly Resolution "(.+?)".',
+            text
+        )
+        if not match:
+            raise _ParseError
+        self.agent = aionationstates.Nation(match.group(1))
+        if match.group(2) == 'voted for':
+            self.action = aionationstates.VoteAction.FOR
+        elif match.group(2) == 'voted against':
+            self.action = aionationstates.VoteAction.AGAINST
+        elif match.group(2) == 'withdrew its vote on':
+            self.action = aionationstates.VoteAction.WITHDREW
+        else:
+            raise _ParseError
+        self.resolution_name = match.group(3)
+        super().__init__(text, params)
+
+    async def resolution(self):
+        """Get the resolution voted on.
+
+        Returns
+        -------
+        awaitable of :class:`aionationstates.ResolutionAtVote`
+            The resolution voted for.
+
+        Raises
+        ------
+        aionationstates.NotFound
+            If the resolution has since been passed or defeated.
+        """
+        resolutions = await asyncio.gather(
+            aionationstates.ga.resolution_at_vote,
+            aionationstates.sc.resolution_at_vote,
+        )
+        for resolution in resolutions:
+            if (resolution is not None
+                    and resolution.name == self.resolution_name):
+                return resolution
+        raise aionationstates.NotFound
+
+
 class WorldAssemblyApplication(Action, WorldAssembly):
     """A nation applying to join the World Assembly."""
     def __init__(self, text, params):
@@ -383,7 +435,7 @@ class WorldAssemblyResignation(Action, WorldAssembly):
 
 class _ProposalHappening:
     async def proposal(self):
-        """Get the proposal submitted.
+        """Get the proposal in question.
 
         Actually just the first proposal with the same name, but the
         chance of a collision is tiny.

@@ -595,6 +595,26 @@ def test_vote_for():
     h = happenings.process_happening(happening_elem(t))
     assert type(h) is happenings.ResolutionVote
     assert h.agent == Nation('parse error')
-    assert h.proposal_name == 'Haha Yes'
+    assert h.resolution_name == 'Haha Yes'
     assert h.action == VoteAction('FOR')
-    # TODO test await h.proposal()
+    # TODO test await h.resolution()
+
+
+def test_vote_against():
+    t = '@@parse_error@@ voted against the World Assembly Resolution "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ResolutionVote
+    assert h.agent == Nation('parse error')
+    assert h.resolution_name == 'Haha Yes'
+    assert h.action == VoteAction('AGAINST')
+    # TODO test await h.resolution()
+
+
+def test_vote_withdraw():
+    t = '@@parse_error@@ withdrew its vote on the World Assembly Resolution "Haha Yes".'
+    h = happenings.process_happening(happening_elem(t))
+    assert type(h) is happenings.ResolutionVote
+    assert h.agent == Nation('parse error')
+    assert h.resolution_name == 'Haha Yes'
+    assert h.action == VoteAction('WITHDREW')
+    # TODO test await h.resolution()
