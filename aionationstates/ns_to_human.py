@@ -1320,4 +1320,47 @@ census_info = [
         region_description=('The World Census calculated the average incomes '
                             'of citizens after paying tax.'),
     ),
+    ScaleInfo(
+        id=86,
+        title='International Artwork',
+        ranked='Most Valuable International Artwork',
+        measurement='Bank',
+        image='deck',
+        nation_description=('Some nations attempt to collect signature'
+                            ' artworks of other nations, developing'
+                            ' collections known as "decks." The World Census'
+                            ' has estimated their value.'),
+        region_description=('Some regions attempt to collect signature'
+                            ' artworks of other regions, developing'
+                            ' collections known as "decks." The World Census'
+                            ' has estimated their value.'),
+    ),
+    ScaleInfo(
+        id=87,
+        title='Patriotism',
+        ranked='Most Patriotic',
+        measurement='flags saluted per person per day',
+        image='patriotism',
+        nation_description=('World Census data collectors measured the fervor'
+                            ' with which citizens believed their own nation'
+                            ' was the greatest of all.'),
+        region_description=('World Census data collectors measured the fervor'
+                            ' with which citizens believed their own region'
+                            ' was the greatest of all.'),
+    ),
+    ScaleInfo(
+        id=88,
+        title='Food Quality',
+        ranked='Highest Food Quality',
+        measurement='Meeshlin-Starr Index',
+        image='foodquality',
+        nation_description=('Professional food critics dined out at'
+                            ' restaurants and popped into home kitchens to'
+                            ' judge ingredient quality, creativity, and'
+                            ' diversity of food.'),
+        region_description=('Professional food critics dined out at'
+                            ' restaurants and popped into home kitchens to'
+                            ' judge ingredient quality, creativity, and'
+                            ' diversity of food.'),
+    ),
 ]
