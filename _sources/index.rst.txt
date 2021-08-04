@@ -7,11 +7,10 @@ A python3.6.1+ asynchronous wrapper for the NationStates Web interface & API.
 
 - Doesn't fall apart in your hands
 - Sane interface that generally doesn't tend to contradict itself
-- Implements pretty much the entire Nation, Region, and World APIs
+- Implements pretty much the entire Nation, Region, World Assembly, and World APIs
 - Including a convenient happenings interface
 - Oh, did I mention the Private Nation API?
 - Yep, that's implemented too
-- The World Assembly API will be added soon I promise
 - Ratelimiting is handled internally
 - Like a whole bunch of things are handled internally
 - You are free to forget they ever existed in the first place
