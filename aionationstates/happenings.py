@@ -469,7 +469,7 @@ class ProposalSubmission(_ProposalHappening, Action, WorldAssembly):
             raise _ParseError
         self.agent = aionationstates.Nation(match.group(1))
 
-        #: str: ``General Assembly`` or ``Security Couyncil``.
+        #: str: ``General Assembly`` or ``Security Council``.
         self.proposal_council = match.group(2)
 
         #: str: The proposal category.
@@ -493,7 +493,7 @@ class ProposalApproval(_ProposalHappening, Action, WorldAssembly):
         self.agent = aionationstates.Nation(match.group(1))
 
         #: str: Name of the proposal.
-        self.proposal_name = match.group(2)
+        self.proposal_name = html.unescape(match.group(2))
 
         super().__init__(text, params)
 
