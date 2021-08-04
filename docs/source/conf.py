@@ -97,7 +97,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'aionationstates'
-copyright = '2017, Михаил Лебедев'
+copyright = '2017-2021, Михаил Лебедев'
 author = 'Михаил Лебедев'
 
 # The version info for the project you're documenting, acts as replacement for
