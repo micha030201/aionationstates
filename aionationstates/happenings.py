@@ -380,8 +380,8 @@ class ResolutionVote(Action, WorldAssembly):
             If the resolution has since been passed or defeated.
         """
         resolutions = await asyncio.gather(
-            aionationstates.ga.resolution_at_vote,
-            aionationstates.sc.resolution_at_vote,
+            aionationstates.ga.resolution_at_vote(),
+            aionationstates.sc.resolution_at_vote(),
         )
         for resolution in resolutions:
             if (resolution is not None
