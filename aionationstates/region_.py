@@ -218,7 +218,7 @@ class Post(DataClassWithId):
         The post text.
     likers : list of :class:`Nation`
         Nations that liked the post.
-    suppressor : :class:`Nation` of None
+    suppressor : :class:`Nation` or None
         Nation that suppressed the post.  ``None`` if the post has not
         been suppressed or has been suppressed by moderators.
     """

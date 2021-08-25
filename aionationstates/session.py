@@ -237,3 +237,7 @@ class Session:
             raise AuthenticationError
         assert resp.status == 200
         return resp
+
+    @ratelimit.web_restricted
+    async def _call_web_restricted(self, *args, **kwargs):
+        return await self._call_web(*args, **kwargs)

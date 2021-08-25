@@ -985,6 +985,7 @@ class NationControl(Nation):
         with suppress(KeyError):
             self.pin = resp.cookies['pin'].value
             logger.info(f'Updating pin for {self.id} from web cookie')
+        assert f'<body id="loggedin" data-nname="{self.id}">' in resp.text
         return resp
 
     async def _call_api_command(self, data, **kwargs):
@@ -1009,3 +1010,25 @@ class NationControl(Nation):
             return await IssueResult(
                 root.find('ISSUE'), self._get_macros_expander())
         return result(self)
+
+    async def message(self, region, text):
+        text += '\n\n[i]This message was made by a bot.[/i]'
+        chk_resp = await self._call_web(f'region={region.id}')
+        chk = re.search(
+            '<input type="hidden" name="chk" value="(.+?)">',
+            chk_resp.text,
+            flags=re.DOTALL
+        ).group(1)
+        await self._call_web_restricted(
+            f'page=lodgermbpost/region={region.id}',
+            method='POST',
+            data={
+                'chk': chk,
+                'message': (
+                    text
+                    .encode('ascii', 'xmlcharrefreplace')  # NS weirdness
+                    .decode('ascii')  # aiohttp weirdness
+                ),
+                'lodge_message': '1'
+            }
+        )

@@ -32,3 +32,16 @@ api = _create_ratelimiter(requests=50, per=30)
 # "Scripts must send no more than 10 requests per minute."
 # https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
 web = _create_ratelimiter(requests=10, per=60)
+
+_web_restricted_lock = asyncio.Lock()
+
+# "A tool may not execute restricted actions simultaneously, but must
+#  instead wait for the completion of each command--that is, a complete
+#  response from the NationStates server--before issuing the next one."
+# https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
+def web_restricted(func):
+    async def wrapper(*args, **kwargs):
+        async with _web_restricted_lock:
+            resp = await func(*args, **kwargs)
+        return resp
+    return wrapper
