@@ -1,4 +1,4 @@
-__version__ = '0.4.7'
+__version__ = '0.4.8'
 
 from aionationstates.world_ import *
 from aionationstates.wa_ import *
