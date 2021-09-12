@@ -1027,11 +1027,39 @@ class NationControl(Nation):
         @api_private_command('rmbpost', region=region.id, text=text)
         async def result(_, root):
             success = root.find('SUCCESS')
-            if not success:
+            if success is None:
                 raise NationStatesError('unable to post')
             post_id = int(re.search(
                 'postid=([0-9]+)#',
                 success.text
             ).group(1))
             return region._get_post(post_id)
+        return result(self)
+
+
+    def post_dispatch(self, title, text, category, subcategory):
+        """Post a new dispatch.
+
+        Returns
+        -------
+        an awaitable of an :class:`ApiQuery` of :class:`Dispatch`
+        """
+        text = (
+            text
+            .encode('ascii', 'xmlcharrefreplace')  # NS weirdness
+            .decode('ascii')  # aiohttp weirdness
+        )
+        @api_private_command(
+            'dispatch', dispatch='add',
+            title=title, text=text,
+            category=category, subcategory=subcategory)
+        async def result(_, root):
+            success = root.find('SUCCESS')
+            if success is None:
+                raise NationStatesError('unable to post')
+            dispatch_id = int(re.search(
+                'page=dispatch/id=([0-9]+)"',
+                success.text
+            ).group(1))
+            return aionationstates.world.dispatch(dispatch_id)
         return result(self)
