@@ -9,8 +9,9 @@ from aionationstates import ratelimit
 from aionationstates.utils import logger
 
 
-__all__ = ('set_user_agent', 'RateLimitError', 'SessionConflictError',
-           'AuthenticationError', 'NotFound', 'ApiQuery')
+__all__ = ('set_user_agent', 'NationStatesError', 'RateLimitError',
+           'SessionConflictError', 'AuthenticationError', 'NotFound',
+           'ApiQuery')
 
 
 NS_URL = 'https://www.nationstates.net/'
@@ -24,7 +25,14 @@ def set_user_agent(user_agent):
 
 # Exceptions:
 
-class RateLimitError(Exception):
+class NationStatesError(Exception):
+    """Raised whenever an error is encountered that doesn't have a clear
+    category.
+
+    Base class for all other exceptions.
+    """
+
+class RateLimitError(NationStatesError):
     """Raised when the request is forcibly terminated by NationStates due
     to a rate limit transgression.
 
@@ -38,7 +46,7 @@ class RateLimitError(Exception):
     """
 
 
-class SessionConflictError(Exception):
+class SessionConflictError(NationStatesError):
     """Raised when an authenticated request from :class:`NationControl`
     is attempted despite the nation having been successfully logged into
     recently from elswhere.
@@ -52,7 +60,7 @@ class SessionConflictError(Exception):
     """
 
 
-class AuthenticationError(Exception):
+class AuthenticationError(NationStatesError):
     """Raised when the credentials provided to :class:`NationControl`
     are incorrect.
 
@@ -61,7 +69,7 @@ class AuthenticationError(Exception):
     """
 
 
-class NotFound(Exception):
+class NotFound(NationStatesError):
     """Raised when the requested nation or region doesn't exist.
 
     (Or whenever the API returns with the HTTP status code 404.)
@@ -164,6 +172,26 @@ def api_command(c, **data):
         async def wrapper(session):
             data['c'] = c
             resp = await session._call_api_command(data)
+            root = ET.fromstring(resp.text)
+            return await func(session, root)
+        wrapper.__doc__ = func.__doc__
+        wrapper.__name__ = func.__name__
+        return wrapper
+    return decorator
+
+
+def api_private_command(c, **data):  # the ones that need to be prepared
+    def decorator(func):
+        async def wrapper(session):
+            data['c'] = c
+            data['mode'] = 'prepare'
+            resp = await session._call_api_command(data)
+
+            token = ET.fromstring(resp.text).find('SUCCESS').text
+            data['mode'] = 'execute'
+            data['token'] = token
+            resp = await session._call_api_command(data)
+
             root = ET.fromstring(resp.text)
             return await func(session, root)
         wrapper.__doc__ = func.__doc__

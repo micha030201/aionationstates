@@ -585,4 +585,10 @@ class Region(CensusRanks, NationRegion, Session):
             if len(posts) < 100:
                 await sleep(poll_period)
 
+    async def _get_post(self, post_id):
+        post = (await self._get_messages(fromid=post_id, limit=1))[0]
+        assert post.id == post_id
+        return post
+
+
     # TODO: history

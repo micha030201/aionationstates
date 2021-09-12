@@ -129,6 +129,8 @@ Nation shards
 
    .. automethod:: issues
 
+   .. automethod:: message
+
 Region shards
 ^^^^^^^^^^^^^
 
@@ -300,6 +302,8 @@ Data Classes
 
 Exceptions
 ----------
+
+.. autoexception:: NationStatesError
 
 .. autoexception:: RateLimitError
 

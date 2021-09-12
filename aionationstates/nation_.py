@@ -1,13 +1,15 @@
 import re
 import html
 import enum
+from urllib.parse import quote
 from contextlib import suppress
 from collections import OrderedDict
 
 from aionationstates.utils import (
     normalize, timestamp, unscramble_encoding, logger, banner_url, aobject,
     alist)
-from aionationstates.session import Session, api_query, api_command
+from aionationstates.session import (
+    Session, api_query, api_command, api_private_command, NationStatesError)
 from aionationstates.shared import NationRegion, DispatchThumbnail
 from aionationstates.ns_to_human import census_info
 import aionationstates
@@ -976,8 +978,7 @@ class NationControl(Nation):
             # Obtain autologin in case only password was provided
             await self._call_api({'nation': self.id, 'q': 'nextissue'})
         cookies = {
-            # Will not work with unescaped equals sign
-            'autologin': self.id + '%3D' + self.autologin,
+            'autologin': quote(f'{self.id}={self.autologin}', safe=''),
             'pin': self.pin
         }
         resp = await super()._call_web(path, method=method,
@@ -1011,24 +1012,26 @@ class NationControl(Nation):
                 root.find('ISSUE'), self._get_macros_expander())
         return result(self)
 
-    async def message(self, region, text):
-        text += '\n\n[i]This message was made by a bot.[/i]'
-        chk_resp = await self._call_web(f'region={region.id}')
-        chk = re.search(
-            '<input type="hidden" name="chk" value="(.+?)">',
-            chk_resp.text,
-            flags=re.DOTALL
-        ).group(1)
-        await self._call_web_restricted(
-            f'page=lodgermbpost/region={region.id}',
-            method='POST',
-            data={
-                'chk': chk,
-                'message': (
-                    text
-                    .encode('ascii', 'xmlcharrefreplace')  # NS weirdness
-                    .decode('ascii')  # aiohttp weirdness
-                ),
-                'lodge_message': '1'
-            }
+    def message(self, region, text):
+        """Lodge a message on a Regional Message Board.
+
+        Returns
+        -------
+        an awaitable of an awaitable of :class:`Post`
+        """
+        text = (
+            text
+            .encode('ascii', 'xmlcharrefreplace')  # NS weirdness
+            .decode('ascii')  # aiohttp weirdness
         )
+        @api_private_command('rmbpost', region=region.id, text=text)
+        async def result(_, root):
+            success = root.find('SUCCESS')
+            if not success:
+                raise NationStatesError('unable to post')
+            post_id = int(re.search(
+                'postid=([0-9]+)#',
+                success.text
+            ).group(1))
+            return region._get_post(post_id)
+        return result(self)
