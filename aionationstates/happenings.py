@@ -360,7 +360,7 @@ class ResolutionVote(Action, WorldAssembly):
             self.action = aionationstates.VoteAction.WITHDREW
         else:
             raise _ParseError
-        self.resolution_name = match.group(3)
+        self.resolution_name = html.unescape(match.group(3))
         super().__init__(text, params)
 
     async def resolution(self):
