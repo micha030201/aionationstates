@@ -135,6 +135,10 @@ class DispatchThumbnail(DataClassWithId):
         self._update_from_elem(elem)
         return self
 
+    @property
+    def url(self):
+        return f'https://www.nationstates.net/page=dispatch/id={self.id}'
+
     def full(self):
         """Request the full dispatch (with text).
 

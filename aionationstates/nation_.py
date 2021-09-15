@@ -4,6 +4,7 @@ import enum
 from urllib.parse import quote
 from contextlib import suppress
 from collections import OrderedDict
+from functools import partial
 
 from aionationstates.utils import (
     normalize, timestamp, unscramble_encoding, logger, banner_url, aobject,
@@ -1017,7 +1018,7 @@ class NationControl(Nation):
 
         Returns
         -------
-        an awaitable of an awaitable of :class:`Post`
+        an awaitable of a function returning an awaitable of :class:`Post`
         """
         text = (
             text
@@ -1026,14 +1027,15 @@ class NationControl(Nation):
         )
         @api_private_command('rmbpost', region=region.id, text=text)
         async def result(_, root):
+            error = root.find('ERROR')
+            if error is not None:
+                raise NationStatesError(error.text)
             success = root.find('SUCCESS')
-            if success is None:
-                raise NationStatesError('unable to post')
             post_id = int(re.search(
                 'postid=([0-9]+)#',
                 success.text
             ).group(1))
-            return region._get_post(post_id)
+            return partial(region._get_post, post_id)
         return result(self)
 
 
@@ -1042,7 +1044,7 @@ class NationControl(Nation):
 
         Returns
         -------
-        an awaitable of an :class:`ApiQuery` of :class:`Dispatch`
+        an awaitable of :class:`DispatchThumbnail`
         """
         text = (
             text
@@ -1054,12 +1056,13 @@ class NationControl(Nation):
             title=title, text=text,
             category=category, subcategory=subcategory)
         async def result(_, root):
+            error = root.find('ERROR')
+            if error is not None:
+                raise NationStatesError(error.text)
             success = root.find('SUCCESS')
-            if success is None:
-                raise NationStatesError('unable to post')
             dispatch_id = int(re.search(
                 'page=dispatch/id=([0-9]+)"',
                 success.text
             ).group(1))
-            return aionationstates.world.dispatch(dispatch_id)
+            return DispatchThumbnail(id=dispatch_id)
         return result(self)

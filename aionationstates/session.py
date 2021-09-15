@@ -182,6 +182,7 @@ def api_command(c, **data):
 
 def api_private_command(c, **data):  # the ones that need to be prepared
     def decorator(func):
+        @ratelimit.api_action  # I don't think issue answers are ratelimited
         async def wrapper(session):
             data['c'] = c
             data['mode'] = 'prepare'

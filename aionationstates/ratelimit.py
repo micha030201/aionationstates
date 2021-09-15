@@ -29,6 +29,13 @@ def _create_ratelimiter(requests, per):
 # https://www.nationstates.net/pages/api.html#ratelimits
 api = _create_ratelimiter(requests=50, per=30)
 
+# this is not actually documented anywhere, but, for example, RMB posts
+# won't go through if posted within a certain time from the previous
+# post, or from any action, such as posting a dispatch
+# i don't know the precise time here, but 40 seconds seems to just about
+# cover that (obtained experimentally)
+api_action = _create_ratelimiter(requests=1, per=50)
+
 # "Scripts must send no more than 10 requests per minute."
 # https://forum.nationstates.net/viewtopic.php?p=16394966#p16394966
 web = _create_ratelimiter(requests=10, per=60)
